@@ -7,8 +7,11 @@ SOURCES=src/main.c \
 	src/CParser.c \
 	src/StringProcessor.c \
 	src/StringBuffer.c \
+	src/TransUnit.c \
+	src/TokenList.c \
 	src/util/Memory.c \
-	src/util/String.c
+	src/util/String.c \
+	src/util/FileList.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=cparser
 
