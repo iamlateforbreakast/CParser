@@ -16,5 +16,6 @@ String* String_newFromFile(const char* fileName);
 void String_delete(String* this);
 String* String_createFromFile(const char* fileName);
 char* String_getBuffer(String* this);
-
+void String_cat(String* this, const char* str2);
+int String_cmp(String* this, const char* str2);
 #endif

@@ -9,8 +9,8 @@ typedef struct FileInfo FileInfo;
 
 struct FileInfo
 {
-    String name;
-    String path;
+    String* name;
+    String* path;
     //FileType type;
     //FileDate date;
     //FileSize size
@@ -24,5 +24,6 @@ typedef struct FileList
 
 FileList* FileList_new();
 void FileList_delete(FileList* this);
+void FileList_addFile(FileList* this, String* fileName);
 void FileList_list(FileList* this, String* dirName, String* filter);
 #endif

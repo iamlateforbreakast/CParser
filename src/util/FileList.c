@@ -6,7 +6,7 @@
 
 #include <dirent.h> 
 #include <stdio.h> 
-#include <string.h>
+
 
 FileList* FileList_new()
 {
@@ -19,9 +19,57 @@ FileList* FileList_new()
 
 void FileList_delete(FileList* this)
 {
-    Memory_free(this, sizeof(FileList));
+    FileInfo* fileInfo;
+	
+	while (this->head!=NULL)
+	{
+	   fileInfo = this->head->next;
+	   Memory_free(this->head, sizeof(FileInfo));
+	   this->head = fileInfo;
+	}
+	
+	Memory_free(this, sizeof(FileList));
 }
 
-void FileList_list(FileList* this, const char* dirName, const char* filter)
+void FileList_addFile(FileList* this, String* fileName)
 {
+    FileInfo* fileInfo;
+	
+	fileInfo = (FileInfo*)Memory_alloc(sizeof(FileInfo));
+	fileInfo->name = fileName;
+    
+	fileInfo->next = this->head;
+	this->head = fileInfo;
+
+}
+
+void FileList_list(FileList* this, String* dirName, String* filter)
+{
+   DIR* d;
+   struct dirent * dir; // for the directory entries
+   String* directoryItem;
+   
+   d=opendir(dirName->buffer);
+   if (d!=NULL)
+   {
+       while ((dir = readdir(d)) != NULL)
+       {
+	      printf("FileList_list %s\n", dir->d_name);
+	      directoryItem=String_new(dir->d_name);
+          if((dir->d_type != DT_DIR)&&(String_filter(filter))!=0)
+		  {
+             FileList_addFile(this, directoryItem);
+			 String_print(directoryItem, "File: ");
+          }
+		  else
+             if(dir -> d_type == DT_DIR && String_cmp(directoryItem,".")!=0 && String_cmp(directoryItem,"..")!=0 )
+             {
+			     String_cat(directoryItem, "/");
+			     String_cat(directoryItem, dir->d_name);
+                 FileList_list(this, directoryItem, filter);	 
+             }
+			 String_delete(directoryItem);
+       }
+    closedir(d); // finally close the directory
+	}
 }
