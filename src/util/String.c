@@ -61,6 +61,8 @@ int String_cmp(String* this, const char* str2)
 {
     int result = 0;
 
+    if (strncmp(this->buffer, str2, this->buffer)==0)
+	    result=1;
     return result;
 }
 
@@ -85,12 +87,14 @@ void String_print(String* this, const char*displayString)
 unsigned int String_filter(String* this, String* filter)
 {
    unsigned int result=1;
-   unsigned int i;
-   
-   for (i=filter->length; (i>0) && (result==1); i--)
+   unsigned int i,j,k;
+  
+   j=this->length-1;
+   k=filter->length-1; 
+   for (i=0;(i<filter->length) && (result==1); i++)
    {
-      printf("String_filter: %c %c\n", this->buffer[i-1], filter->buffer[i-1]);
-      if ((this->buffer[i-1]!=filter->buffer[i-1]))
+      printf("String_filter: %c %c\n", this->buffer[j-i], filter->buffer[k-i]);
+      if ((this->buffer[j-i]!=filter->buffer[k-i]))
 	     result = 0;
    }
    
