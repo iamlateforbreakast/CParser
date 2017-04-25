@@ -26,7 +26,8 @@ void CParser_delete(CParser* this)
 
 void CParser_parse(CParser* this, const char* dirName)
 {
-    String* newDirName, *filter;
+    String* newDirName;
+    String* filter;
 
     newDirName = String_new(dirName);
     filter = String_new(".c");
