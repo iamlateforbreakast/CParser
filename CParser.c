@@ -6,46 +6,53 @@
 
 CParser* CParser_new()
 {
-    CParser* this;
+  CParser* this;
 
-    this=(CParser*)Memory_alloc(sizeof(CParser));
+  this=(CParser*)Memory_alloc(sizeof(CParser));
 
-    this->tokenList = TokenList_new();
-    this->fileList = FileList_new();
+  this->tokenList = TokenList_new();
+  this->fileList = FileList_new();
 
-    return this;
+  return this;
 }
 
 void CParser_delete(CParser* this)
 {
-    TokenList_delete(this->tokenList);
-    FileList_delete(this->fileList);
+  TokenList_delete(this->tokenList);
+  FileList_delete(this->fileList);
 
-    Memory_free(this, sizeof(CParser));
+  Memory_free(this, sizeof(CParser));
 }
 
 void CParser_parse(CParser* this, const char* dirName)
 {
-    String* newDirName;
-    String* filter;
+  String* newDirName;
+  String* filter;
+  String* fileName;
 
-    newDirName = String_new(dirName);
-    filter = String_new(".c");
+  newDirName = String_new(dirName);
+  filter = String_new(".c");
 
-    FileList_list(this->fileList, newDirName, filter);
+  // List all C files in newDirName and sub directories
+  FileList_list(this->fileList, newDirName, filter);
 
-    // List all C files in newDirName and sub directories
-    // for each C file add to the TokenList
+  // for each C file add to the TokenList
+  fileName = FileList_getNextFile(this->fileList);
+  while (fileName!=NULL)
+  {
     //Initialise from initial fileName
     TokenList_initialise(this->tokenList, newDirName);
+    fileName = FileList_getNextFile(this->fileList);
+  }
     
-    /*while (TokensList_get())
+  /*while (TokensList_get())
 	populate functions from list of tokens
 	populate global vars
 	populate local vars
 	populate code blocks */
-    String_delete(newDirName);
-    String_delete(filter);
+  String_delete(fileName);
+  String_delete(newDirName);
+  String_delete(filter);
 }
 
 /*void CParser_populateFunctions()
