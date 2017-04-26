@@ -15,13 +15,13 @@ String* String_new(const char* string)
     this->length = strlen(string);
     this->buffer = (char*)Memory_alloc(sizeof(char)*this->length);
     memcpy(this->buffer, string, this->length);
-	printf("Allocating %s\n", this->buffer);
+	//printf("String: Allocating %s\n", this->buffer);
     return this;
 }
 
 void String_delete(String* this)
 {
-    printf("Deleting %s\n", this->buffer);
+    //printf("Deleting %s\n", this->buffer);
     Memory_free(this->buffer, this->length);
     this->length=0;
     Memory_free(this, sizeof(String));
@@ -30,8 +30,9 @@ void String_delete(String* this)
 String* String_newFromFile(const char* fileName)
 {
     String* this = NULL;
-
     char* buffer = NULL;
+
+    this = (String*)Memory_alloc(sizeof(String));
 
     FILE* f=fopen(fileName,"rb");
     if (f)
@@ -55,15 +56,44 @@ String* String_newFromFile(const char* fileName)
 
 void String_cat(String* this, const char* str2)
 {
+  char* catBuffer;
+  unsigned int length;
+	
+  length = this->length + strlen(str2);
+	catBuffer = Memory_alloc(length);
+	memcpy(catBuffer, this->buffer, this->length);
+	memcpy(catBuffer+this->length, str2, strlen(str2));
+	Memory_free(this->buffer, this->length);
+	this->length = length;
+	this->buffer = catBuffer;
+	
+	//String_print(this, "Cat string: ");
+	//printf("String: Cat: %d\n", this->length);
+	//printf("String: Cat: %d\n", strlen(this->buffer));
+  //ssprintf("String: Cat: %d\n", strlen(str2));
+}
+
+String* String_dup(String* this)
+{
+  String* duplicatedString;
+   
+  duplicatedString = (String*)Memory_alloc(sizeof(String));
+  duplicatedString->length = this->length;
+  duplicatedString->buffer = (char*)Memory_alloc(sizeof(char)*this->length);
+  memcpy(duplicatedString->buffer, this->buffer, this->length);
+	
+	return duplicatedString;
 }
 
 int String_cmp(String* this, const char* str2)
 {
-    int result = 0;
+  int result = 0;
 
-    if (strncmp(this->buffer, str2, this->buffer)==0)
-	    result=1;
-    return result;
+  if (strncmp(this->buffer, str2, this->length)==0)
+	  result=1;
+  //printf("String_cmp: %d %s %s\n", this->length, this->buffer, str2);
+	
+  return result;
 }
 
 char* String_getBuffer(String* this)
@@ -73,30 +103,34 @@ char* String_getBuffer(String* this)
 
 void String_print(String* this, const char*displayString)
 {
-   char* buffer;
-   unsigned int length;
+  char* buffer;
+  unsigned int length;
    
-   length = this->length + strlen(displayString) + 1;
-   buffer = Memory_alloc(length);
-   sprintf(buffer, "%s%s", displayString, this->buffer);
-   buffer[length-1]=0;
-   printf("%s\n", buffer);
-   Memory_free(buffer,sizeof(char));
+  length = this->length + strlen(displayString) + 1;
+
+  buffer = Memory_alloc(length);
+  memcpy(buffer, displayString, strlen(displayString));
+  memcpy(buffer+strlen(displayString), this->buffer, this->length);
+  buffer[length-1]=0;
+  printf("%s\n", buffer);
+  Memory_free(buffer,length);
+  //printf("String_print: Here\n");
 }
 
 unsigned int String_filter(String* this, String* filter)
 {
-   unsigned int result=1;
-   unsigned int i,j,k;
+  unsigned int result=1;
+  unsigned int i,j,k;
   
-   j=this->length-1;
-   k=filter->length-1; 
-   for (i=0;(i<filter->length) && (result==1); i++)
-   {
-      printf("String_filter: %c %c\n", this->buffer[j-i], filter->buffer[k-i]);
-      if ((this->buffer[j-i]!=filter->buffer[k-i]))
-	     result = 0;
-   }
+  j=this->length-1;
+  k=filter->length-1; 
+
+  for (i=0;(i<filter->length) && (result==1); i++)
+  {
+    //printf("String_filter: %c %c\n", this->buffer[j-i], filter->buffer[k-i]);
+    if ((this->buffer[j-i]!=filter->buffer[k-i]))
+	    result = 0;
+  }
    
-   return result;
+  return result;
 }

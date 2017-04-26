@@ -18,4 +18,5 @@ String* String_createFromFile(const char* fileName);
 char* String_getBuffer(String* this);
 void String_cat(String* this, const char* str2);
 int String_cmp(String* this, const char* str2);
+String* String_dup(String* this);
 #endif

@@ -24,6 +24,6 @@ typedef struct FileList
 
 FileList* FileList_new();
 void FileList_delete(FileList* this);
-void FileList_addFile(FileList* this, String* fileName);
+void FileList_addFile(FileList* this, String* fileName, String* path);
 void FileList_list(FileList* this, String* dirName, String* filter);
 #endif
