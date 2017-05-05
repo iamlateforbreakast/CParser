@@ -6,23 +6,23 @@
 
 TransUnit* TransUnit_new()
 {
-    TransUnit* this;
+  TransUnit* this;
 
-    this = (TransUnit*)Memory_alloc(sizeof(TransUnit));
+  this = (TransUnit*)Memory_alloc(sizeof(TransUnit));
 
-    return this;
+  return this;
 }
 
 void TransUnit_delete(TransUnit* this)
 {
-    Memory_free(this, sizeof(TransUnit));
+  Memory_free(this, sizeof(TransUnit));
 }
 
 void TransUnit_loadFromFile(TransUnit* this, const char* fileName)
 {
-    String path;
+  String path;
 
-    StringProcessor_addFile(this->processor, "*", fileName);
+  StringProcessor_addFile(this->processor, "*", fileName);
 }
 
 /*
@@ -30,10 +30,10 @@ void TransUnit_loadFromFile(TransUnit* this, const char* fileName)
  */
 unsigned char TransUnit_readCharFromProcessedStream(TransUnit* this)
 {
-    unsigned char c;
-   //this->processor->readChar();
-   //if // readsingleLineComment
-   //if /* readMultiLine comment   
+  unsigned char c;
+  //this->processor->readChar();
+  //if // readsingleLineComment
+  //if /* readMultiLine comment   
 
-    return c;
+  return c;
 }

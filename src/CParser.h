@@ -6,6 +6,7 @@
 //#include "ElementTable.h"
 #include "TokenList.h"
 #include "FileList.h"
+#include "FileMgr.h"
 
 typedef struct CParser
 {
@@ -15,6 +16,7 @@ typedef struct CParser
     // ElementTable code blocks
     TokenList* tokenList;
     FileList* fileList;
+	FileMgr* fileMgr;
 } CParser;
 
 CParser* CParser_new();

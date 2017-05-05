@@ -12,6 +12,7 @@ CParser* CParser_new()
 
   this->tokenList = TokenList_new();
   this->fileList = FileList_new();
+  this->fileMgr = FileMgr_new();
 
   return this;
 }
@@ -20,7 +21,8 @@ void CParser_delete(CParser* this)
 {
   TokenList_delete(this->tokenList);
   FileList_delete(this->fileList);
-
+  FileMgr_delete(this->fileMgr);
+  
   Memory_free(this, sizeof(CParser));
 }
 
@@ -28,7 +30,7 @@ void CParser_parse(CParser* this, const char* dirName)
 {
   String* newDirName;
   String* filter;
-  String* fileName;
+  String* cFileContent;
 
   newDirName = String_new(dirName);
   filter = String_new(".c");
@@ -37,20 +39,23 @@ void CParser_parse(CParser* this, const char* dirName)
   FileList_list(this->fileList, newDirName, filter);
 
   // for each C file add to the TokenList
-  fileName = FileList_getNextFile(this->fileList);
-  while (fileName!=NULL)
+  cFileContent = FileMgr_load(FileList_getNextFileName(this->fileList));
+  
+  while (cFileContent!=NULL)
   {
     //Initialise from initial fileName
     TokenList_initialise(this->tokenList, newDirName);
-    fileName = FileList_getNextFile(this->fileList);
-  }
     
+    cFileContent = FileMgr_load(FileList_getNextFileName(this->fileList));
+    //Grammar_process()
+  }
+  
   /*while (TokensList_get())
 	populate functions from list of tokens
 	populate global vars
 	populate local vars
 	populate code blocks */
-  String_delete(fileName);
+  String_delete(cFileContent);
   String_delete(newDirName);
   String_delete(filter);
 }
