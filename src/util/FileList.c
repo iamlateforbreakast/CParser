@@ -89,3 +89,15 @@ void FileList_list(FileList* this, String* dirName, String* filter)
     closedir(d); // finally close the directory
 	}
 }
+
+String* FileList_loadNextFile(FileList* this)
+{
+  String* fileContent;
+#if 0
+  FileInfo* currentFile = this->currentFile->next;
+  
+  if (currentFile!=NULL) this->current
+  
+  return fileContent;
+#endif
+}
