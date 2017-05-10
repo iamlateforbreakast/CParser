@@ -11,6 +11,7 @@ struct FileInfo
 {
   String* name;
   String* path;
+  String* fullName;
   //FileType type;
   //FileDate date;
   //FileSize size

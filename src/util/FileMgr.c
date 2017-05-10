@@ -16,30 +16,32 @@ void FileMgr_delete(FileMgr* this)
     Memory_free(this, sizeof(FileMgr));
 }
 
-String* FileMgr_load(FileMgr* this, String* fileName, String* path)
+String* FileMgr_load(FileMgr* this, String* fileName)
 {
-#if 0
+  String* fileContent=NULL;
+
   String* result = NULL;
-  char* buffer = NULL;
+  char buffer[255] = { 0 };
 
-  result = (String*)Memory_alloc(sizeof(String));
-
-  FILE* f=fopen(fileName,"rb");
+  fileContent = (String*)Memory_alloc(sizeof(String));
+  memcpy(buffer, fileName->buffer, fileName->length);
+  
+  FILE* f=fopen(buffer,"rb");
   if (f)
   {
 	  fseek(f, 0, SEEK_END);
-	  this->length=ftell(f);
+	  fileContent->length=ftell(f);
 	  fseek(f, 0 , SEEK_SET);
         
-	  buffer = (char*)Memory_alloc(this->length);
+	  fileContent->buffer = (char*)Memory_alloc(fileContent->length);
 	  fclose(f);
-    this = String_new(buffer);
   }
   else
   {
 	/* File cannot be found */
   }
-#endif
+
+  return fileContent;
 }
 
 void FileMgr_close(FileMgr* this, String* fileName)

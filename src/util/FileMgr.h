@@ -19,7 +19,7 @@ typedef struct FileMgr
 
 FileMgr* FileMgr_new();
 void FileMgr_delete(FileMgr* this);
-String* FileMgr_load(FileMgr* this, String* fileName, String* path);
+String* FileMgr_load(FileMgr* this, String* fileName);
 void FileMgr_close(FileMgr* this, String* fileName);
 
 #endif
