@@ -4,6 +4,8 @@
 #include "CParser.h"
 #include "FileList.h"
 
+CParser* cparser;
+
 CParser* CParser_new()
 {
   CParser* this;
@@ -19,18 +21,22 @@ CParser* CParser_new()
 
 void CParser_delete(CParser* this)
 {
+  
   TokenList_delete(this->tokenList);
+      
   FileList_delete(this->fileList);
+  printf("CParser_delete\n");
   FileMgr_delete(this->fileMgr);
   
   Memory_free(this, sizeof(CParser));
+
 }
 
 void CParser_parse(CParser* this, const char* dirName)
 {
-  String* newDirName;
-  String* filter;
-  String* cFileContent;
+  String* newDirName=NULL;
+  String* filter=NULL;
+  String* cFileContent=NULL;
 
   newDirName = String_new(dirName);
   filter = String_new(".c");
@@ -39,23 +45,25 @@ void CParser_parse(CParser* this, const char* dirName)
   FileList_list(this->fileList, newDirName, filter);
 
   // for each C file add to the TokenList
-  cFileContent = FileMgr_load(FileList_getNextFileName(this->fileList));
-  
+  cFileContent = FileList_loadNextFile(this->fileList);
+  printf("CParser.c: cFileContent %d\n", cFileContent->length);
+#if 0
   while (cFileContent!=NULL)
   {
     //Initialise from initial fileName
     TokenList_initialise(this->tokenList, newDirName);
     
-    cFileContent = FileMgr_load(FileList_getNextFileName(this->fileList));
+    cFileContent = FileMgr_load(this->fileMgr, FileList_getNextFileName(this->fileList));
     //Grammar_process()
   }
-  
+#endif
   /*while (TokensList_get())
 	populate functions from list of tokens
 	populate global vars
 	populate local vars
 	populate code blocks */
-  String_delete(cFileContent);
+
+  //String_delete(cFileContent);
   String_delete(newDirName);
   String_delete(filter);
 }
@@ -70,3 +78,15 @@ void CParser_parse(CParser* this, const char* dirName)
 void CParser_populateGlobalVars()
 {
 }*/
+
+FileMgr* CParser_getFileMgr()
+{
+    FileMgr* result=NULL;
+
+    if (cparser!=NULL)
+    {
+	result = cparser->fileMgr;
+    }
+
+    return result;
+}
