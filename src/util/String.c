@@ -1,5 +1,7 @@
 /* String.h */
 
+#define _GNU_SOURCE
+
 #include <string.h>
 
 #include "Common.h"
@@ -15,43 +17,16 @@ String* String_new(const char* string)
     this->length = strlen(string);
     this->buffer = (char*)Memory_alloc(sizeof(char)*this->length);
     memcpy(this->buffer, string, this->length);
-	//printf("String: Allocating %s\n", this->buffer);
+	  printf("String: Allocating %s\n", this->buffer);
     return this;
 }
 
 void String_delete(String* this)
 {
-    //printf("Deleting %s\n", this->buffer);
+    printf("Deleting %s\n", this->buffer);
     Memory_free(this->buffer, this->length);
     this->length=0;
     Memory_free(this, sizeof(String));
-}
-
-String* String_newFromFile(const char* fileName)
-{
-    String* this = NULL;
-    char* buffer = NULL;
-
-    this = (String*)Memory_alloc(sizeof(String));
-
-    FILE* f=fopen(fileName,"rb");
-    if (f)
-    {
-	fseek(f, 0, SEEK_END);
-	this->length=ftell(f);
-	fseek(f, 0 , SEEK_SET);
-        
-	buffer = (char*)Memory_alloc(this->length);
-	fclose(f);
-        this = String_new(buffer);
-    }
-    else
-    {
-	/* File cannot be found */
-    }
-
-
-    return this;
 }
 
 void String_cat(String* this, const char* str2)
@@ -71,6 +46,24 @@ void String_cat(String* this, const char* str2)
 	//printf("String: Cat: %d\n", this->length);
 	//printf("String: Cat: %d\n", strlen(this->buffer));
   //ssprintf("String: Cat: %d\n", strlen(str2));
+}
+
+void String_append(String* this, String* str2)
+{
+  char* buffer = NULL;
+  unsigned int length;
+  
+  length = this->length + str2->length;
+  buffer = (String*)Memory_alloc(length);
+  
+  memcpy(buffer, this->buffer, this->length);
+  memcpy(buffer + this->length, str2->buffer, str2->length);
+  Memory_free(this->buffer, this->length);
+  
+  this->buffer = buffer;
+  this->length = length;
+  
+  String_print(this,"String_append.c: Return = ");
 }
 
 String* String_dup(String* this)
