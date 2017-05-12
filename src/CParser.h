@@ -24,5 +24,6 @@ extern CParser* cparser;
 CParser* CParser_new();
 void CParser_delete(CParser* this);
 void CParser_parse(CParser* this, const char* fileName);
+FileMgr* CParser_getFileMgr();
 
 #endif

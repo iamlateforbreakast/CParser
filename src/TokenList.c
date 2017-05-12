@@ -3,24 +3,26 @@
 #include "TokenList.h"
 #include "Common.h"
 
-TokenList* TokenList_new()
+TokenList* TokenList_new(String* fileContent)
 {
     TokenList* this;
     
     this = (TokenList*)Memory_alloc(sizeof(TokenList));
+    this->transUnit = TransUnit_new(fileContent);
+    
     return this;
 }
 
 void TokenList_delete(TokenList* this)
 {
-    //TransUnit_free(this->currentTransUnit);
+    printf("TokenList.c: delete\n");
+    TransUnit_delete(this->transUnit);
     Memory_free(this, sizeof(TokenList));
 }
 
-void TokenList_initialise(TokenList* this, String* fileName)
+void TokenList_initialise(TokenList* this, String* fileBuffer)
 {
-    //this->currentTransUnit = TransUnit_new();
-    //TransUnit_loadFromFile(fileName);
+    
 }
 
 void TokenList_getTokenFromTransUnit(TokenList* this)

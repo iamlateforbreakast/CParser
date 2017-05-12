@@ -12,7 +12,7 @@ CParser* CParser_new()
 
   this=(CParser*)Memory_alloc(sizeof(CParser));
 
-  this->tokenList = TokenList_new();
+
   this->fileList = FileList_new();
   this->fileMgr = FileMgr_new();
 
@@ -47,11 +47,13 @@ void CParser_parse(CParser* this, const char* dirName)
   // for each C file add to the TokenList
   cFileContent = FileList_loadNextFile(this->fileList);
   printf("CParser.c: cFileContent %d\n", cFileContent->length);
+  
+  this->tokenList = TokenList_new(cFileContent);
 #if 0
   while (cFileContent!=NULL)
   {
     //Initialise from initial fileName
-    TokenList_initialise(this->tokenList, newDirName);
+    
     
     cFileContent = FileMgr_load(this->fileMgr, FileList_getNextFileName(this->fileList));
     //Grammar_process()

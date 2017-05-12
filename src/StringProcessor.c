@@ -1,31 +1,51 @@
 /* StringProcessor.c */
 
 #include "StringProcessor.h"
+#include "FileMgr.h"
 
 #include "Common.h"
 
 void StringProcessor_processDirective(StringProcessor* this);
 
-StringProcessor* StringProcessor_new()
+StringProcessor* StringProcessor_new(String* initialFileContent)
 {
   StringProcessor* this;
-
+  StringBuffer* newBuffer;
+  
   this=(StringProcessor*)Memory_alloc(sizeof(StringProcessor));
+  memset(this->buffers, 0, sizeof(StringBuffer*) * NB_MAX_BUFFERS);
+  
+  newBuffer = StringBuffer_new(initialFileContent);
+  this->buffers[0]  = newBuffer;
+  
+  this->currentBuffer = this->buffers[0];
+  
   return this;
 }
 
 void StringProcessor_delete(StringProcessor* this)
 {
+  int i=0;
+  //FileMgr*  f = CParser_getFileMgr();
+  
+  printf("StringProcessor.c: delete\n");
+  
+  for (i=0; i++; (this->buffers[i] == this->currentBuffer))
+  {
+    StringBuffer_delete(this->buffers[i]);
+  }
+  //StringBuffer_delete(this->currentBuffer);
+  this->currentBuffer = NULL;
+  //close all H files f.close
   Memory_free(this, sizeof(StringProcessor));
 }
 
-void StringProcessor_addFile(StringProcessor* this, const char* path, const char* fileName)
+void StringProcessor_addFile(StringProcessor* this, String* file)
 {
 #if 0
   String* newCFile;
   StringBuffer* newBuffer;
   
-  newCFile = FileMgr_loadFile(fileName);
   newBuffer = StringBuffer_new(newCFile);
   this->currentBuffer++;
   buffers[this->currentBuffer]  = newBuffer;
