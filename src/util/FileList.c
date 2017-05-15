@@ -29,9 +29,9 @@ void FileList_delete(FileList* this)
   {
     fileInfo = this->head->next;
     String_delete(this->head->name);
-    printf("FileList.c: Free fullName %d\n", this->head->fullName->length);
+    //printf("FileList.c: Free fullName %d\n", this->head->fullName->length);
     String_delete(this->head->fullName);
-    printf("FileList.c: Free fileInfo %x\n", this->head);
+    //printf("FileList.c: Free fileInfo %x\n", this->head);
     Memory_free(this->head, sizeof(FileInfo));
     this->head = fileInfo;
   }

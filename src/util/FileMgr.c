@@ -34,6 +34,8 @@ String* FileMgr_load(FileMgr* this, String* fileName)
 	  fseek(f, 0 , SEEK_SET);
         
 	  fileContent->buffer = (char*)Memory_alloc(fileContent->length);
+    fread(fileContent->buffer,fileContent->length, 1, f);
+    
 	  fclose(f);
   }
   else
