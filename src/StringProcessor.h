@@ -17,4 +17,6 @@ StringProcessor* StringProcessor_new();
 void StringProcessor_delete(StringProcessor* this);
 void StringProcessor_addFile(StringProcessor* this, String* file);
 unsigned char StringProcessor_readTransUnitChar(StringProcessor* this);
+unsigned int StringProcessor_checkForMacro(StringProcessor* this);
+unsigned int StringProcessor_match(StringProcessor* this, String* pattern);
 #endif
