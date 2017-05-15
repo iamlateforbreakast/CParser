@@ -37,7 +37,8 @@ void CParser_parse(CParser* this, const char* dirName)
   String* newDirName=NULL;
   String* filter=NULL;
   String* cFileContent=NULL;
-
+  int i;
+  
   newDirName = String_new(dirName);
   filter = String_new(".c");
 
@@ -47,18 +48,26 @@ void CParser_parse(CParser* this, const char* dirName)
   // for each C file add to the TokenList
   cFileContent = FileList_loadNextFile(this->fileList);
   printf("CParser.c: cFileContent %d\n", cFileContent->length);
+
   
-  this->tokenList = TokenList_new(cFileContent);
-#if 0
-  while (cFileContent!=NULL)
+
+  //while (cFileContent!=NULL)
   {
-    //Initialise from initial fileName
+    //Initialise from initial fileName  
+    this->tokenList = TokenList_new(cFileContent);
     
+    while (TokenList_getTokenFromTransUnit(this->tokenList)!=0)
+    {
+    }
     
-    cFileContent = FileMgr_load(this->fileMgr, FileList_getNextFileName(this->fileList));
+    TokenList_delete(this->tokenList);
+    
+    //cFileContent = FileList_loadNextFile(this->fileList);
+    //close C file
+    //cFileContent = FileMgr_load(this->fileMgr, FileList_getNextFileName(this->fileList));
     //Grammar_process()
   }
-#endif
+
   /*while (TokensList_get())
 	populate functions from list of tokens
 	populate global vars

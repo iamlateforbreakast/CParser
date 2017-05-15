@@ -25,11 +25,15 @@ void TokenList_initialise(TokenList* this, String* fileBuffer)
     
 }
 
-void TokenList_getTokenFromTransUnit(TokenList* this)
+unsigned int TokenList_getTokenFromTransUnit(TokenList* this)
 {
+  unsigned char c;
+  
+  c = TransUnit_readCharFromProcessedStream(this->transUnit);
+  
+  printf("Read char %c\n",c);
     /*
-    c = TransUnit_getChar(this->currentTransUnit);
-
+    
     while (!isEOF)
     {
         if {}()=+-!
@@ -39,4 +43,5 @@ void TokenList_getTokenFromTransUnit(TokenList* this)
         c = TransUnit_getChar(this->currentTransUnit);
     }
     */
+  return c;
 }

@@ -4,17 +4,23 @@
 
 #include "Common.h"
 
-TransUnit* TransUnit_new()
+unsigned int TransUnit_readSingleLineComment(TransUnit* this);
+unsigned int TransUnit_readMultiLineComment(TransUnit* this);
+
+TransUnit* TransUnit_new(String* fileContent)
 {
   TransUnit* this;
 
   this = (TransUnit*)Memory_alloc(sizeof(TransUnit));
-
+  this->processor = StringProcessor_new(fileContent);
+  
   return this;
 }
 
 void TransUnit_delete(TransUnit* this)
 {
+  printf("TransUnit.c: delete\n");
+  StringProcessor_delete(this->processor);
   Memory_free(this, sizeof(TransUnit));
 }
 
@@ -22,7 +28,7 @@ void TransUnit_loadFromFile(TransUnit* this, const char* fileName)
 {
   String path;
 
-  StringProcessor_addFile(this->processor, "*", fileName);
+  
 }
 
 /*
@@ -31,9 +37,77 @@ void TransUnit_loadFromFile(TransUnit* this, const char* fileName)
 unsigned char TransUnit_readCharFromProcessedStream(TransUnit* this)
 {
   unsigned char c;
-  //this->processor->readChar();
-  //if // readsingleLineComment
-  //if /* readMultiLine comment   
+  unsigned int isComment = 1;
+  
+  while (isComment)
+  {
+    isComment = TransUnit_readSingleLineComment(this);
+    isComment = isComment + TransUnit_readMultiLineComment(this);
+    isComment=0;
+  }
+  
+  c = StringProcessor_readTransUnitChar(this->processor);  
 
   return c;
+}
+
+unsigned int TransUnit_readSingleLineComment(TransUnit* this)
+{
+  unsigned int result = 0;
+  String* singleLineComment;
+  unsigned char c = 0;
+  
+  singleLineComment = String_new("//");
+  if (StringProcessor_match(this->processor, singleLineComment))
+  {
+    c = StringProcessor_readTransUnitChar(this->processor);
+    c = StringProcessor_readTransUnitChar(this->processor);
+    
+    while (StringProcessor_readTransUnitChar(this->processor)!=13)
+    {
+      c = StringProcessor_readTransUnitChar(this->processor);
+    }
+  }
+  
+  String_delete(singleLineComment);
+  
+  return result;
+}
+
+unsigned int TransUnit_readMultiLineComment(TransUnit* this)
+{
+  unsigned int result = 0;
+  unsigned int isFound = 0;
+  unsigned char c;
+  
+  String* multiLineStartToken;
+  String* multiLineEndToken;
+  
+  multiLineStartToken = String_new("/*");
+  multiLineEndToken  = String_new("*/");
+  
+  if (StringProcessor_match(this->processor, multiLineStartToken))
+  {
+    c = StringProcessor_readTransUnitChar(this->processor);
+    c = StringProcessor_readTransUnitChar(this->processor);
+    
+    isFound = StringProcessor_match(this->processor, multiLineEndToken);
+    
+    while (!isFound)
+    {
+      c = StringProcessor_readTransUnitChar(this->processor);
+      isFound = StringProcessor_match(this->processor, multiLineEndToken);
+    }
+    
+    if (isFound)
+    {
+      c = StringProcessor_readTransUnitChar(this->processor);
+      c = StringProcessor_readTransUnitChar(this->processor);
+    }
+  }
+  
+  String_delete(multiLineStartToken);
+  String_delete(multiLineEndToken);
+  
+  return result;
 }

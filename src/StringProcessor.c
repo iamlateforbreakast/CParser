@@ -9,14 +9,14 @@ void StringProcessor_processDirective(StringProcessor* this);
 
 StringProcessor* StringProcessor_new(String* initialFileContent)
 {
-  StringProcessor* this;
-  StringBuffer* newBuffer;
+  StringProcessor* this = NULL;
+  StringBuffer* newBuffer = NULL;
   
   this=(StringProcessor*)Memory_alloc(sizeof(StringProcessor));
   memset(this->buffers, 0, sizeof(StringBuffer*) * NB_MAX_BUFFERS);
   
   newBuffer = StringBuffer_new(initialFileContent);
-  this->buffers[0]  = newBuffer;
+  this->buffers[0] = newBuffer;
   
   this->currentBuffer = this->buffers[0];
   
@@ -30,9 +30,9 @@ void StringProcessor_delete(StringProcessor* this)
   
   printf("StringProcessor.c: delete\n");
   
-  for (i=0; i++; (this->buffers[i] == this->currentBuffer))
+  for (i=0; i<NB_MAX_BUFFERS; i++)
   {
-    StringBuffer_delete(this->buffers[i]);
+    if (this->buffers[i]!=NULL) StringBuffer_delete(this->buffers[i]);
   }
   //StringBuffer_delete(this->currentBuffer);
   this->currentBuffer = NULL;
@@ -54,13 +54,28 @@ void StringProcessor_addFile(StringProcessor* this, String* file)
 
 unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
 { 
-  unsigned char c;
-
-  // 1. Read current buffer char
-  // 2. If char = '#' then process directive
-  // 3. Check if macro used
+  unsigned char current_c = 0;
+  unsigned char peek_c = 0;
   
-  return c;
+  if (!StringBuffer_isEOF(this->currentBuffer))
+  {
+    // 1. Read current buffer char
+    current_c = StringBuffer_readChar(this->currentBuffer);
+    // 2. If char = '#' then process directive
+    if (current_c=='#')
+    {
+      StringProcessor_processDirective(this);
+      // Move position after processing of directive
+    }
+    // 3. Check if a macro used
+    peek_c = current_c;
+    while (StringProcessor_checkForMacro(peek_c))
+    {
+      peek_c = StringBuffer_peekChar(this->currentBuffer);
+    }
+  }
+  
+  return current_c;
 }
 
 void StringProcessor_processDirective(StringProcessor* this)
@@ -77,4 +92,16 @@ void StringProcessor_processDirective(StringProcessor* this)
   //       find "#endif"
   // 5. If StringBuffer_compare(current, "#endif") and isProcessingCondtion = TRUE
   //       isProcessingCOndtion = FALSE
+}
+
+unsigned int StringProcessor_checkForMacro(StringProcessor* this)
+{
+  unsigned int result=0;
+  
+  return result;
+}
+
+unsigned int StringProcessor_match(StringProcessor* this, String* pattern)
+{  
+  return (StringBuffer_match(this->currentBuffer, pattern));
 }
