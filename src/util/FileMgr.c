@@ -2,6 +2,8 @@
 
 #include "FileMgr.h"
 
+#include <string.h>
+
 FileMgr* FileMgr_new()
 {
     FileMgr* this;
@@ -20,7 +22,6 @@ String* FileMgr_load(FileMgr* this, String* fileName)
 {
   String* fileContent=NULL;
 
-  String* result = NULL;
   char buffer[255] = { 0 };
 
   fileContent = (String*)Memory_alloc(sizeof(String));

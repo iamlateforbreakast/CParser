@@ -5,8 +5,12 @@
 
 #include "Common.h"
 
+#include "String.h"
+
 #include <dirent.h> 
 #include <stdio.h> 
+
+#include <string.h>
 
 
 FileList* FileList_new()

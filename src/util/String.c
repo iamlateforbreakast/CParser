@@ -54,7 +54,7 @@ void String_append(String* this, String* str2)
   unsigned int length;
   
   length = this->length + str2->length;
-  buffer = (String*)Memory_alloc(length);
+  buffer = Memory_alloc(length);
   
   memcpy(buffer, this->buffer, this->length);
   memcpy(buffer + this->length, str2->buffer, str2->length);
@@ -75,7 +75,7 @@ String* String_dup(String* this)
   duplicatedString->buffer = (char*)Memory_alloc(sizeof(char)*this->length);
   memcpy(duplicatedString->buffer, this->buffer, this->length);
 	
-	return duplicatedString;
+  return duplicatedString;
 }
 
 int String_cmp(String* this, const char* str2)
