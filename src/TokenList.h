@@ -13,6 +13,5 @@ typedef struct TokenList
 TokenList* TokenList_new();
 void TokenList_delete(TokenList* this);
 void TokenList_initialise(TokenList* this, String* fileName);
-void TokenList_getTokenFromTansUnit(TokenList* this);
-
+unsigned int TokenList_getTokenFromTansUnit(TokenList* this);
 #endif

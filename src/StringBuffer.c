@@ -20,18 +20,18 @@ void StringBuffer_delete(StringBuffer* this)
     Memory_free(this, sizeof(StringBuffer));
 }
 
+#if 0
 StringBuffer* StringBuffer_newFromFile(const char* fileName)
 {
   StringBuffer* this;
-#if 0
   this=StringBuffer_new();
    
   this->s = String_newFromFile(fileName);
   this->name = String_new(fileName);
-#endif
 
   return this;
 }
+#endif
 
 unsigned char StringBuffer_readChar(StringBuffer* this)
 {
@@ -48,7 +48,7 @@ unsigned char StringBuffer_readChar(StringBuffer* this)
 
 unsigned char StringBuffer_peekChar(StringBuffer* this)
 {
-  unsigned char result;
+  unsigned char result = 0;
   
   return result;
 }

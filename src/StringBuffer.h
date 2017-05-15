@@ -19,4 +19,5 @@ StringBuffer* StringBuffer_newFromFile(const char* fileName);
 unsigned char StringBuffer_readChar(StringBuffer* this);
 unsigned char StringBuffer_peekChar(StringBuffer* this);
 unsigned int StringBuffer_isEOF(StringBuffer* this);
+unsigned int StringBuffer_match(StringBuffer* this, String* pattern);
 #endif

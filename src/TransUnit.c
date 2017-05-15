@@ -24,12 +24,12 @@ void TransUnit_delete(TransUnit* this)
   Memory_free(this, sizeof(TransUnit));
 }
 
+#if 0
 void TransUnit_loadFromFile(TransUnit* this, const char* fileName)
 {
   String path;
-
-  
 }
+#endif
 
 /*
  *
@@ -78,7 +78,7 @@ unsigned int TransUnit_readMultiLineComment(TransUnit* this)
 {
   unsigned int result = 0;
   unsigned int isFound = 0;
-  unsigned char c;
+  unsigned char c = 0;
   
   String* multiLineStartToken;
   String* multiLineEndToken;

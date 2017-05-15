@@ -69,10 +69,10 @@ unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
     }
     // 3. Check if a macro used
     peek_c = current_c;
-    while (StringProcessor_checkForMacro(peek_c))
-    {
-      peek_c = StringBuffer_peekChar(this->currentBuffer);
-    }
+    //while (StringProcessor_checkForMacro(peek_c))
+    //{
+    //  peek_c = StringBuffer_peekChar(this->currentBuffer);
+    //}
   }
   
   return current_c;

@@ -37,7 +37,6 @@ void CParser_parse(CParser* this, const char* dirName)
   String* newDirName=NULL;
   String* filter=NULL;
   String* cFileContent=NULL;
-  int i;
   
   newDirName = String_new(dirName);
   filter = String_new(".c");
