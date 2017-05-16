@@ -63,7 +63,7 @@ unsigned int TransUnit_readSingleLineComment(TransUnit* this)
     c = StringProcessor_readTransUnitChar(this->processor);
     c = StringProcessor_readTransUnitChar(this->processor);
     
-    while (StringProcessor_readTransUnitChar(this->processor)!=13)
+    while (c!=10)
     {
       c = StringProcessor_readTransUnitChar(this->processor);
     }

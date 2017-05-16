@@ -5,6 +5,8 @@
 
 #include "Common.h"
 
+#include <string.h>
+
 void StringProcessor_processDirective(StringProcessor* this);
 
 StringProcessor* StringProcessor_new(String* initialFileContent)

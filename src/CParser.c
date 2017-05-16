@@ -22,7 +22,7 @@ CParser* CParser_new()
 void CParser_delete(CParser* this)
 {
   
-  TokenList_delete(this->tokenList);
+  //TokenList_delete(this->tokenList);
       
   FileList_delete(this->fileList);
   printf("CParser_delete\n");
@@ -50,7 +50,7 @@ void CParser_parse(CParser* this, const char* dirName)
 
   
 
-  //while (cFileContent!=NULL)
+  while (cFileContent!=NULL)
   {
     //Initialise from initial fileName  
     this->tokenList = TokenList_new(cFileContent);
@@ -61,9 +61,8 @@ void CParser_parse(CParser* this, const char* dirName)
     
     TokenList_delete(this->tokenList);
     
-    //cFileContent = FileList_loadNextFile(this->fileList);
+    cFileContent = FileList_loadNextFile(this->fileList);
     //close C file
-    //cFileContent = FileMgr_load(this->fileMgr, FileList_getNextFileName(this->fileList));
     //Grammar_process()
   }
 
