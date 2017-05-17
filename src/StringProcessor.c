@@ -82,18 +82,37 @@ unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
 
 void StringProcessor_processDirective(StringProcessor* this)
 {
+  String* includeToken = NULL;
+  String* defineToken = NULL;
+  String* ifdefToken = NULL;
+  String* endifToken = NULL;
+  String* elifToken = NULL;
+  includeToken = String_new("include");
+  defineToken = String_new("define");
+  ifdefToken = String_new("ifdef");
+  endifToken = String_new("endif");
+  elifToken = String_new("elif");
   // 1. If StringBuffer_compare(current, "#include") then
-  //       current = StringBuffer_new()
-  // 2. If StringBuffer_compare(current, "#define") then
-  //       read define defintion
-  // 3. If StringBuffer_compare(current, "#ifdef")
-  //       evaluate condition
-  //       jump to appplicable code
-  //       isProcessingCondition = TRUE;
-  // 4. If StringBuffer_compare(current, "#elif") and isProcessingCondition = TRUE
-  //       find "#endif"
+  if (StringProcessor_match(this, includeToken))
+  {
+    // Read include file name
+  } 
+  // 2. If StringBuffer_compare(current, "#define") then  
+  else if (StringProcessor_match(this, defineToken))
+  {
+    //       read define defintion
+  } else if (StringProcessor_match(this, ifdefToken))
+  {  //       evaluate condition
   // 5. If StringBuffer_compare(current, "#endif") and isProcessingCondtion = TRUE
-  //       isProcessingCOndtion = FALSE
+  } else if (StringProcessor_match(this, endifToken))
+  {
+    //       isProcessingCOndtion = FALSE
+  }
+  String_delete(includeToken);
+  String_delete(defineToken);
+  String_delete(ifdefToken);
+  String_delete(endifToken);
+  String_delete(elifToken);
 }
 
 unsigned int StringProcessor_checkForMacro(StringProcessor* this)
