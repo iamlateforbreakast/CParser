@@ -86,6 +86,8 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
   String* endifToken = NULL;
   String* elifToken = NULL;
   String* quoteToken = NULL;
+  String* bracketOpenToken = NULL;
+  String* bracketCloseToken = NULL;
   
   includeToken = String_new("#include");
   defineToken = String_new("#define");
@@ -93,15 +95,17 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
   endifToken = String_new("#endif");
   elifToken = String_new("#elif");
   quoteToken = String_new("\"");
- 
+  bracketOpenToken = String_new("<");
+  bracketCloseToken = String_new(">");
+  
   // 1. If StringBuffer_compare(current, "#include") then
   if (StringProcessor_match(this, includeToken))
   {
     // Read include file name
     result = result + StringProcessor_readSpaces(this);
-    result = result + StringProcessor_match(this, quoteToken);
+    result = result + StringProcessor_match(this, quoteToken) + StringProcessor_match(this, bracketOpenToken);
     result = result + StringProcessor_readFileName(this);
-    result = result + StringProcessor_match(this, quoteToken);
+    result = result + StringProcessor_match(this, quoteToken) + StringProcessor_match(this, bracketCloseToken);
   } 
   // 2. If StringBuffer_compare(current, "#define") then  
   else if (StringProcessor_match(this, defineToken))
@@ -121,6 +125,8 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
   String_delete(endifToken);
   String_delete(elifToken);
   String_delete(quoteToken);
+  String_delete(bracketOpenToken);
+  String_delete(bracketCloseToken);
   
   return result;
 }
@@ -157,7 +163,7 @@ unsigned int StringProcessor_readFileName(StringProcessor* this)
   
   c = StringBuffer_readChar(this->currentBuffer);
   
-  while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_') || (c=='.'))
+  while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_') || (c=='.') || (c=='-') || (c=='/'))
   {
     c = StringBuffer_readChar(this->currentBuffer);
     result++;
