@@ -20,4 +20,5 @@ unsigned char StringBuffer_readChar(StringBuffer* this);
 unsigned char StringBuffer_peekChar(StringBuffer* this);
 unsigned int StringBuffer_isEOF(StringBuffer* this);
 unsigned int StringBuffer_match(StringBuffer* this, String* pattern);
+String* StringBuffer_readback(StringBuffer* this, unsigned int nbChar);
 #endif

@@ -50,12 +50,24 @@ unsigned char StringBuffer_peekChar(StringBuffer* this)
 {
   unsigned char result = 0;
   
+  if (this->pos<this->s->length)
+  {
+    result=this->s->buffer[this->pos];
+  }
+  
   return result;
 }
 
 unsigned int StringBuffer_match(StringBuffer* this, String* pattern)
 {
-  return (String_match(this->s, this->pos, pattern));
+  unsigned int result = 0;
+  
+  if (String_match(this->s, this->pos, pattern))
+  {
+    result = 1;
+    this->pos = this->pos + pattern->length;
+  }
+  return result;
 }
 
 unsigned int StringBuffer_isEOF(StringBuffer* this)
@@ -63,6 +75,15 @@ unsigned int StringBuffer_isEOF(StringBuffer* this)
   unsigned int result = 0;
   
   if (this->pos>=this->s->length) result = 1;
+  
+  return result;
+}
+
+String* StringBuffer_readback(StringBuffer* this, unsigned int nbChar)
+{
+  String* result = NULL;
+  
+  result = String_subString(this->s, this->pos-nbChar, nbChar);
   
   return result;
 }

@@ -60,8 +60,8 @@ unsigned int TransUnit_readSingleLineComment(TransUnit* this)
   singleLineComment = String_new("//");
   if (StringProcessor_match(this->processor, singleLineComment))
   {
-    c = StringProcessor_readTransUnitChar(this->processor);
-    c = StringProcessor_readTransUnitChar(this->processor);
+    //c = StringProcessor_readTransUnitChar(this->processor);
+    //c = StringProcessor_readTransUnitChar(this->processor);
     
     while (c!=10)
     {
@@ -88,8 +88,8 @@ unsigned int TransUnit_readMultiLineComment(TransUnit* this)
   
   if (StringProcessor_match(this->processor, multiLineStartToken))
   {
-    c = StringProcessor_readTransUnitChar(this->processor);
-    c = StringProcessor_readTransUnitChar(this->processor);
+    //c = StringProcessor_readTransUnitChar(this->processor);
+    //c = StringProcessor_readTransUnitChar(this->processor);
     
     isFound = StringProcessor_match(this->processor, multiLineEndToken);
     
@@ -101,8 +101,8 @@ unsigned int TransUnit_readMultiLineComment(TransUnit* this)
     
     if (isFound)
     {
-      c = StringProcessor_readTransUnitChar(this->processor);
-      c = StringProcessor_readTransUnitChar(this->processor);
+      //c = StringProcessor_readTransUnitChar(this->processor);
+      //c = StringProcessor_readTransUnitChar(this->processor);
     }
   }
   

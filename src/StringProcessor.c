@@ -7,7 +7,9 @@
 
 #include <string.h>
 
-void StringProcessor_processDirective(StringProcessor* this);
+unsigned int  StringProcessor_processDirective(StringProcessor* this);
+unsigned int StringProcessor_readFileName(StringProcessor* this);
+unsigned int StringProcessor_readSpaces(StringProcessor* this);
 
 StringProcessor* StringProcessor_new(String* initialFileContent)
 {
@@ -58,44 +60,48 @@ unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
 { 
   unsigned char current_c = 0;
   unsigned char peek_c = 0;
+  unsigned int isDirective = 1;
   
   if (!StringBuffer_isEOF(this->currentBuffer))
   {
-    // 1. Read current buffer char
-    current_c = StringBuffer_readChar(this->currentBuffer);
-    // 2. If char = '#' then process directive
-    if (current_c=='#')
+    while (isDirective)
     {
-      StringProcessor_processDirective(this);
-      // Move position after processing of directive
+      isDirective = StringProcessor_processDirective(this);
+      //isDirective = isDirective + StringProcessor_checkForMacro(peek_c);
     }
-    // 3. Check if a macro used
-    peek_c = current_c;
-    //while (StringProcessor_checkForMacro(peek_c))
-    //{
-    //  peek_c = StringBuffer_peekChar(this->currentBuffer);
-    //}
+
+    current_c = StringBuffer_readChar(this->currentBuffer);
   }
   
   return current_c;
 }
 
-void StringProcessor_processDirective(StringProcessor* this)
+unsigned int  StringProcessor_processDirective(StringProcessor* this)
 {
+  unsigned int result = 0;
+  
   String* includeToken = NULL;
   String* defineToken = NULL;
   String* ifdefToken = NULL;
   String* endifToken = NULL;
   String* elifToken = NULL;
-  includeToken = String_new("include");
-  defineToken = String_new("define");
-  ifdefToken = String_new("ifdef");
-  endifToken = String_new("endif");
-  elifToken = String_new("elif");
+  String* quoteToken = NULL;
+  
+  includeToken = String_new("#include");
+  defineToken = String_new("#define");
+  ifdefToken = String_new("#ifdef");
+  endifToken = String_new("#endif");
+  elifToken = String_new("#elif");
+  quoteToken = String_new("\"");
+ 
   // 1. If StringBuffer_compare(current, "#include") then
   if (StringProcessor_match(this, includeToken))
   {
     // Read include file name
+    result = result + StringProcessor_readSpaces(this);
+    result = result + StringProcessor_match(this, quoteToken);
+    result = result + StringProcessor_readFileName(this);
+    result = result + StringProcessor_match(this, quoteToken);
   } 
   // 2. If StringBuffer_compare(current, "#define") then  
   else if (StringProcessor_match(this, defineToken))
@@ -108,11 +114,15 @@ void StringProcessor_processDirective(StringProcessor* this)
   {
     //       isProcessingCOndtion = FALSE
   }
+
   String_delete(includeToken);
   String_delete(defineToken);
   String_delete(ifdefToken);
   String_delete(endifToken);
   String_delete(elifToken);
+  String_delete(quoteToken);
+  
+  return result;
 }
 
 unsigned int StringProcessor_checkForMacro(StringProcessor* this)
@@ -125,4 +135,38 @@ unsigned int StringProcessor_checkForMacro(StringProcessor* this)
 unsigned int StringProcessor_match(StringProcessor* this, String* pattern)
 {  
   return (StringBuffer_match(this->currentBuffer, pattern));
+}
+
+unsigned int StringProcessor_readSpaces(StringProcessor* this)
+{
+  unsigned int result = 0;
+  
+  while (StringBuffer_readChar(this->currentBuffer)==20)
+  {
+    result++;
+  }
+  
+  return result;
+}
+
+unsigned int StringProcessor_readFileName(StringProcessor* this)
+{
+  unsigned int result = 0;
+  unsigned char c = 0;
+  String* fileName = NULL;
+  
+  c = StringBuffer_readChar(this->currentBuffer);
+  
+  while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_') || (c=='.'))
+  {
+    c = StringBuffer_readChar(this->currentBuffer);
+    result++;
+  }
+  
+  fileName = StringBuffer_readback(this->currentBuffer, result);
+  String_print(fileName, "#include: ");
+  
+  String_delete(fileName);
+  
+  return result;
 }
