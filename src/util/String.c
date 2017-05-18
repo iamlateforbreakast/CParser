@@ -54,7 +54,7 @@ void String_append(String* this, String* str2)
   unsigned int length;
   
   length = this->length + str2->length;
-  buffer = Memory_alloc(length);
+  buffer = (String*)Memory_alloc(length);
   
   memcpy(buffer, this->buffer, this->length);
   memcpy(buffer + this->length, str2->buffer, str2->length);
@@ -75,7 +75,7 @@ String* String_dup(String* this)
   duplicatedString->buffer = (char*)Memory_alloc(sizeof(char)*this->length);
   memcpy(duplicatedString->buffer, this->buffer, this->length);
 	
-  return duplicatedString;
+	return duplicatedString;
 }
 
 int String_cmp(String* this, const char* str2)
@@ -116,7 +116,7 @@ void String_print(String* this, const char*displayString)
   memcpy(buffer, displayString, strlen(displayString));
   memcpy(buffer+strlen(displayString), this->buffer, this->length);
   buffer[length-1]=0;
-  //printf("%s\n", buffer);
+  printf("%s\n", buffer);
   Memory_free(buffer,length);
   //printf("String_print: Here\n");
 }
@@ -136,5 +136,17 @@ unsigned int String_filter(String* this, String* filter)
 	    result = 0;
   }
    
+  return result;
+}
+
+String* String_subString(String* this, unsigned int pos, unsigned int length)
+{
+  String* result = NULL;
+  
+  result = (String*)Memory_alloc(sizeof(String));
+  result->length = length;
+  result->buffer = (char*)Memory_alloc(sizeof(char)*length);
+  memcpy(result->buffer, this->buffer+pos-1, length);
+    
   return result;
 }
