@@ -59,7 +59,7 @@ void StringProcessor_addFile(StringProcessor* this, String* file)
 unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
 { 
   unsigned char current_c = 0;
-  unsigned char peek_c = 0;
+  //unsigned char peek_c = 0;
   unsigned int isDirective = 1;
   
   if (!StringBuffer_isEOF(this->currentBuffer))
@@ -138,12 +138,12 @@ String* StringProcessor_readIdentifier(StringProcessor* this)
   unsigned char c;
   
   c = StringBuffer_peekChar(this->currentBuffer);
-  if ((c>='a' && c<="z") || (c>='A' && c <='Z') || (c=='_'))
+  if ((c>='a' && c<='z') || (c>='A' && c <='Z') || (c=='_'))
   {
     length++;
     c = StringBuffer_readChar(this->currentBuffer);
     c = StringBuffer_peekChar(this->currentBuffer);
-    while ((c>='a' && c<="z") || (c>='A' && c <='Z') || (c>='0' && c<='9') ||(c=='_'))
+    while ((c>='a' && c<='z') || (c>='A' && c <='Z') || (c>='0' && c<='9') ||(c=='_'))
     {
       length++;
       c = StringBuffer_readChar(this->currentBuffer);

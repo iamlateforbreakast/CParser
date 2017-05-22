@@ -78,7 +78,7 @@ unsigned int TransUnit_readMultiLineComment(TransUnit* this)
 {
   unsigned int result = 0;
   unsigned int isFound = 0;
-  unsigned char c = 0;
+  unsigned char c;
   
   String* multiLineStartToken;
   String* multiLineEndToken;
@@ -92,7 +92,6 @@ unsigned int TransUnit_readMultiLineComment(TransUnit* this)
     //c = StringProcessor_readTransUnitChar(this->processor);
     
     isFound = StringProcessor_match(this->processor, multiLineEndToken);
-    
     while (!isFound)
     {
       c = StringProcessor_readTransUnitChar(this->processor);
@@ -123,6 +122,9 @@ unsigned int TransUnit_match(TransUnit* this, String* keyword)
 
 unsigned int TransUnit_readConstantInteger(TransUnit* this)
 {
+  unsigned int result = 0;
+  
+  return result;
 }
 
 String* TransUnit_readIdentifier(TransUnit* this)

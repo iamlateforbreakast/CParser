@@ -114,7 +114,7 @@ Token* TokenList_checkIdentifier(TokenList* this)
   
   if (identifierName!=NULL)
   {
-    result = Token_new(TOK_IDENTIFIER, (unsigned int)identifierName);
+    result = Token_new(TOK_IDENTIFIER, (void*)identifierName);
   }
   
   return result;

@@ -4,6 +4,8 @@
 #define _TOKENLIST_H_
 
 #include "TransUnit.h"
+#include "Token.h"
+
 
 typedef struct TokenList
 {
@@ -15,5 +17,5 @@ typedef struct TokenList
 TokenList* TokenList_new();
 void TokenList_delete(TokenList* this);
 void TokenList_initialise(TokenList* this, String* fileName);
-unsigned int TokenList_getTokenFromTansUnit(TokenList* this);
+Token* TokenList_getTokenFromTransUnit(TokenList* this);
 #endif

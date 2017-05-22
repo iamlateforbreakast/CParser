@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "CParser.h"
 #include "FileList.h"
+#include "TokenList.h"
 #include "Token.h"
 
 CParser* cparser;

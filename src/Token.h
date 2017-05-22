@@ -43,7 +43,7 @@ typedef enum
 typedef struct Token
 {
     TokenId id;
-    unsigned int value;
+    void* value;
 } Token;
 
 Token* Token_new(TokenId, unsigned int value);
