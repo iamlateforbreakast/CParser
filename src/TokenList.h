@@ -8,6 +8,8 @@
 typedef struct TokenList
 {
     TransUnit* transUnit;
+	String** keyword;
+	unsigned int nbKeywords;
 } TokenList;
 
 TokenList* TokenList_new();

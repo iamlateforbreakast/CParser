@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "CParser.h"
 #include "FileList.h"
+#include "Token.h"
 
 CParser* cparser;
 
@@ -37,6 +38,7 @@ void CParser_parse(CParser* this, const char* dirName)
   String* newDirName=NULL;
   String* filter=NULL;
   String* cFileContent=NULL;
+  Token* newToken = NULL;
   
   newDirName = String_new(dirName);
   filter = String_new(".c");
@@ -55,8 +57,14 @@ void CParser_parse(CParser* this, const char* dirName)
     //Initialise from initial fileName  
     this->tokenList = TokenList_new(cFileContent);
     
-    while (TokenList_getTokenFromTransUnit(this->tokenList)!=0)
+    newToken = TokenList_getTokenFromTransUnit(this->tokenList);
+    printf("Token Id: %d\n", newToken->id);
+    
+    while (newToken->id!=TOK_EOF)
     {
+      newToken = TokenList_getTokenFromTransUnit(this->tokenList);
+      printf("Token Id: %d\n", newToken->id);
+      Token_delete(newToken);
     }
     
     TokenList_delete(this->tokenList);

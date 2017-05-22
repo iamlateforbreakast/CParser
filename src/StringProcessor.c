@@ -131,6 +131,31 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
   return result;
 }
 
+String* StringProcessor_readIdentifier(StringProcessor* this)
+{
+  String* result = NULL;
+  unsigned int length = 0;
+  unsigned char c;
+  
+  c = StringBuffer_peekChar(this->currentBuffer);
+  if ((c>='a' && c<="z") || (c>='A' && c <='Z') || (c=='_'))
+  {
+    length++;
+    c = StringBuffer_readChar(this->currentBuffer);
+    c = StringBuffer_peekChar(this->currentBuffer);
+    while ((c>='a' && c<="z") || (c>='A' && c <='Z') || (c>='0' && c<='9') ||(c=='_'))
+    {
+      length++;
+      c = StringBuffer_readChar(this->currentBuffer);
+      c = StringBuffer_peekChar(this->currentBuffer);
+    }
+    result = StringBuffer_readback(this->currentBuffer, length);
+    this->currentBuffer->pos=this->currentBuffer->pos+length;
+  }
+  
+  return result;
+}
+
 unsigned int StringProcessor_checkForMacro(StringProcessor* this)
 {
   unsigned int result=0;

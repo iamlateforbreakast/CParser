@@ -111,3 +111,21 @@ unsigned int TransUnit_readMultiLineComment(TransUnit* this)
   
   return result;
 }
+
+unsigned int TransUnit_match(TransUnit* this, String* keyword)
+{
+  unsigned int result = 0;
+  
+  result = StringProcessor_match(this->processor, keyword);
+  
+  return result;
+}
+
+unsigned int TransUnit_readConstantInteger(TransUnit* this)
+{
+}
+
+String* TransUnit_readIdentifier(TransUnit* this)
+{ 
+  return (StringProcessor_readIdentifier(this->processor));
+}

@@ -2,6 +2,8 @@
 
 #include "StringBuffer.h"
 
+#include "Common.h"
+
 StringBuffer* StringBuffer_new(String* s)
 {
   StringBuffer* this;
@@ -62,10 +64,15 @@ unsigned int StringBuffer_match(StringBuffer* this, String* pattern)
 {
   unsigned int result = 0;
   
+  //String_print(pattern, "Matching: ");
+  //printf("Pos: %d\n", this->pos);
+  
   if (String_match(this->s, this->pos, pattern))
   {
     result = 1;
     this->pos = this->pos + pattern->length;
+    //String_print(pattern, "Match found: %s\n");
+    //printf("Pos: %d\n", this->pos);
   }
   return result;
 }
