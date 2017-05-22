@@ -12,7 +12,10 @@ SOURCES=src/main.c \
 	src/util/Memory.c \
 	src/util/String.c \
 	src/util/FileList.c \
-	src/util/FileMgr.c
+	src/util/FileMgr.c \
+	src/SdbMgr.c \
+	src/Token.c \
+	src/OptionMgr.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=cparser
 
