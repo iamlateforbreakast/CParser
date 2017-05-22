@@ -54,7 +54,7 @@ void String_append(String* this, String* str2)
   unsigned int length;
   
   length = this->length + str2->length;
-  buffer = (String*)Memory_alloc(length);
+  buffer = Memory_alloc(length);
   
   memcpy(buffer, this->buffer, this->length);
   memcpy(buffer + this->length, str2->buffer, str2->length);
@@ -143,7 +143,7 @@ String* String_subString(String* this, unsigned int pos, unsigned int length)
 {
   String* result = NULL;
   
-  result = (String*)Memory_alloc(sizeof(String));
+  result = Memory_alloc(sizeof(String));
   result->length = length;
   result->buffer = (char*)Memory_alloc(sizeof(char)*length);
   memcpy(result->buffer, this->buffer+pos-1, length);
