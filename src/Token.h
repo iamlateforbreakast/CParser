@@ -46,6 +46,6 @@ typedef struct Token
     void* value;
 } Token;
 
-Token* Token_new(TokenId, unsigned int value);
+Token* Token_new(TokenId id, void* value);
 void Token_delete(Token* this);
 #endif

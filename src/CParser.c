@@ -63,11 +63,12 @@ void CParser_parse(CParser* this, const char* dirName)
     
     while (newToken->id!=TOK_EOF)
     {
+      Token_delete(newToken);
       newToken = TokenList_getTokenFromTransUnit(this->tokenList);
       printf("Token Id: %d\n", newToken->id);
-      Token_delete(newToken);
     }
     
+    Token_delete(newToken);
     TokenList_delete(this->tokenList);
     
     cFileContent = FileList_loadNextFile(this->fileList);

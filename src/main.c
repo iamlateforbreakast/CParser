@@ -13,6 +13,7 @@ int main(int argc, char** argv)
     CParser_parse(cparser, argv[1]);
     CParser_delete(cparser);
 	  printf("Nb bytes not freed: %d\n", Memory_nbBytesAllocated);
+    printf("Max nb bytes used: %d\n", Memory_maxNbBytesAllocated);
   }
   else
   {

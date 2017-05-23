@@ -69,10 +69,14 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
     {
       nextToken = Token_new(TOK_EOF, 0);
     }
-    else
+    else if ((c!=10) && (c!=32))
     {
       nextToken = Token_new(TOK_UNKNOWN, c);
-      printf("Ignore: Read char: %c\n",c);
+      printf("Ignore: Read char: %c %d\n",c,c);
+    }
+    else
+    {
+      nextToken = Token_new(TOK_UNKNOWN, 0);
     }
 
   }
@@ -101,7 +105,17 @@ Token* TokenList_checkKeyword(TokenList* this)
 Token* TokenList_checkIntegerConstant(TokenList* this)
 {
   Token* result=NULL;
-
+  int tmpInt = 0;
+  String* tmpStr = NULL;
+  
+  tmpStr = TransUnit_readConstantInteger(this->transUnit);
+  if (tmpStr)
+  {
+    tmpInt = String_toInt(tmpStr);
+    String_delete(tmpStr);
+    result = Token_new(TOK_INT, (void*)tmpInt);
+  }
+  
   return result;
 }
 
@@ -115,6 +129,7 @@ Token* TokenList_checkIdentifier(TokenList* this)
   if (identifierName!=NULL)
   {
     result = Token_new(TOK_IDENTIFIER, (void*)identifierName);
+    String_print(identifierName, "Token identifier: ");
   }
   
   return result;

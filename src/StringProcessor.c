@@ -17,7 +17,7 @@ StringProcessor* StringProcessor_new(String* initialFileContent)
   StringBuffer* newBuffer = NULL;
   
   this=(StringProcessor*)Memory_alloc(sizeof(StringProcessor));
-  memset(this->buffers, 0, sizeof(StringBuffer*) * NB_MAX_BUFFERS);
+  Memory_set(this->buffers, 0, sizeof(StringBuffer*) * NB_MAX_BUFFERS);
   
   newBuffer = StringBuffer_new(initialFileContent);
   this->buffers[0] = newBuffer;
@@ -69,8 +69,8 @@ unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
       isDirective = StringProcessor_processDirective(this);
       //isDirective = isDirective + StringProcessor_checkForMacro(peek_c);
     }
-
     current_c = StringBuffer_readChar(this->currentBuffer);
+    
   }
   
   return current_c;
@@ -150,7 +150,31 @@ String* StringProcessor_readIdentifier(StringProcessor* this)
       c = StringBuffer_peekChar(this->currentBuffer);
     }
     result = StringBuffer_readback(this->currentBuffer, length);
-    this->currentBuffer->pos=this->currentBuffer->pos+length;
+  }
+  
+  return result;
+}
+
+String* StringProcessor_readInteger(StringProcessor* this)
+{
+  String* result = 0;
+  unsigned int length = 0;
+  unsigned char c;
+  
+  c = StringBuffer_peekChar(this->currentBuffer);
+
+  if (c>='0' && c<='9')
+  {
+    length++;
+    c = StringBuffer_readChar(this->currentBuffer);
+    c = StringBuffer_peekChar(this->currentBuffer);
+    while (c>='0' && c<='9')
+    {
+      length++;
+      c = StringBuffer_readChar(this->currentBuffer);
+      c = StringBuffer_peekChar(this->currentBuffer);
+    }
+    result = StringBuffer_readback(this->currentBuffer, length);
   }
   
   return result;
@@ -171,10 +195,14 @@ unsigned int StringProcessor_match(StringProcessor* this, String* pattern)
 unsigned int StringProcessor_readSpaces(StringProcessor* this)
 {
   unsigned int result = 0;
+  unsigned char c = 0;
   
-  while (StringBuffer_readChar(this->currentBuffer)==20)
+  c = StringBuffer_peekChar(this->currentBuffer);
+  while ((c==32)||(c==10))
   {
+    c = StringBuffer_readChar(this->currentBuffer);
     result++;
+    c = StringBuffer_peekChar(this->currentBuffer);
   }
   
   return result;
@@ -186,12 +214,13 @@ unsigned int StringProcessor_readFileName(StringProcessor* this)
   unsigned char c = 0;
   String* fileName = NULL;
   
-  c = StringBuffer_readChar(this->currentBuffer);
+  c = StringBuffer_peekChar(this->currentBuffer);
   
   while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_') || (c=='.') || (c=='-') || (c=='/'))
   {
-    c = StringBuffer_readChar(this->currentBuffer);
     result++;
+    c = StringBuffer_readChar(this->currentBuffer);
+    c = StringBuffer_peekChar(this->currentBuffer);
   }
   
   fileName = StringBuffer_readback(this->currentBuffer, result);

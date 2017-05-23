@@ -6,7 +6,6 @@
 #include "TransUnit.h"
 #include "Token.h"
 
-
 typedef struct TokenList
 {
     TransUnit* transUnit;

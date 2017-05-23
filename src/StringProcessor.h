@@ -20,4 +20,5 @@ unsigned char StringProcessor_readTransUnitChar(StringProcessor* this);
 unsigned int StringProcessor_checkForMacro(StringProcessor* this);
 unsigned int StringProcessor_match(StringProcessor* this, String* pattern);
 String* StringProcessor_readIdentifier(StringProcessor* this);
+String* StringProcessor_readInteger(StringProcessor* this);
 #endif
