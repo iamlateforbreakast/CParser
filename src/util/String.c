@@ -146,7 +146,18 @@ String* String_subString(String* this, unsigned int pos, unsigned int length)
   result = Memory_alloc(sizeof(String));
   result->length = length;
   result->buffer = (char*)Memory_alloc(sizeof(char)*length);
-  memcpy(result->buffer, this->buffer+pos-1, length);
+  memcpy(result->buffer, this->buffer+pos, length);
     
+  return result;
+}
+
+int String_toInt(String* this)
+{
+  int result = 0;
+  char tmp[20] = { 0 };
+  
+  memcpy(tmp, this->buffer, this->length);
+  result = atoi(tmp);
+  
   return result;
 }

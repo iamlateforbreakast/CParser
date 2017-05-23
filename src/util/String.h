@@ -24,5 +24,5 @@ void String_append(String* this, String* str2);
 unsigned int String_filter(String* this, String* filter);
 void String_print(String* this, const char*displayString);
 String* String_subString(String* this, unsigned int pos, unsigned int length);
-
+int String_toInt(String* this);
 #endif

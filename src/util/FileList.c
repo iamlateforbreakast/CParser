@@ -5,11 +5,8 @@
 
 #include "Common.h"
 
-#include "String.h"
-
 #include <dirent.h> 
 #include <stdio.h> 
-
 #include <string.h>
 
 
@@ -114,6 +111,8 @@ String* FileList_loadNextFile(FileList* this)
 
   if (currentFile!=NULL)
   {
+      String_print(currentFile->fullName, "Processing file ");
+      printf("-----------------------------------------------\n");
       fileContent = FileMgr_load(f, currentFile->fullName);
       this->currentFile = this->currentFile->next;
   }

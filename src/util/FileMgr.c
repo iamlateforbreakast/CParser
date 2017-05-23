@@ -2,8 +2,6 @@
 
 #include "FileMgr.h"
 
-#include <string.h>
-
 FileMgr* FileMgr_new()
 {
     FileMgr* this;
