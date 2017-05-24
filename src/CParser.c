@@ -5,6 +5,7 @@
 #include "FileList.h"
 #include "TokenList.h"
 #include "Token.h"
+#include "SdbMgr.h"
 
 CParser* cparser;
 
@@ -17,17 +18,17 @@ CParser* CParser_new()
 
   this->fileList = FileList_new();
   this->fileMgr = FileMgr_new();
-
+  this->sdbName = NULL;
+  this->initialLocation = NULL;
+  
   return this;
 }
 
 void CParser_delete(CParser* this)
-{
-  
-  //TokenList_delete(this->tokenList);
-      
+{ 
   FileList_delete(this->fileList);
-  printf("CParser_delete\n");
+  String_delete(this->sdbName);
+  String_delete(this->initialLocation);
   FileMgr_delete(this->fileMgr);
   
   Memory_free(this, sizeof(CParser));
@@ -40,16 +41,24 @@ void CParser_parse(CParser* this, const char* dirName)
   String* filter=NULL;
   String* cFileContent=NULL;
   Token* newToken = NULL;
+  SdbMgr* sdbMgr = NULL;
   
-  newDirName = String_new(dirName);
-  filter = String_new(".c");
-
+  // Open DB
+  this->sdbName = String_new("TESTDB");
+  sdbMgr = SdbMgr_getSdbMgr();
+  SdbMgr_open(sdbMgr, this->sdbName);
+  
+  // Initialise root location
+  this->initialLocation = String_new(dirName);
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location (directory text NOT NULL)");
+  
   // List all C files in newDirName and sub directories
-  FileList_list(this->fileList, newDirName, filter);
+  filter = String_new(".c");
+  FileList_list(this->fileList, this->initialLocation, filter);
 
   // for each C file add to the TokenList
   cFileContent = FileList_loadNextFile(this->fileList);
-  printf("CParser.c: cFileContent %d\n", cFileContent->length);
+  printf("Processing C file %d\n", cFileContent->length);
 
   
 
@@ -75,15 +84,6 @@ void CParser_parse(CParser* this, const char* dirName)
     //close C file
     //Grammar_process()
   }
-
-  /*while (TokensList_get())
-	populate functions from list of tokens
-	populate global vars
-	populate local vars
-	populate code blocks */
-
-  //String_delete(cFileContent);
-  String_delete(newDirName);
   String_delete(filter);
 }
 

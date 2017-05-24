@@ -17,6 +17,8 @@ typedef struct CParser
     TokenList* tokenList;
     FileList* fileList;
 	FileMgr* fileMgr;
+	String* initialLocation;
+	String* sdbName;
 } CParser;
 
 extern CParser* cparser;
