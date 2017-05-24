@@ -24,9 +24,16 @@ String* String_new(const char* string)
 void String_delete(String* this)
 {
     //printf("Deleting %s\n", this->buffer);
-    Memory_free(this->buffer, this->length);
-    this->length=0;
-    Memory_free(this, sizeof(String));
+    if (this!=NULL)
+    {
+      Memory_free(this->buffer, this->length);
+      this->length=0;
+      Memory_free(this, sizeof(String));
+    }
+    else
+    {
+      printf("String_delete: NULL pointer\n");
+    }
 }
 
 void String_cat(String* this, const char* str2)
