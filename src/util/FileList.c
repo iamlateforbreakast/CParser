@@ -107,7 +107,7 @@ String* FileList_loadNextFile(FileList* this)
 {
   FileInfo* currentFile = this->currentFile;
   String*   fileContent = NULL; 
-  FileMgr*  f = CParser_getFileMgr();
+  FileMgr*  f = FileMgr_getFileMgr();
 
   if (currentFile!=NULL)
   {

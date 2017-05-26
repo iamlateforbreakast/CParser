@@ -2,6 +2,8 @@
 
 #include "FileMgr.h"
 
+static FileMgr* fileMgr = NULL;
+
 FileMgr* FileMgr_new()
 {
     FileMgr* this;
@@ -47,4 +49,21 @@ String* FileMgr_load(FileMgr* this, String* fileName)
 
 void FileMgr_close(FileMgr* this, String* fileName)
 {
+}
+
+FileMgr* FileMgr_getFileMgr()
+{
+  FileMgr* this;
+  
+  if (fileMgr==NULL)
+  {
+    this = FileMgr_new();
+  }
+  else
+  {
+    this = fileMgr;
+  }
+  this->refCount++;
+  
+  return this;
 }
