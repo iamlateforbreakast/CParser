@@ -6,6 +6,7 @@
 #include "TokenList.h"
 #include "Token.h"
 #include "SdbMgr.h"
+#include "FileMgr.h"
 
 CParser* cparser;
 
@@ -17,7 +18,6 @@ CParser* CParser_new()
 
 
   this->fileList = FileList_new();
-  this->fileMgr = FileMgr_new();
   this->sdbName = NULL;
   this->initialLocation = NULL;
   
@@ -42,6 +42,7 @@ void CParser_parse(CParser* this, const char* dirName)
   String* cFileContent=NULL;
   Token* newToken = NULL;
   SdbMgr* sdbMgr = NULL;
+  FileMgr* fileMgr = FileMgr_getFileMgr();
   
   // Open DB
   this->sdbName = String_new("TESTDB");
@@ -85,6 +86,7 @@ void CParser_parse(CParser* this, const char* dirName)
     //Grammar_process()
   }
   String_delete(filter);
+  FileMgr_delete(fileMgr);
 }
 
 /*void CParser_populateFunctions()
@@ -97,15 +99,3 @@ void CParser_parse(CParser* this, const char* dirName)
 void CParser_populateGlobalVars()
 {
 }*/
-
-FileMgr* CParser_getFileMgr()
-{
-    FileMgr* result=NULL;
-
-    if (cparser!=NULL)
-    {
-	result = cparser->fileMgr;
-    }
-
-    return result;
-}
