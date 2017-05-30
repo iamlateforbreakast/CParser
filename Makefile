@@ -15,7 +15,8 @@ SOURCES=src/main.c \
 	src/util/FileMgr.c \
 	src/SdbMgr.c \
 	src/Token.c \
-	src/OptionMgr.c
+	src/OptionMgr.c \
+	src/Grammar.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=cparser
 
