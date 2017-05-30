@@ -2,7 +2,7 @@ CC=gcc
 RM=rm -f
 INCLUDES=src/util
 CFLAGS=-g -c -Wall
-LDFLAGS=
+LDFLAGS= -lsqlite3
 SOURCES=src/main.c \
 	src/CParser.c \
 	src/StringProcessor.c \
@@ -24,7 +24,7 @@ all: $(SOURCES) $(EXECUTABLE)
 clean:
 	$(RM) $(OBJECTS) $(EXECUTABLE)
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 
 .c.o:
 	$(CC) $(CFLAGS) -I$(INCLUDES) $< -o $@
