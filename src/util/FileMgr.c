@@ -8,7 +8,7 @@ FileMgr* FileMgr_new()
 {
     FileMgr* this;
 
-    this = (FileMgr*)Memory_alloc(sizeof(FileMgr*));
+    this = (FileMgr*)Memory_alloc(sizeof(FileMgr));
 
     return this;
 }

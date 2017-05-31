@@ -68,7 +68,7 @@ void FileList_list(FileList* this, String* dirName, String* filter)
 
   memcpy(directory, dirName->buffer, dirName->length);
 
-  //printf("FileList_list: dirName->Glength=%d\n", dirName->length);
+  //printf("FileList_list: dirName->length=%d\n", dirName->length);
   d=opendir(directory);
   //String_print(dirName, "Looking in directory: ");
 
@@ -107,17 +107,17 @@ String* FileList_loadNextFile(FileList* this)
 {
   FileInfo* currentFile = this->currentFile;
   String*   fileContent = NULL; 
-  FileMgr*  f = FileMgr_getFileMgr();
+  FileMgr*  f = NULL;
 
   if (currentFile!=NULL)
   {
-      String_print(currentFile->fullName, "Processing file ");
-      printf("-----------------------------------------------\n");
-      fileContent = FileMgr_load(f, currentFile->fullName);
-      this->currentFile = this->currentFile->next;
+    String_print(currentFile->fullName, "Processing file ");
+    printf("-----------------------------------------------\n");
+    f = FileMgr_getFileMgr();
+    fileContent = FileMgr_load(f, currentFile->fullName);
+    this->currentFile = this->currentFile->next;
+    FileMgr_delete(f);
   }
 
-  FileMgr_delete(f);
-  
   return fileContent;
 }
