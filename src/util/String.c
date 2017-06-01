@@ -128,6 +128,18 @@ void String_print(String* this, const char*displayString)
   //printf("String_print: Here\n");
 }
 
+String* String_sprint(String* this, const char*displayString)
+{
+  char* buffer[512] = {0};
+  String* result = NULL;
+  unsigned int length = 0;
+  
+  memcpy(buffer, this->buffer, this->length);
+  sprintf(buffer, displayString, this->buffer);
+  result->length = strlen(buffer);
+  memcpy(result->buffer, buffer, result->length);
+}
+
 unsigned int String_filter(String* this, String* filter)
 {
   unsigned int result=1;
