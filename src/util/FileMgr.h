@@ -23,4 +23,5 @@ void FileMgr_delete(FileMgr* this);
 String* FileMgr_load(FileMgr* this, String* fileName);
 void FileMgr_close(FileMgr* this, String* fileName);
 FileMgr* FileMgr_getFileMgr();
+String* FileMgr_getCurrentDir(FileMgr* this);
 #endif

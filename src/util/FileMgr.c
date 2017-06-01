@@ -2,6 +2,8 @@
 
 #include "FileMgr.h"
 
+#include <unistd.h>
+
 static FileMgr* fileMgr = NULL;
 
 FileMgr* FileMgr_new()
@@ -66,4 +68,18 @@ FileMgr* FileMgr_getFileMgr()
   this->refCount++;
   
   return this;
+}
+
+String* FileMgr_getCurrentDir(FileMgr* this)
+{
+  String* result = NULL;
+  char buffer[255] = { 0 };
+  
+  if (getcwd(buffer, sizeof(buffer)) != NULL)
+  {
+    result=String_new(buffer);
+    String_print(result, "Current Directory is ");
+  }
+  
+  return result;
 }
