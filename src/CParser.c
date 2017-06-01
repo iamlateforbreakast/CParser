@@ -41,6 +41,8 @@ void CParser_parse(CParser* this, const char* dirName)
   Token* newToken = NULL;
   SdbMgr* sdbMgr = NULL;
   FileMgr* fileMgr = FileMgr_getFileMgr();
+  String* sdbCmd = NULL;
+  //String s = {.buffer="hello", .length=5};
   
   // Open DB
   this->sdbName = String_new("TESTDB");
@@ -54,9 +56,13 @@ void CParser_parse(CParser* this, const char* dirName)
   SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location (" \
                          "directory text NOT NULL" \
                          ")");
+                         
+  //sdbCmd = String_sprint(currPath, "INSERT INTO Root_Location ( directory )"\
+  //                                "VALUES ('%s')");
   SdbMgr_execute(sdbMgr, "INSERT INTO Root_Location ( directory )" \
                          "VALUES ('C:/\Temp/\CParser2')");
-
+  String_delete(sdbCmd);
+  
   // List all C files in newDirName and sub directories
   filter = String_new(".c");
   FileList_list(this->fileList, this->initialLocation, filter);
