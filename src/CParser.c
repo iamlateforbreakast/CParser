@@ -16,7 +16,6 @@ CParser* CParser_new()
 
   this=(CParser*)Memory_alloc(sizeof(CParser));
 
-
   this->fileList = FileList_new();
   this->sdbName = NULL;
   this->initialLocation = NULL;
@@ -29,7 +28,6 @@ void CParser_delete(CParser* this)
   FileList_delete(this->fileList);
   String_delete(this->sdbName);
   String_delete(this->initialLocation);
-  FileMgr_delete(this->fileMgr);
   
   Memory_free(this, sizeof(CParser));
 
@@ -37,8 +35,8 @@ void CParser_delete(CParser* this)
 
 void CParser_parse(CParser* this, const char* dirName)
 {
-  String* newDirName=NULL;
   String* filter=NULL;
+  String* currPath = NULL;
   String* cFileContent=NULL;
   Token* newToken = NULL;
   SdbMgr* sdbMgr = NULL;
@@ -50,9 +48,15 @@ void CParser_parse(CParser* this, const char* dirName)
   SdbMgr_open(sdbMgr, this->sdbName);
   
   // Initialise root location
+  currPath = FileMgr_getCurrentDir(fileMgr);
   this->initialLocation = String_new(dirName);
-  SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location (directory text NOT NULL)");
-  
+
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location (" \
+                         "directory text NOT NULL" \
+                         ")");
+  SdbMgr_execute(sdbMgr, "INSERT INTO Root_Location ( directory )" \
+                         "VALUES ('C:/\Temp/\CParser2')");
+
   // List all C files in newDirName and sub directories
   filter = String_new(".c");
   FileList_list(this->fileList, this->initialLocation, filter);
@@ -85,6 +89,7 @@ void CParser_parse(CParser* this, const char* dirName)
     //close C file
     //Grammar_process()
   }
+  String_delete(currPath);
   String_delete(filter);
   FileMgr_delete(fileMgr);
 }
