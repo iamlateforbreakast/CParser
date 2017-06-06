@@ -37,7 +37,8 @@ void CParser_parse(CParser* this, const char* dirName)
 {
   String* filter=NULL;
   String* currPath = NULL;
-  String* cFileContent=NULL;
+  //String* cFileContent=NULL;
+  String* cFileName = NULL;
   Token* newToken = NULL;
   SdbMgr* sdbMgr = NULL;
   FileMgr* fileMgr = FileMgr_getFileMgr();
@@ -68,15 +69,15 @@ void CParser_parse(CParser* this, const char* dirName)
   FileList_list(this->fileList, this->initialLocation, filter);
 
   // for each C file add to the TokenList
-  cFileContent = FileList_loadNextFile(this->fileList);
-  printf("Processing C file %d\n", cFileContent->length);
+  //cFileContent = FileList_loadNextFile(this->fileList);
+  cFileName = FileList_loadNextFile(this->fileList);
 
   
 
-  while (cFileContent!=NULL)
+  while (cFileName!=NULL)
   {
     //Initialise from initial fileName  
-    this->tokenList = TokenList_new(cFileContent);
+    this->tokenList = TokenList_new(cFileName);
     
     newToken = TokenList_getTokenFromTransUnit(this->tokenList);
     printf("Token Id: %d\n", newToken->id);
@@ -91,7 +92,7 @@ void CParser_parse(CParser* this, const char* dirName)
     Token_delete(newToken);
     TokenList_delete(this->tokenList);
     
-    cFileContent = FileList_loadNextFile(this->fileList);
+    cFileName = FileList_loadNextFile(this->fileList);
     //close C file
     //Grammar_process()
   }

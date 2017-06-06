@@ -11,18 +11,28 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this);
 unsigned int StringProcessor_readFileName(StringProcessor* this);
 unsigned int StringProcessor_readSpaces(StringProcessor* this);
 
-StringProcessor* StringProcessor_new(String* initialFileContent)
+StringProcessor* StringProcessor_new(String* initialFileName)
 {
   StringProcessor* this = NULL;
   StringBuffer* newBuffer = NULL;
+  FileMgr* fileMgr = FileMgr_getFileMgr();
+  String* fileContent = NULL;
   
   this=(StringProcessor*)Memory_alloc(sizeof(StringProcessor));
   Memory_set(this->buffers, 0, sizeof(StringBuffer*) * NB_MAX_BUFFERS);
   
-  newBuffer = StringBuffer_new(initialFileContent);
+  
+  String_print(initialFileName, "Processing file ");
+  printf("-----------------------------------------------\n");
+  
+  fileContent = FileMgr_load(fileMgr, initialFileName);
+  newBuffer = StringBuffer_new(fileContent);
+  
   this->buffers[0] = newBuffer;
   
   this->currentBuffer = this->buffers[0];
+  
+  FileMgr_delete(fileMgr);
   
   return this;
 }
