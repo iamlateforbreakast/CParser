@@ -94,3 +94,8 @@ String* StringBuffer_readback(StringBuffer* this, unsigned int nbChar)
   
   return result;
 }
+
+String* StringBuffer_getName(StringBuffer* this)
+{
+  return this->name;
+}

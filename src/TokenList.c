@@ -56,29 +56,33 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
   unsigned char c = 0;
   Token* nextToken = NULL;
 
-  nextToken = TokenList_checkKeyword(this);
-
-  if (nextToken==NULL) nextToken = TokenList_checkIntegerConstant(this);
-
-  if (nextToken==NULL) nextToken = TokenList_checkIdentifier(this);
-
-  if (nextToken==NULL) 
+  while (nextToken==NULL)
   {
-    c = TransUnit_readCharFromProcessedStream(this->transUnit);
-    if (c==0)
-    {
-      nextToken = Token_new(TOK_EOF, 0);
-    }
-    else if ((c!=10) && (c!=32))
-    {
-      nextToken = Token_new(TOK_UNKNOWN, c);
-      printf("Ignore: Read char: %c %d\n",c,c);
-    }
-    else
-    {
-      nextToken = Token_new(TOK_UNKNOWN, 0);
-    }
+    nextToken = TokenList_checkKeyword(this);
 
+    if (nextToken==NULL) nextToken = TokenList_checkIntegerConstant(this);
+
+    if (nextToken==NULL) nextToken = TokenList_checkIdentifier(this);
+
+    if (nextToken==NULL) 
+    {
+      c = TransUnit_readCharFromProcessedStream(this->transUnit);
+      if (c==0)
+      {  
+        nextToken = Token_new(TOK_EOF, 0, NULL);
+        printf("Read char EOF\n");
+      }
+      else if ((c!=10) && (c!=32))
+      {
+        nextToken = Token_new(TOK_UNKNOWN, c, NULL);
+        printf("Accepted: Read char: %c %d\n",c,c);
+      }
+      else
+      {
+        //nextToken = NULL;
+        //printf("Ignore: Read char: %c %d\n",c,c);
+      }
+    }
   }
   
   return nextToken;
@@ -95,7 +99,7 @@ Token* TokenList_checkKeyword(TokenList* this)
     if (TransUnit_match(this->transUnit, this->keyword[i]))
     {
       isFound = 1;
-      result = Token_new(i, 0);
+      result = Token_new(i, 0, NULL);
     }
   }
   
@@ -113,7 +117,7 @@ Token* TokenList_checkIntegerConstant(TokenList* this)
   {
     tmpInt = String_toInt(tmpStr);
     String_delete(tmpStr);
-    result = Token_new(TOK_INT, (void*)tmpInt);
+    result = Token_new(TOK_INT, (void*)tmpInt, NULL);
   }
   
   return result;
@@ -128,7 +132,7 @@ Token* TokenList_checkIdentifier(TokenList* this)
   
   if (identifierName!=NULL)
   {
-    result = Token_new(TOK_IDENTIFIER, (void*)identifierName);
+    result = Token_new(TOK_IDENTIFIER, (void*)identifierName, NULL);
     String_print(identifierName, "Token identifier: ");
   }
   

@@ -131,3 +131,8 @@ String* TransUnit_readIdentifier(TransUnit* this)
 { 
   return (StringProcessor_readIdentifier(this->processor));
 }
+
+String* TransUnit_getFileName(TransUnit* this)
+{
+   return (StringProcessor_getFileName(this->processor));
+}
