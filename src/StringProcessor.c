@@ -230,3 +230,8 @@ unsigned int StringProcessor_readFileName(StringProcessor* this)
   
   return result;
 }
+
+String* StringProcessor_getFileName(StringProcessor* this)
+{
+  return StringBuffer_getName(this->currentBuffer);
+}
