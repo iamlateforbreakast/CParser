@@ -105,19 +105,13 @@ void FileList_list(FileList* this, String* dirName, String* filter)
 
 String* FileList_loadNextFile(FileList* this)
 {
-  FileInfo* currentFile = this->currentFile;
-  String*   fileContent = NULL; 
-  FileMgr*  f = NULL;
+  String*   fileName = NULL; 
 
-  if (currentFile!=NULL)
+  if (this->currentFile!=NULL)
   {
-    String_print(currentFile->fullName, "Processing file ");
-    printf("-----------------------------------------------\n");
-    f = FileMgr_getFileMgr();
-    fileContent = FileMgr_load(f, currentFile->fullName);
+    fileName = this->currentFile->fullName;
     this->currentFile = this->currentFile->next;
-    FileMgr_delete(f);
   }
 
-  return fileContent;
+  return fileName;
 }
