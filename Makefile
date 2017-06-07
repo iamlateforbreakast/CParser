@@ -13,6 +13,8 @@ SOURCES=src/main.c \
 	src/util/String.c \
 	src/util/FileList.c \
 	src/util/FileMgr.c \
+	src/util/List.c \
+	src/util/Map.c \
 	src/SdbMgr.c \
 	src/Token.c \
 	src/OptionMgr.c \
