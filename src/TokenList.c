@@ -10,7 +10,7 @@ Token* TokenList_checkIdentifier(TokenList* this);
 
 static const char* keywords[] = { "int", "float", "auto", "break", "case", "char", "const", "continue", "default", "do", "double", "else",
                                  "enum", "extern", "for", "goto", "if", "inline", "long", "register", "restrict", "return", "short", "signed",
-                                 "sizeof", "union", "unsigned", "void", "volatile", "while" };
+                                 "sizeof", "static", "typedef", "union", "unsigned", "void", "volatile", "while" };
                
 TokenList* TokenList_new(String* fileContent)
 {
@@ -19,7 +19,7 @@ TokenList* TokenList_new(String* fileContent)
     
   this = (TokenList*)Memory_alloc(sizeof(TokenList));
   this->transUnit = TransUnit_new(fileContent);
-  this->nbKeywords = 30;
+  this->nbKeywords = 32;
   this->keyword = (String**)Memory_alloc(sizeof(String*) * this->nbKeywords);
     
   for (i=0; i<this->nbKeywords; i++)
@@ -70,12 +70,12 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
       if (c==0)
       {  
         nextToken = Token_new(TOK_EOF, 0, NULL);
-        printf("Read char EOF\n");
+        //printf("Read char EOF\n");
       }
       else if ((c!=10) && (c!=32))
       {
-        nextToken = Token_new(TOK_UNKNOWN, c, NULL);
-        printf("Accepted: Read char: %c %d\n",c,c);
+        nextToken = Token_new(TOK_UNKNOWN, (void*)c, NULL);
+        //printf("Accepted: Read char: %c %d\n",c,c);
       }
       else
       {

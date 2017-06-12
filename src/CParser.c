@@ -7,6 +7,7 @@
 #include "Token.h"
 #include "SdbMgr.h"
 #include "FileMgr.h"
+#include "List.h"
 
 CParser* cparser;
 
@@ -19,7 +20,7 @@ CParser* CParser_new()
   this->fileList = FileList_new();
   this->sdbName = NULL;
   this->initialLocation = NULL;
-  
+  this->grammar = Grammar_new();
   return this;
 }
 
@@ -28,7 +29,7 @@ void CParser_delete(CParser* this)
   FileList_delete(this->fileList);
   String_delete(this->sdbName);
   String_delete(this->initialLocation);
-  
+  Grammar_delete(this->grammar);
   Memory_free(this, sizeof(CParser));
 
 }
@@ -37,7 +38,6 @@ void CParser_parse(CParser* this, const char* dirName)
 {
   String* filter=NULL;
   String* currPath = NULL;
-  //String* cFileContent=NULL;
   String* cFileName = NULL;
   Token* newToken = NULL;
   SdbMgr* sdbMgr = NULL;
@@ -80,13 +80,15 @@ void CParser_parse(CParser* this, const char* dirName)
     this->tokenList = TokenList_new(cFileName);
     
     newToken = TokenList_getTokenFromTransUnit(this->tokenList);
-    printf("Token Id: %d\n", newToken->id);
+    //printf("Token Id: %d\n", newToken->id);
+    Grammar_pushToken(this->grammar, newToken);
     
     while (newToken->id!=TOK_EOF)
     {
       Token_delete(newToken);
       newToken = TokenList_getTokenFromTransUnit(this->tokenList);
-      printf("Token Id: %d\n", newToken->id);
+      //printf("Token Id: %d\n", newToken->id);
+      Grammar_pushToken(this->grammar, newToken);
     }
     
     Token_delete(newToken);
@@ -111,3 +113,12 @@ void CParser_parse(CParser* this, const char* dirName)
 void CParser_populateGlobalVars()
 {
 }*/
+
+void CParser_testList(CParser* this)
+{
+  List* list = NULL;
+  
+  list = List_new();
+  
+  
+}
