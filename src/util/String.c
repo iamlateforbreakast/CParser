@@ -1,7 +1,5 @@
 /* String.h */
 
-#define _GNU_SOURCE
-
 #include <string.h>
 
 #include "Common.h"
@@ -32,7 +30,7 @@ void String_delete(String* this)
     }
     else
     {
-      printf("String_delete: NULL pointer\n");
+      //printf("String.c: String_delete: NULL pointer\n");
     }
 }
 
@@ -138,6 +136,8 @@ String* String_sprint(String* this, const char*displayString)
   sprintf(buffer, displayString, this->buffer);
   result->length = strlen(buffer);
   memcpy(result->buffer, buffer, result->length);
+  
+  return result;
 }
 
 unsigned int String_filter(String* this, String* filter)
