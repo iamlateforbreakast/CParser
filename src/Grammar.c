@@ -51,6 +51,11 @@ void Grammar_reset(Grammar* this)
 
 void Grammar_pushToken(Grammar* this, Token* token)
 {
+  this->resultDeclarationSpecifiers = 0;
+  this->resultDeclarator = 0;
+  this->evaluatedDeclarationSpecifiers = 0;
+  this->evaluatedDeclarator = 0;
+  
   if (Grammar_matchExternalDeclaration(this, token))
   {
     // Reset al internal states?
@@ -160,7 +165,7 @@ unsigned int Grammar_matchDeclaration(Grammar* this, Token* token)
       }
       else
       {
-        // Syntax Error
+        this->declarationCnt = 0 ;
       }
       break;
   }
@@ -177,27 +182,29 @@ declaration_specifiers
 	| type_qualifier declaration_specifiers
 ****************************************************************************/
 unsigned int Grammar_matchDeclarationSpecifiers(Grammar* this, Token* token)
-{
-  unsigned int result = 0;
-  
-  switch(this->declarationSpecifiersCnt)
+{ 
+  if (!this->evaluatedDeclarationSpecifiers)
   {
-    case 0:
-      if (Grammar_matchStorageClass(this, token))
-      {
-        result = 1;
-      }
-      else if (Grammar_matchTypeSpecifier(this, token))
-      {
-        result = 1;
-      }
-      else if (Grammar_matchTypeQualifier(this, token))
-      {
-        result = 1;
-      }
+	  switch(this->declarationSpecifiersCnt)
+	  {
+	    case 0:
+	      if (Grammar_matchStorageClass(this, token))
+	      {
+	        this->resultDeclarationSpecifiers = 1;
+	      }
+	      else if (Grammar_matchTypeSpecifier(this, token))
+	      {
+	        this->resultDeclarationSpecifiers = 1;
+	      }
+	      else if (Grammar_matchTypeQualifier(this, token))
+	      {
+	        this->resultDeclarationSpecifiers = 1;
+	      }
+	  }
+	  this->evaluatedDeclarationSpecifiers = 1;
   }
-  
-  return result;
+
+  return this->resultDeclarationSpecifiers;
 }
 
 /****************************************************************************
@@ -234,36 +241,38 @@ init_declarator
 	| declarator '=' initializer
 ****************************************************************************/
 unsigned int Grammar_matchDeclarator(Grammar* this, Token* token)
-{
-  unsigned int result = 0;
-  
-  switch (this->declaratorCnt)
+{ 
+  if (!this->evaluatedDeclarator)
   {
-    case 0:
-      if (Grammar_matchPointer(this, token))
-      {
-        this->declaratorCnt = 1;
-      }
-      else if (Grammar_matchDirectDeclarator(this, token))
-      {
-        result = 1;
-      }
-      else
-      {
-        // Syntax Error
-      }
-    case 1:
-      if (Grammar_matchDirectDeclarator(this, token))
-      {
-        result = 1;
-      }
-      else
-      {
-        // Syntax Error
-      }
-  }
+    switch (this->declaratorCnt)
+    {
+      case 0:
+        if (Grammar_matchPointer(this, token))
+        {
+          this->declaratorCnt = 1;
+        }
+        else if (Grammar_matchDirectDeclarator(this, token))
+        {
+          this->resultDeclarator = 1;
+        }
+        else
+        {
+          // Syntax Error
+        }
+      case 1:
+        if (Grammar_matchDirectDeclarator(this, token))
+        {
+          this->resultDeclarator = 1;
+        }
+        else
+        {
+          // Syntax Error
+        }
+     }
+     this->evaluatedDeclarator = 1;
+   }
   
-  return result;
+  return this->resultDeclarator;
 }
 
 /****************************************************************************

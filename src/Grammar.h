@@ -19,6 +19,10 @@ typedef struct Grammar{
   unsigned int declarationCnt;
   unsigned int functionDeclarationCnt;
   unsigned int compountStatementCnt;
+  unsigned int evaluatedDeclarationSpecifiers;
+  unsigned int resultDeclarationSpecifiers;
+  unsigned int evaluatedDeclarator;
+  unsigned int resultDeclarator;
   Declarator declarator;
 } Grammar;
 
