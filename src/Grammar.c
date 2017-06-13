@@ -151,15 +151,11 @@ unsigned int Grammar_matchDeclaration(Grammar* this, Token* token)
     case 0:
       if (Grammar_matchDeclarationSpecifiers(this, token))
       {
-        // Keep matching until ';'
-      }
-      else if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == ';'))
-      {
-        result = 1;
+        this->declarationCnt = 1 ;
       }
       else if (Grammar_matchInitDeclaratorList(this, token))
       {
-        this->declarationCnt = 1 ;
+        this->declarationCnt = 2 ;
       }
       else
       {
@@ -167,7 +163,28 @@ unsigned int Grammar_matchDeclaration(Grammar* this, Token* token)
       }
       break;
     case 1:
-      if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == ';'))
+      if (Grammar_matchDeclarationSpecifiers(this, token))
+      {
+      }
+      else if (Grammar_matchInitDeclaratorList(this, token))
+      {
+        this->declarationCnt = 2 ;
+      }
+      else if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == ';'))
+      {
+        // Must be typedef
+        result = 1;
+        this->declarationCnt = 0 ;
+      }
+      else
+      {
+      }
+    case 2:
+      if (Grammar_matchInitDeclaratorList(this, token))
+      {
+        // Keep matching until ';'
+      }
+      else if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == ';'))
       {
         //printf("YEAHHHHHHHH!\n");
         String_print(this->declarator.name,"Var. Declaration: ");
@@ -175,10 +192,11 @@ unsigned int Grammar_matchDeclaration(Grammar* this, Token* token)
         this->declarator.name = NULL;
         Grammar_reset(this);
         result = 1;
+        this->declarationCnt = 0 ;
       }
       else
       {
-        this->declarationCnt = 0 ;
+        //this->declarationCnt = 0 ;
       }
       break;
   }
@@ -414,7 +432,7 @@ unsigned int Grammar_matchTypeSpecifier(Grammar* this, Token* token)
   }
   else if (token->id == TOK_IDENTIFIER)
   {
-    String_print((String*)token->value, "Hey I am here ");
+    //String_print((String*)token->value, "Hey I am here ");
     if (String_cmp((String*)token->value,"Uint")) result = 1;
     //result = 1;
   }
@@ -473,7 +491,7 @@ unsigned int Grammar_matchCompountStatement(Grammar* this, Token* token)
       if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == '{'))
       {
         this->compountStatementCnt = 1;
-        //result = 1;
+        result = 1;
       }
     case 1:
       if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == '}'))
