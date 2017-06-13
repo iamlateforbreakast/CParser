@@ -34,7 +34,7 @@ void TokenList_delete(TokenList* this)
 {
   unsigned int i = 0;
   
-  printf("TokenList.c: delete\n");
+  //printf("TokenList.c: delete\n");
   TransUnit_delete(this->transUnit);
     
   for (i=0; i<this->nbKeywords; i++)
@@ -117,7 +117,7 @@ Token* TokenList_checkIntegerConstant(TokenList* this)
   {
     tmpInt = String_toInt(tmpStr);
     String_delete(tmpStr);
-    result = Token_new(TOK_INT, (void*)tmpInt, NULL);
+    result = Token_new(TOK_CONSTANT, (void*)tmpInt, NULL);
   }
   
   return result;
@@ -133,7 +133,7 @@ Token* TokenList_checkIdentifier(TokenList* this)
   if (identifierName!=NULL)
   {
     result = Token_new(TOK_IDENTIFIER, (void*)identifierName, NULL);
-    String_print(identifierName, "Token identifier: ");
+    //String_print(identifierName, "Token identifier: ");
   }
   
   return result;

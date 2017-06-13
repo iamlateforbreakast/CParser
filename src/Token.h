@@ -40,6 +40,7 @@ typedef enum
   TOK_VOLATILE,
   TOK_WHILE,
   TOK_IDENTIFIER,
+  TOK_CONSTANT,
   TOK_UNKNOWN,
   TOK_EOF
 } TokenId;

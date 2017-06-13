@@ -19,7 +19,7 @@ TransUnit* TransUnit_new(String* fileContent)
 
 void TransUnit_delete(TransUnit* this)
 {
-  printf("TransUnit.c: delete\n");
+  //printf("TransUnit.c: delete\n");
   StringProcessor_delete(this->processor);
   Memory_free(this, sizeof(TransUnit));
 }

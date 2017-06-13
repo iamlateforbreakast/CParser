@@ -21,17 +21,13 @@ StringProcessor* StringProcessor_new(String* initialFileName)
   this=(StringProcessor*)Memory_alloc(sizeof(StringProcessor));
   Memory_set(this->buffers, 0, sizeof(StringBuffer*) * NB_MAX_BUFFERS);
   
-  
   String_print(initialFileName, "Processing file ");
   printf("-----------------------------------------------\n");
-  
   fileContent = FileMgr_load(fileMgr, initialFileName);
   newBuffer = StringBuffer_new(fileContent);
-  
   this->buffers[0] = newBuffer;
   
   this->currentBuffer = this->buffers[0];
-  
   FileMgr_delete(fileMgr);
   
   return this;
@@ -42,7 +38,7 @@ void StringProcessor_delete(StringProcessor* this)
   int i=0;
   //FileMgr*  f = CParser_getFileMgr();
   
-  printf("StringProcessor.c: delete\n");
+  //printf("StringProcessor.c: delete\n");
   
   for (i=0; i<NB_MAX_BUFFERS; i++)
   {
@@ -226,7 +222,9 @@ unsigned int StringProcessor_readFileName(StringProcessor* this)
   
   c = StringBuffer_peekChar(this->currentBuffer);
   
-  while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_') || (c=='.') || (c=='-') || (c=='/'))
+  while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) ||
+         ((c>='0') && (c<='9')) || (c=='_') || (c=='.') || 
+          (c=='-') || (c=='/'))
   {
     result++;
     c = StringBuffer_readChar(this->currentBuffer);
