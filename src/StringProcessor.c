@@ -10,6 +10,7 @@
 unsigned int  StringProcessor_processDirective(StringProcessor* this);
 unsigned int StringProcessor_readFileName(StringProcessor* this);
 unsigned int StringProcessor_readSpaces(StringProcessor* this);
+void StringProcessor_readDefine(StringProcessor* this);
 
 StringProcessor* StringProcessor_new(String* initialFileName)
 {
@@ -28,6 +29,8 @@ StringProcessor* StringProcessor_new(String* initialFileName)
   this->buffers[0] = newBuffer;
   
   this->currentBuffer = this->buffers[0];
+  
+  this->macros = Map_new();
   FileMgr_delete(fileMgr);
   
   return this;
@@ -46,6 +49,7 @@ void StringProcessor_delete(StringProcessor* this)
   }
   //StringBuffer_delete(this->currentBuffer);
   this->currentBuffer = NULL;
+  Map_delete(this->macros, &String_delete);
   //close all H files f.close
   Memory_free(this, sizeof(StringProcessor));
 }
@@ -116,11 +120,13 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
   // 2. If StringBuffer_compare(current, "#define") then  
   else if (StringProcessor_match(this, defineToken))
   {
-    //       read define defintion
-  } else if (StringProcessor_match(this, ifdefToken))
+    StringProcessor_readDefine(this);
+  } 
+  else if (StringProcessor_match(this, ifdefToken))
   {  //       evaluate condition
   // 5. If StringBuffer_compare(current, "#endif") and isProcessingCondtion = TRUE
-  } else if (StringProcessor_match(this, endifToken))
+  } 
+  else if (StringProcessor_match(this, endifToken))
   {
     //       isProcessingCOndtion = FALSE
   }
@@ -242,4 +248,56 @@ unsigned int StringProcessor_readFileName(StringProcessor* this)
 String* StringProcessor_getFileName(StringProcessor* this)
 {
   return StringBuffer_getName(this->currentBuffer);
+}
+
+void StringProcessor_readDefine(StringProcessor* this)
+{
+  unsigned int result = 0;
+  String* defineMacro = NULL;
+  String* macroBody = NULL;
+  unsigned char c = 0;
+  
+  //printf("Read define: result=%d\n", result);
+  (void)StringProcessor_readSpaces(this);
+  
+  c = StringBuffer_peekChar(this->currentBuffer);
+    
+  while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) ||
+         ((c>='0') && (c<='9')) || (c=='_'))
+  {
+    result++;
+    c = StringBuffer_readChar(this->currentBuffer);
+    c = StringBuffer_peekChar(this->currentBuffer);
+  }
+  
+  //printf("Read define: result=%d\n", result);
+  
+  defineMacro = StringBuffer_readback(this->currentBuffer, result);
+  String_print(defineMacro, "#define: ");
+
+  (void)StringProcessor_readSpaces(this);
+  result =0;
+  
+  c = StringBuffer_peekChar(this->currentBuffer);
+    
+  while (c!=10)
+  {
+    result++;
+    c = StringBuffer_readChar(this->currentBuffer);
+    c = StringBuffer_peekChar(this->currentBuffer);
+  }
+  //printf("Read define: result=%d\n", result);
+  macroBody = StringBuffer_readback(this->currentBuffer, result);
+  String_print(macroBody, "#define: ");
+  
+  if (!Map_insert(this->macros, defineMacro, (void*)macroBody))
+  {
+    String_print(defineMacro, "StringProcessor.c: Could not store macro ");
+  }
+  if (Map_find(this->macros, defineMacro))
+  {
+    String_print(defineMacro, "StringProcessor.c: Found the macro again->");
+  }
+  String_delete(macroBody);
+  String_delete(defineMacro);
 }

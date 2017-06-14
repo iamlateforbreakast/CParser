@@ -4,6 +4,7 @@
 #define _STRINGPROCESSOR_H_
 
 #include "StringBuffer.h"
+#include "Map.h"
 
 #define NB_MAX_BUFFERS (20)
 
@@ -11,6 +12,7 @@ typedef struct StringProcessor
 {
     StringBuffer* buffers[NB_MAX_BUFFERS];	
     StringBuffer* currentBuffer;
+	Map* macros;
 } StringProcessor;
 
 StringProcessor* StringProcessor_new();
