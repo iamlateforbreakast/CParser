@@ -8,8 +8,8 @@ unsigned int Memory_nbBytesAllocated = 0;
 unsigned int Memory_maxNbBytesAllocated = 0;
 unsigned int Memory_allocRequestId = 0;
 unsigned int Memory_freeRequestId = 0;
-unsigned long long int Memory_minAddress = 0xFFFFFFFF;
-unsigned long long int Memory_maxAddress = 0x0;
+void* Memory_maxAddress = (void*)0x0;
+void* Memory_minAddress = (void*)0xFFFFFFFF;
 
 void* Memory_alloc(unsigned int nbBytes)
 {
@@ -22,7 +22,7 @@ void* Memory_alloc(unsigned int nbBytes)
     Memory_allocRequestId++;
     
     //printf("Memory: Malloc %d|%d %x\n", Memory_allocRequestId, nbBytes,p);
-    if (p+nbBytes> Memory_maxAddress) Memory_maxAddress = p + nbBytes;
+    if (p+nbBytes> (void*)Memory_maxAddress) Memory_maxAddress = p + nbBytes;
     return p;
 }
 
@@ -51,6 +51,6 @@ void Memory_report()
   printf("Max nb bytes used: %d\n", Memory_maxNbBytesAllocated);
   printf("Nb alloc request %d\n", Memory_allocRequestId);
   printf("Nb free requests %d\n", Memory_freeRequestId);
-  printf("Lower Address 0x%llx\n", Memory_minAddress);
-  printf("Upper Address 0x%llx\n", Memory_maxAddress);
+  printf("Lower Address 0x%p\n", Memory_minAddress);
+  printf("Upper Address 0x%p\n", Memory_maxAddress);
 }

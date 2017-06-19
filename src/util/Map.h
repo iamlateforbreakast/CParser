@@ -4,7 +4,7 @@
 #define _MAP_H_
 
 #include "List.h"
-#include "String.h"
+#include "String2.h"
 
 #define HTABLE_SIZE (50)
 
@@ -24,4 +24,5 @@ Map* Map_new();
 void Map_delete(Map* this, void (*f_delete)(void*));
 unsigned int Map_insert(Map* this,String* s, void* p);
 unsigned int Map_hash(Map* this, String* s, unsigned int i);
+void* Map_find(Map* this, String* s);
 #endif

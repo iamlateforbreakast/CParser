@@ -6,6 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "String.h"
+#include "String2.h"
 #include "Memory.h"
 #endif

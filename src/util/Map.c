@@ -4,14 +4,13 @@
 
 #include "Common.h"
 
-
-
 Map* Map_new()
 {
   Map* this = NULL;
 
   this = Memory_alloc(sizeof(Map));
-  memset(this->htable, 0, sizeof(this->htable));
+  //memset((void*)this->htable, (int)0, (size_t)sizeof(this->htable));
+  Memory_set(this->htable, 0, sizeof(this->htable));
   
   return this;
 }

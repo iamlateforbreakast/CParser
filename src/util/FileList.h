@@ -3,7 +3,7 @@
 #ifndef _FILELIST_H_
 #define _FILELIST_H_
 
-#include "String.h"
+#include "String2.h"
 
 typedef struct FileInfo FileInfo;
 

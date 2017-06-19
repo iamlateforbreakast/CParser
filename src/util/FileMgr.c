@@ -3,6 +3,7 @@
 #include "FileMgr.h"
 
 #include <unistd.h>
+#include <string.h>
 
 static FileMgr* fileMgr = NULL;
 
