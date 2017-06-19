@@ -10,7 +10,7 @@ SOURCES=src/main.c \
 	src/TransUnit.c \
 	src/TokenList.c \
 	src/util/Memory.c \
-	src/util/String.c \
+	src/util/String2.c \
 	src/util/FileList.c \
 	src/util/FileMgr.c \
 	src/util/List.c \
