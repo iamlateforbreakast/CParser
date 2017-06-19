@@ -68,13 +68,14 @@ void SdbMgr_close(SdbMgr* this)
 unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
 {
   unsigned int result = 0;
-  char **errmsg;
+  char **errmsg = NULL;
   
   result = sqlite3_exec(this->db, statement, SdbMgr_execCallback, this, errmsg);
   if (result!=SQLITE_OK)
   {
     printf("SdbMgr.c: SQLITE_NOK\n");
-    printf("SdbMgr.c: errmsg=%ld\n", errmsg);
+    
+    printf("SdbMgr.c: errmsg=%p\n", errmsg);
     //fprintf(stderr, "SQL error: %s\n", *errmsg);
     //sqlite3_free(*errmsg);
   }

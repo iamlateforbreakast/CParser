@@ -3,7 +3,7 @@
 #ifndef _GRAMMAR_H_
 #define _GRAMMAR_H_
 
-#include "String.h"
+#include "String2.h"
 #include "Token.h"
 
 typedef struct Declarator

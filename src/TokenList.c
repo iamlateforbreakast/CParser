@@ -74,7 +74,7 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
       }
       else if ((c!=10) && (c!=32))
       {
-        nextToken = Token_new(TOK_UNKNOWN, (void*)c, NULL);
+        nextToken = Token_new(TOK_UNKNOWN, (void*)((int)c), NULL);
         //printf("Accepted: Read char: %c %d\n",c,c);
       }
       else

@@ -18,6 +18,7 @@ unsigned int Grammar_matchPointer(Grammar* this, Token* token);
 unsigned int Grammar_matchConstantExpression(Grammar* this, Token* token);
 unsigned int Grammar_matchTypeQualifier(Grammar* this, Token* token);
 unsigned int Grammar_matchCompountStatement(Grammar* this, Token* token);
+void Grammar_reset(Grammar* this);
 
 /****************************************************************************
 ****************************************************************************/
@@ -469,6 +470,8 @@ pointer
 unsigned int Grammar_matchPointer(Grammar* this, Token* token)
 {
   unsigned int result = 0;
+  
+  result = 0;
   
   return 0;
 }

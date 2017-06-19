@@ -21,6 +21,7 @@ CParser* CParser_new()
   this->sdbName = NULL;
   this->initialLocation = NULL;
   this->grammar = Grammar_new();
+  
   return this;
 }
 
@@ -31,7 +32,6 @@ void CParser_delete(CParser* this)
   String_delete(this->initialLocation);
   Grammar_delete(this->grammar);
   Memory_free(this, sizeof(CParser));
-
 }
 
 void CParser_parse(CParser* this, const char* dirName)
@@ -54,14 +54,14 @@ void CParser_parse(CParser* this, const char* dirName)
   currPath = FileMgr_getCurrentDir(fileMgr);
   this->initialLocation = String_new(dirName);
 
-  SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location (" \
-                         "directory text NOT NULL" \
-                         ")");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( \
+                         directory text NOT NULL \
+                         )");
                          
-  //sdbCmd = String_sprint(currPath, "INSERT INTO Root_Location ( directory )"\
-  //                                "VALUES ('%s')");
-  SdbMgr_execute(sdbMgr, "INSERT INTO Root_Location ( directory )" \
-                         "VALUES ('C:/\Temp/\CParser2')");
+  sdbCmd = String_sprint(currPath, "INSERT INTO Root_Location ( directory ) \
+                                    VALUES ('%s')");
+  /*SdbMgr_execute(sdbMgr, "INSERT INTO Root_Location ( directory )" \
+                         "VALUES ('C:/\Temp/\CParser2')"); */
   String_delete(sdbCmd);
   
   // List all C files in newDirName and sub directories
@@ -69,10 +69,7 @@ void CParser_parse(CParser* this, const char* dirName)
   FileList_list(this->fileList, this->initialLocation, filter);
 
   // for each C file add to the TokenList
-  //cFileContent = FileList_loadNextFile(this->fileList);
   cFileName = FileList_loadNextFile(this->fileList);
-
-  
 
   while (cFileName!=NULL)
   {
@@ -95,30 +92,8 @@ void CParser_parse(CParser* this, const char* dirName)
     TokenList_delete(this->tokenList);
     
     cFileName = FileList_loadNextFile(this->fileList);
-    //close C file
-    //Grammar_process()
   }
   String_delete(currPath);
   String_delete(filter);
   FileMgr_delete(fileMgr);
-}
-
-/*void CParser_populateFunctions()
-{
-    if Grammar_matchFunctions(element)
-    {
-    }
-}
-
-void CParser_populateGlobalVars()
-{
-}*/
-
-void CParser_testList(CParser* this)
-{
-  List* list = NULL;
-  
-  list = List_new();
-  
-  
 }

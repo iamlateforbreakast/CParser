@@ -11,31 +11,34 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this);
 unsigned int StringProcessor_readFileName(StringProcessor* this);
 unsigned int StringProcessor_readSpaces(StringProcessor* this);
 void StringProcessor_readDefine(StringProcessor* this);
+void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName);
 
+/**************************************************
+@brief StringProcessor_new - TBD
+ * 
+ * @param[in]   initialFileName  : initial file name
+ * @param[out]  None    : None
+ *
+ * @return TBD
+**************************************************/
 StringProcessor* StringProcessor_new(String* initialFileName)
 {
   StringProcessor* this = NULL;
-  StringBuffer* newBuffer = NULL;
-  FileMgr* fileMgr = FileMgr_getFileMgr();
-  String* fileContent = NULL;
   
   this=(StringProcessor*)Memory_alloc(sizeof(StringProcessor));
   Memory_set(this->buffers, 0, sizeof(StringBuffer*) * NB_MAX_BUFFERS);
-  
-  String_print(initialFileName, "Processing file ");
-  printf("-----------------------------------------------\n");
-  fileContent = FileMgr_load(fileMgr, initialFileName);
-  newBuffer = StringBuffer_new(fileContent);
-  this->buffers[0] = newBuffer;
-  
-  this->currentBuffer = this->buffers[0];
-  
+
+  this->currentBuffer = NULL;
+  this->nbOpenBuffers = 0;  
+  StringProcessor_openNewBufferFromFile(this, initialFileName);
   this->macros = Map_new();
-  FileMgr_delete(fileMgr);
+
   
   return this;
 }
 
+/**************************************************
+**************************************************/
 void StringProcessor_delete(StringProcessor* this)
 {
   int i=0;
@@ -49,11 +52,13 @@ void StringProcessor_delete(StringProcessor* this)
   }
   //StringBuffer_delete(this->currentBuffer);
   this->currentBuffer = NULL;
-  Map_delete(this->macros, &String_delete);
+  Map_delete(this->macros, (void(*)(void*))&String_delete);
   //close all H files f.close
   Memory_free(this, sizeof(StringProcessor));
 }
 
+/**************************************************
+**************************************************/
 void StringProcessor_addFile(StringProcessor* this, String* file)
 {
 #if 0
@@ -66,6 +71,8 @@ void StringProcessor_addFile(StringProcessor* this, String* file)
 #endif
 }
 
+/**************************************************
+**************************************************/
 unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
 { 
   unsigned char current_c = 0;
@@ -86,6 +93,8 @@ unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
   return current_c;
 }
 
+/**************************************************
+**************************************************/
 unsigned int  StringProcessor_processDirective(StringProcessor* this)
 {
   unsigned int result = 0;
@@ -116,6 +125,9 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
     result = result + StringProcessor_match(this, quoteToken) + StringProcessor_match(this, bracketOpenToken);
     result = result + StringProcessor_readFileName(this);
     result = result + StringProcessor_match(this, quoteToken) + StringProcessor_match(this, bracketCloseToken);
+    if (result)
+    {
+    }
   } 
   // 2. If StringBuffer_compare(current, "#define") then  
   else if (StringProcessor_match(this, defineToken))
@@ -143,6 +155,8 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
   return result;
 }
 
+/**************************************************
+**************************************************/
 String* StringProcessor_readIdentifier(StringProcessor* this)
 {
   String* result = NULL;
@@ -167,6 +181,8 @@ String* StringProcessor_readIdentifier(StringProcessor* this)
   return result;
 }
 
+/**************************************************
+**************************************************/
 String* StringProcessor_readInteger(StringProcessor* this)
 {
   String* result = 0;
@@ -192,6 +208,8 @@ String* StringProcessor_readInteger(StringProcessor* this)
   return result;
 }
 
+/**************************************************
+**************************************************/
 unsigned int StringProcessor_checkForMacro(StringProcessor* this)
 {
   unsigned int result=0;
@@ -199,11 +217,15 @@ unsigned int StringProcessor_checkForMacro(StringProcessor* this)
   return result;
 }
 
+/**************************************************
+**************************************************/
 unsigned int StringProcessor_match(StringProcessor* this, String* pattern)
 {  
   return (StringBuffer_match(this->currentBuffer, pattern));
 }
 
+/**************************************************
+**************************************************/
 unsigned int StringProcessor_readSpaces(StringProcessor* this)
 {
   unsigned int result = 0;
@@ -220,6 +242,8 @@ unsigned int StringProcessor_readSpaces(StringProcessor* this)
   return result;
 }
 
+/**************************************************
+**************************************************/
 unsigned int StringProcessor_readFileName(StringProcessor* this)
 {
   unsigned int result = 0;
@@ -245,11 +269,15 @@ unsigned int StringProcessor_readFileName(StringProcessor* this)
   return result;
 }
 
+/**************************************************
+**************************************************/
 String* StringProcessor_getFileName(StringProcessor* this)
 {
   return StringBuffer_getName(this->currentBuffer);
 }
 
+/**************************************************
+**************************************************/
 void StringProcessor_readDefine(StringProcessor* this)
 {
   unsigned int result = 0;
@@ -298,6 +326,27 @@ void StringProcessor_readDefine(StringProcessor* this)
   {
     String_print(defineMacro, "StringProcessor.c: Found the macro again->");
   }
-  String_delete(macroBody);
-  String_delete(defineMacro);
+}
+
+void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName)
+{
+  String* fileContent = NULL;
+  FileMgr* fileMgr = FileMgr_getFileMgr();
+  
+  if (this->nbOpenBuffers < NB_MAX_BUFFERS)
+  {
+    fileContent = FileMgr_load(fileMgr, fileName);
+    this->buffers[this->nbOpenBuffers] = StringBuffer_new(fileContent);
+    this->currentBuffer = this->buffers[this->nbOpenBuffers];
+
+    String_print(fileName, "Processing file ");
+    printf("-----------------------------------------------\n");
+    this->nbOpenBuffers++;
+  }
+  else
+  {
+    String_print(fileName, "StringProcessor.c: No available buffer to load ");
+  }
+  
+  FileMgr_delete(fileMgr);
 }
