@@ -180,6 +180,7 @@ unsigned int Grammar_matchDeclaration(Grammar* this, Token* token)
       else
       {
       }
+      break;
     case 2:
       if (Grammar_matchInitDeclaratorList(this, token))
       {

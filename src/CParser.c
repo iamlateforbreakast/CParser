@@ -11,6 +11,8 @@
 
 CParser* cparser;
 
+/**************************************************
+**************************************************/
 CParser* CParser_new()
 {
   CParser* this;
@@ -25,6 +27,8 @@ CParser* CParser_new()
   return this;
 }
 
+/**************************************************
+**************************************************/
 void CParser_delete(CParser* this)
 { 
   FileList_delete(this->fileList);
@@ -32,8 +36,11 @@ void CParser_delete(CParser* this)
   String_delete(this->initialLocation);
   Grammar_delete(this->grammar);
   Memory_free(this, sizeof(CParser));
+
 }
 
+/**************************************************
+**************************************************/
 void CParser_parse(CParser* this, const char* dirName)
 {
   String* filter=NULL;
