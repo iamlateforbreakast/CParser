@@ -10,10 +10,6 @@
 
 typedef struct CParser
 {
-    // ElementTable functions
-    // ElementTable global vars
-    // ElementTable local vars
-    // ElementTable code blocks
     TokenList* tokenList;
     FileList* fileList;
 	Grammar* grammar;

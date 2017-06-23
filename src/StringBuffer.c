@@ -91,7 +91,7 @@ String* StringBuffer_readback(StringBuffer* this, unsigned int nbChar)
   String* result = NULL;
   
   result = String_subString(this->s, this->pos-nbChar, nbChar);
-  
+
   return result;
 }
 

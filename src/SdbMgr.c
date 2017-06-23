@@ -6,7 +6,6 @@
 
 static SdbMgr* sdbMgr = NULL;
 
-unsigned int SdbMgr_open(SdbMgr* this, String* sdbName);
 void SdbMgr_close(SdbMgr* this);
 static int SdbMgr_execCallback(void* this, int argc, char **argv, char **azColName);
 
@@ -27,6 +26,7 @@ void SdbMgr_delete(SdbMgr* this)
     
     if (this->refCount==0)
     {
+      SdbMgr_close(this);
       String_delete(this->name);
       Memory_free(this, sizeof(SdbMgr));
     }

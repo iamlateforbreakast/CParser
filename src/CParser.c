@@ -36,7 +36,6 @@ void CParser_delete(CParser* this)
   String_delete(this->initialLocation);
   Grammar_delete(this->grammar);
   Memory_free(this, sizeof(CParser));
-
 }
 
 /**************************************************
@@ -50,7 +49,6 @@ void CParser_parse(CParser* this, const char* dirName)
   SdbMgr* sdbMgr = NULL;
   FileMgr* fileMgr = FileMgr_getFileMgr();
   String* sdbCmd = NULL;
-  //String s = {.buffer="hello", .length=5};
   
   // Open DB
   this->sdbName = String_new("TESTDB");
