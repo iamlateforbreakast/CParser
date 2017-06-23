@@ -12,7 +12,7 @@ List* List_new()
   return this;
 }
 
-void List_delete(List* this)
+void List_delete(List* this, void (*f_delete)(void*))
 {
   Memory_free(this, sizeof(List));   
 }
@@ -48,4 +48,8 @@ void List_iterator(List* this, void *(f)(void* t))
     f(iterator->item);
     iterator = iterator->next;
   }
+}
+
+void List_merge(List* this, List* l1)
+{
 }

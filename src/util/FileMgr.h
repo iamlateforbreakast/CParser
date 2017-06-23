@@ -5,17 +5,18 @@
 
 #include "Common.h"
 
-typedef struct FileDesc FileDesc;
+#include "String2.h"
+#include "List.h"
 
-struct FileDesc
-{
-  FileDesc* next;
-};
+#include <dirent.h>
 
 typedef struct FileMgr
 {
-  FileDesc* openFiles;
+  List* files;
+  DIR* activeDir;
   unsigned int refCount;
+  String* rootPath;
+  String* activePath;
 } FileMgr;
 
 FileMgr* FileMgr_new();
