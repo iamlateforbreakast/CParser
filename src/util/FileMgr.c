@@ -18,15 +18,16 @@ List* FileMgr_listDirInDir(FileMgr* this);
 
 /**************************************************
 **************************************************/
-FileMgr* FileMgr_new(String* rootPath)
+FileMgr* FileMgr_new()
 {
     FileMgr* this;
 
     this = (FileMgr*)Memory_alloc(sizeof(FileMgr));
 
     this->files = List_new();
+    this->activePath = FileMgr_getCurrentDir(this);
     this->activeDir = NULL;
-    this->rootPath = String_dup(rootPath);
+    
     return this;
 }
 
@@ -111,23 +112,32 @@ String* FileMgr_getCurrentDir(FileMgr* this)
 
 /**************************************************
 **************************************************/
-void FileMgr_listAllFiles(FileMgr* this, String* newDir)
+void FileMgr_listAllFiles(FileMgr* this)
 { 
   List* allFilesInDir = NULL;
   List* allDirInDir = NULL;
+  String* currentDirName = NULL;
   
-  allFilesInDir = List_new();
-  // ChangeDir to newDir
-  /* TBD: FileMgr_changeDirectory(root + newDir);*/
-  // List all files and add to list of all files
-  allFilesInDir = FileMgr_listFilesInDir(this);
-  List_merge(this->files, allFilesInDir);
-  List_delete(allFilesInDir, NULL);
-  // for each dir in list Dir call FileMgr_listAllFiles();
-  allDirInDir = FileMgr_listDirInDir(this);
-  List_iterator(allDirInDir, &FileMgr_listAllFiles);
-  List_delete(allDirInDir, NULL);
-  closedir(this->activeDir);
+  if (this->activePath)
+  {
+    //currentDirName = FileMgr_getCurrentDir(this);
+    allFilesInDir = List_new();
+    // ChangeDir to newDir
+    /* TBD: FileMgr_changeDirectory(root + newDir);*/
+    // List all files and add to list of all files
+    allFilesInDir = FileMgr_listFilesInDir(currentDirName);
+    List_merge(this->files, allFilesInDir);
+    List_delete(allFilesInDir, NULL);
+    // for each dir in list Dir call FileMgr_listAllFiles();
+    //allDirInDir = FileMgr_listDirInDir(this);
+    //List_iterator(allDirInDir, &FileMgr_listAllFiles);
+    //List_delete(allDirInDir, NULL);
+    closedir(this->activeDir);
+  }
+  else
+  {
+    printf("FileMgr.c: No current active directory\n");
+  }
 }
 
 /**************************************************
@@ -140,9 +150,21 @@ void FileMgr_changeDirectory(FileMgr* this, String* newDir)
   {
     closedir(this->activeDir);
   }
-  memcpy(directory, newDir->buffer, newDir->length);
-  this->activeDir = opendir(directory);
-  this->activePath = newDir;
+  
+  if (newDir->buffer[0] == '/')
+  {
+    this->activePath = newDir;
+    memcpy(directory, newDir->buffer, newDir->length);
+    this->activeDir = opendir(directory);
+  }
+  else
+  {
+    String_cat(this->activePath, "/");
+    String_append(this->activePath, newDir);
+    memcpy(directory, this->activePath->buffer, this->activePath->length);
+    this->activeDir = opendir(directory);
+  }
+  //this->activePath = FileMgr_getCurrentDir(this);
 }
 
 /**************************************************

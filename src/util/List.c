@@ -3,7 +3,9 @@
 #include "List.h"
 
 #include "Common.h"
- 
+
+/**************************************************
+**************************************************/ 
 List* List_new()
 {
   List* this = NULL;
@@ -12,11 +14,15 @@ List* List_new()
   return this;
 }
 
+/**************************************************
+**************************************************/
 void List_delete(List* this, void (*f_delete)(void*))
 {
   Memory_free(this, sizeof(List));   
 }
 
+/**************************************************
+**************************************************/
 void List_insert(List* this, void* item)
 {
   ListNode* newNode = NULL;
@@ -28,6 +34,8 @@ void List_insert(List* this, void* item)
   this->head = newNode;
 }
 
+/**************************************************
+**************************************************/
 unsigned int List_find(List* this, void* item)
 {
   unsigned int result = 0;
@@ -35,10 +43,14 @@ unsigned int List_find(List* this, void* item)
   return result;
 }
 
+/**************************************************
+**************************************************/
 void List_remove(List* this)
 {
 }
 
+/**************************************************
+**************************************************/
 void List_iterator(List* this, void *(f)(void* t))
 {
   ListNode* iterator = this->head;
@@ -50,6 +62,18 @@ void List_iterator(List* this, void *(f)(void* t))
   }
 }
 
+/**************************************************
+**************************************************/
 void List_merge(List* this, List* l1)
 {
+  ListNode* iterator = l1->head;
+  
+  while (iterator!=NULL)
+  {
+    iterator = iterator->next;
+  }
+  
+  iterator->next = this->head;
+  this->head = l1->head;
+  
 }
