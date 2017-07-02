@@ -2,10 +2,12 @@
 
 #include "FileMgr.h"
 
+#include "List.h"
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
 
-static FileMgr* fileMgr = NULL;
+PRIVATE FileMgr* fileMgr = NULL;
 
 typedef struct FileDesc
 {
@@ -13,8 +15,11 @@ typedef struct FileDesc
   String* fullName;
 } FileDesc;
 
-List* FileMgr_listFilesInDir(FileMgr* this);
-List* FileMgr_listDirInDir(FileMgr* this);
+/**************************************************
+**************************************************/
+PRIVATE List* FileMgr_listFilesInDir(FileMgr* this);
+PRIVATE List* FileMgr_listDirInDir(FileMgr* this);
+PRIVATE void FileMgr_mergePath(String* path1, String* path2);
 
 /**************************************************
 **************************************************/
@@ -24,10 +29,10 @@ FileMgr* FileMgr_new()
 
     this = (FileMgr*)Memory_alloc(sizeof(FileMgr));
 
-    this->files = List_new();
-    this->activePath = FileMgr_getCurrentDir(this);
+    this->files = NULL;
+    this->activePath = NULL;
     this->activeDir = NULL;
-    
+    this->rootPath = NULL;
     return this;
 }
 
@@ -48,17 +53,17 @@ String* FileMgr_load(FileMgr* this, String* fileName)
 
   fileContent = (String*)Memory_alloc(sizeof(String));
   memcpy(buffer, fileName->buffer, fileName->length);
-  
+
   FILE* f=fopen(buffer,"rb");
   if (f)
   {
 	  fseek(f, 0, SEEK_END);
 	  fileContent->length=ftell(f);
 	  fseek(f, 0 , SEEK_SET);
-        
+
 	  fileContent->buffer = (char*)Memory_alloc(fileContent->length);
     fread(fileContent->buffer,fileContent->length, 1, f);
-    
+
 	  fclose(f);
   }
   else
@@ -80,7 +85,7 @@ void FileMgr_close(FileMgr* this, String* fileName)
 FileMgr* FileMgr_getFileMgr()
 {
   FileMgr* this;
-  
+
   if (fileMgr==NULL)
   {
     this = FileMgr_new();
@@ -90,7 +95,7 @@ FileMgr* FileMgr_getFileMgr()
     this = fileMgr;
   }
   this->refCount++;
-  
+
   return this;
 }
 
@@ -100,37 +105,49 @@ String* FileMgr_getCurrentDir(FileMgr* this)
 {
   String* result = NULL;
   char buffer[255] = { 0 };
-  
+
   if (getcwd(buffer, sizeof(buffer)) != NULL)
   {
     result=String_new(buffer);
     String_print(result, "Current Directory is ");
   }
-  
+
   return result;
 }
 
 /**************************************************
 **************************************************/
-void FileMgr_listAllFiles(FileMgr* this)
-{ 
+void FileMgr_initialise(FileMgr* this, String* initialPath)
+{
+  this->rootPath = FileMgr_getCurrentDir(this);
+  // Merge current dir with initialPath
+  FileMgr_mergePath(this->rootPath, initialPath);
+  //this->files = FileMgr_listAllFiles(this);
+  // change directory to inital path
+}
+
+/**************************************************
+**************************************************/
+List* FileMgr_listAllFiles(FileMgr* this)
+{
   List* allFilesInDir = NULL;
   List* allDirInDir = NULL;
+  List* result = NULL;
   String* currentDirName = NULL;
-  
+
   if (this->activePath)
   {
-    //currentDirName = FileMgr_getCurrentDir(this);
-    allFilesInDir = List_new();
-    // ChangeDir to newDir
-    /* TBD: FileMgr_changeDirectory(root + newDir);*/
+    result = List_new();
+    currentDirName = FileMgr_getCurrentDir(this);
     // List all files and add to list of all files
     allFilesInDir = FileMgr_listFilesInDir(currentDirName);
-    List_merge(this->files, allFilesInDir);
+    List_merge(result, allFilesInDir);
     List_delete(allFilesInDir, NULL);
     // for each dir in list Dir call FileMgr_listAllFiles();
-    //allDirInDir = FileMgr_listDirInDir(this);
-    //List_iterator(allDirInDir, &FileMgr_listAllFiles);
+    allDirInDir = FileMgr_listDirInDir(this);
+    // For each dir in allDirInDir
+    // change dir to dir
+    // list all files
     //List_delete(allDirInDir, NULL);
     closedir(this->activeDir);
   }
@@ -138,19 +155,26 @@ void FileMgr_listAllFiles(FileMgr* this)
   {
     printf("FileMgr.c: No current active directory\n");
   }
+
+  return result;
 }
 
 /**************************************************
 **************************************************/
 void FileMgr_changeDirectory(FileMgr* this, String* newDir)
 {
+  List* result = NULL;
+  DIR* d = NULL;
+  struct dirent * dir; // for the directory entries
+  String* directoryItem;
+  String* newDirectory;
   char directory[255]={0};
 
   if (this->activeDir!=NULL)
   {
     closedir(this->activeDir);
   }
-  
+
   if (newDir->buffer[0] == '/')
   {
     this->activePath = newDir;
@@ -175,9 +199,9 @@ List* FileMgr_listFilesInDir(FileMgr* this)
   FileDesc* fileDesc = NULL;
   List* result = NULL;
   String* directoryItem = NULL;
-  
+
   result = List_new();
-  
+
   while (((dir = readdir(this->activeDir)) != NULL) && (dir->d_type != DT_DIR))
   {
     fileDesc = Memory_alloc(sizeof(FileDesc));
@@ -185,10 +209,10 @@ List* FileMgr_listFilesInDir(FileMgr* this)
     String_cat(fileDesc->fullName, "/");
     //String_append(fileDesc->fullName, fileName);
 	  directoryItem=String_new(dir->d_name);
-    
+
     List_insert(result, (void*)fileDesc);
   }
-  
+
   return result;
 }
 
@@ -200,9 +224,9 @@ List* FileMgr_listDirInDir(FileMgr* this)
   FileDesc* fileDesc = NULL;
   List* result = NULL;
   String* directoryItem = NULL;
-  
+
   result = List_new();
-  
+
   while (((dir = readdir(this->activeDir)) != NULL) && (dir->d_type == DT_DIR))
   {
     fileDesc = Memory_alloc(sizeof(FileDesc));
@@ -210,9 +234,36 @@ List* FileMgr_listDirInDir(FileMgr* this)
     String_cat(fileDesc->fullName, "/");
     //String_append(fileDesc->fullName, fileName);
 	  directoryItem=String_new(dir->d_name);
-    
+
     List_insert(result, (void*)fileDesc);
   }
-  
+
   return result;
+}
+
+/**************************************************
+**************************************************/
+void FileMgr_mergePath(String* path1, String* path2)
+{
+  #if 0
+  String* result = NULL;
+  String** path1Token = NULL;
+  String** path2Token = NULL;
+
+  unsigned int p1_idx = 0;
+  unsigned int p2_idx = 0;
+
+  path1Token = String_tokenize(path1,"/");
+  path2Token = String_tokenize(path2,"/");
+
+  for (p2_idx=0; p2_idx<sizeof(path2Token);p2_idx++)
+  {
+    if (String_cmp(path2[p2_idx], ".."))
+    {}
+    else if (String_cmp(path2[p2_idx], "."))
+    {}
+    else{
+    }
+  }
+  #endif
 }

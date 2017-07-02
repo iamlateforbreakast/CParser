@@ -18,6 +18,14 @@ List* List_new()
 **************************************************/
 void List_delete(List* this, void (*f_delete)(void*))
 {
+  ListNode* p = this->head;
+  
+  while (p!=NULL)
+  {
+	(*f_delete)(p);
+	this->head = p->next;
+  }
+  
   Memory_free(this, sizeof(List));   
 }
 

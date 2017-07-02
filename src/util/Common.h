@@ -8,4 +8,8 @@
 
 #include "String2.h"
 #include "Memory.h"
+
+#define PRIVATE static
+#define PUBLIC
+
 #endif
