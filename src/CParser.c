@@ -43,27 +43,28 @@ void CParser_delete(CParser* this)
 void CParser_parse(CParser* this, const char* dirName)
 {
   String* filter=NULL;
-  String* currPath = NULL;
+  //String* currPath = NULL;
   String* cFileName = NULL;
   Token* newToken = NULL;
   SdbMgr* sdbMgr = NULL;
   FileMgr* fileMgr = FileMgr_getFileMgr();
   String* sdbCmd = NULL;
+  String stringDirName = { .buffer = dirName, .length = strlen(dirName) };
+  
+  // Initialise root location
+  FileMgr_initialise(fileMgr, &stringDirName);
+  this->initialLocation = fileMgr->rootPath;
   
   // Open DB
   this->sdbName = String_new("TESTDB");
   sdbMgr = SdbMgr_getSdbMgr();
   SdbMgr_open(sdbMgr, this->sdbName);
   
-  // Initialise root location
-  currPath = FileMgr_getCurrentDir(fileMgr);
-  this->initialLocation = String_new(dirName);
-
   SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( \
                          directory text NOT NULL \
                          )");
                          
-  sdbCmd = String_sprint(currPath, "INSERT INTO Root_Location ( directory ) \
+  sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory ) \
                                     VALUES ('%s')");
   /*SdbMgr_execute(sdbMgr, "INSERT INTO Root_Location ( directory )" \
                          "VALUES ('C:/\Temp/\CParser2')"); */
@@ -98,7 +99,7 @@ void CParser_parse(CParser* this, const char* dirName)
     
     cFileName = FileList_loadNextFile(this->fileList);
   }
-  String_delete(currPath);
+  //String_delete(currPath);
   String_delete(filter);
   FileMgr_delete(fileMgr);
 }
