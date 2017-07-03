@@ -23,7 +23,7 @@ PRIVATE void FileMgr_mergePath(String* path1, String* path2);
 
 /**************************************************
 **************************************************/
-FileMgr* FileMgr_new()
+PUBLIC FileMgr* FileMgr_new()
 {
     FileMgr* this;
 
@@ -38,14 +38,14 @@ FileMgr* FileMgr_new()
 
 /**************************************************
 **************************************************/
-void FileMgr_delete(FileMgr* this)
+PUBLIC void FileMgr_delete(FileMgr* this)
 {
     Memory_free(this, sizeof(FileMgr));
 }
 
 /**************************************************
 **************************************************/
-String* FileMgr_load(FileMgr* this, String* fileName)
+PUBLIC String* FileMgr_load(FileMgr* this, String* fileName)
 {
   String* fileContent=NULL;
 
@@ -53,17 +53,17 @@ String* FileMgr_load(FileMgr* this, String* fileName)
 
   fileContent = (String*)Memory_alloc(sizeof(String));
   memcpy(buffer, fileName->buffer, fileName->length);
-
+  
   FILE* f=fopen(buffer,"rb");
   if (f)
   {
 	  fseek(f, 0, SEEK_END);
 	  fileContent->length=ftell(f);
 	  fseek(f, 0 , SEEK_SET);
-
+        
 	  fileContent->buffer = (char*)Memory_alloc(fileContent->length);
     fread(fileContent->buffer,fileContent->length, 1, f);
-
+    
 	  fclose(f);
   }
   else
@@ -82,10 +82,10 @@ void FileMgr_close(FileMgr* this, String* fileName)
 
 /**************************************************
 **************************************************/
-FileMgr* FileMgr_getFileMgr()
+PUBLIC FileMgr* FileMgr_getFileMgr()
 {
   FileMgr* this;
-
+  
   if (fileMgr==NULL)
   {
     this = FileMgr_new();
@@ -95,7 +95,7 @@ FileMgr* FileMgr_getFileMgr()
     this = fileMgr;
   }
   this->refCount++;
-
+  
   return this;
 }
 
@@ -105,42 +105,54 @@ String* FileMgr_getCurrentDir(FileMgr* this)
 {
   String* result = NULL;
   char buffer[255] = { 0 };
-
+  
   if (getcwd(buffer, sizeof(buffer)) != NULL)
   {
     result=String_new(buffer);
     String_print(result, "Current Directory is ");
   }
-
+  
   return result;
 }
 
 /**************************************************
 **************************************************/
-void FileMgr_initialise(FileMgr* this, String* initialPath)
+PUBLIC void FileMgr_initialise(FileMgr* this, String* initialPath)
 {
   this->rootPath = FileMgr_getCurrentDir(this);
   // Merge current dir with initialPath
   FileMgr_mergePath(this->rootPath, initialPath);
+  // Parse all files contained in the root path
   //this->files = FileMgr_listAllFiles(this);
-  // change directory to inital path
 }
 
 /**************************************************
 **************************************************/
-List* FileMgr_listAllFiles(FileMgr* this)
+PUBLIC unsigned int FileMgr_isFile(FileMgr* this, String* fullFileName)
+{
+  unsigned int result = 0;
+  
+  #if 0
+  DIR* directory = opendir(name)
+  #endif
+  return result;
+}
+
+/**************************************************
+**************************************************/
+PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
 {
   List* allFilesInDir = NULL;
   List* allDirInDir = NULL;
   List* result = NULL;
   String* currentDirName = NULL;
-
+  
   if (this->activePath)
   {
     result = List_new();
     currentDirName = FileMgr_getCurrentDir(this);
     // List all files and add to list of all files
-    allFilesInDir = FileMgr_listFilesInDir(currentDirName);
+    allFilesInDir = FileMgr_listFilesInDir(this);
     List_merge(result, allFilesInDir);
     List_delete(allFilesInDir, NULL);
     // for each dir in list Dir call FileMgr_listAllFiles();
@@ -174,7 +186,7 @@ void FileMgr_changeDirectory(FileMgr* this, String* newDir)
   {
     closedir(this->activeDir);
   }
-
+  
   if (newDir->buffer[0] == '/')
   {
     this->activePath = newDir;
@@ -193,15 +205,15 @@ void FileMgr_changeDirectory(FileMgr* this, String* newDir)
 
 /**************************************************
 **************************************************/
-List* FileMgr_listFilesInDir(FileMgr* this)
+PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
 {
   struct dirent *dir = NULL;
   FileDesc* fileDesc = NULL;
   List* result = NULL;
   String* directoryItem = NULL;
-
+  
   result = List_new();
-
+  
   while (((dir = readdir(this->activeDir)) != NULL) && (dir->d_type != DT_DIR))
   {
     fileDesc = Memory_alloc(sizeof(FileDesc));
@@ -209,24 +221,24 @@ List* FileMgr_listFilesInDir(FileMgr* this)
     String_cat(fileDesc->fullName, "/");
     //String_append(fileDesc->fullName, fileName);
 	  directoryItem=String_new(dir->d_name);
-
+    
     List_insert(result, (void*)fileDesc);
   }
-
+  
   return result;
 }
 
 /**************************************************
 **************************************************/
-List* FileMgr_listDirInDir(FileMgr* this)
+PRIVATE List* FileMgr_listDirInDir(FileMgr* this)
 {
   struct dirent *dir = NULL;
   FileDesc* fileDesc = NULL;
   List* result = NULL;
   String* directoryItem = NULL;
-
+  
   result = List_new();
-
+  
   while (((dir = readdir(this->activeDir)) != NULL) && (dir->d_type == DT_DIR))
   {
     fileDesc = Memory_alloc(sizeof(FileDesc));
@@ -234,36 +246,73 @@ List* FileMgr_listDirInDir(FileMgr* this)
     String_cat(fileDesc->fullName, "/");
     //String_append(fileDesc->fullName, fileName);
 	  directoryItem=String_new(dir->d_name);
-
+    
     List_insert(result, (void*)fileDesc);
   }
-
+  
   return result;
 }
 
 /**************************************************
+ @brief FileMgr_mergePath
+ 
+ This function merges 2 paths into one.
+ 
+ @param [in/out] path1: String* - Path to merge
+ @param [in]     path2: String* - Path to merge
+ @return: none
 **************************************************/
-void FileMgr_mergePath(String* path1, String* path2)
+PRIVATE void FileMgr_mergePath(String* path1, String* path2)
 {
-  #if 0
-  String* result = NULL;
-  String** path1Token = NULL;
-  String** path2Token = NULL;
-
-  unsigned int p1_idx = 0;
   unsigned int p2_idx = 0;
-
-  path1Token = String_tokenize(path1,"/");
-  path2Token = String_tokenize(path2,"/");
-
-  for (p2_idx=0; p2_idx<sizeof(path2Token);p2_idx++)
+  unsigned int p1_idx = path1->length;
+  char buffer[255];
+  char* token = path2->buffer;
+  
+  // Initialise result buffer
+  memset(buffer, 0, 255);
+  memcpy(buffer, path1->buffer, p1_idx);
+  
+  buffer[p1_idx] = '/';
+  p1_idx++;
+  
+  for (p2_idx=0; p2_idx<path2->length; p2_idx++)
   {
-    if (String_cmp(path2[p2_idx], ".."))
-    {}
-    else if (String_cmp(path2[p2_idx], "."))
-    {}
-    else{
+    if ((path2->buffer[p2_idx] == '/') || (p2_idx > (path2->length - 1)))
+    {
+      //Ignore ./ in path2
+      if (memcmp(token, ".", 1) == 0)
+      {
+        p1_idx = p1_idx - 1;
+        token = path2->buffer + p2_idx + 1;
+      }
+      //Take ../ into account
+      else if (memcmp(token, "..", 2) == 0)
+      {
+        p1_idx = p1_idx - 3;
+        while ((path1->buffer[p1_idx] != '/') && (p1_idx > 0))
+        {
+          p1_idx = p1_idx - 1;
+        }
+        p2_idx = p2_idx + 1;
+        token = path2->buffer + p2_idx;
+      }
+      else
+      {
+        p2_idx = p2_idx + 1;
+        token = path2->buffer + p2_idx;
+      }
+    }
+    else
+    {
+      // Copy char from p2 to p1
+      buffer[p1_idx] = path2->buffer[p2_idx];
+      p1_idx++;
     }
   }
-  #endif
+  
+  Memory_free(path1->buffer, path1->length);
+  path1->length = p1_idx;
+  path1->buffer = Memory_alloc(path1->length);
+  memcpy(path1->buffer, buffer, path1->length);
 }
