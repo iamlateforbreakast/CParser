@@ -17,9 +17,10 @@ typedef struct FileDesc
 
 /**************************************************
 **************************************************/
+PRIVATE List* FileMgr_listAllFiles(FileMgr* this);
 PRIVATE List* FileMgr_listFilesInDir(FileMgr* this);
 PRIVATE List* FileMgr_listDirInDir(FileMgr* this);
-PRIVATE void FileMgr_mergePath(String* path1, String* path2);
+PRIVATE void FileMgr_mergePath(FileMgr* this, String* path1, String* path2);
 
 /**************************************************
 **************************************************/
@@ -40,7 +41,11 @@ PUBLIC FileMgr* FileMgr_new()
 **************************************************/
 PUBLIC void FileMgr_delete(FileMgr* this)
 {
-    Memory_free(this, sizeof(FileMgr));
+  if (this->activeDir!=NULL)
+  {
+    closedir(this->activeDir);
+  }
+  Memory_free(this, sizeof(FileMgr));
 }
 
 /**************************************************
@@ -121,9 +126,10 @@ PUBLIC void FileMgr_initialise(FileMgr* this, String* initialPath)
 {
   this->rootPath = FileMgr_getCurrentDir(this);
   // Merge current dir with initialPath
-  FileMgr_mergePath(this->rootPath, initialPath);
+  FileMgr_mergePath(this, this->rootPath, initialPath);
   // Parse all files contained in the root path
-  //this->files = FileMgr_listAllFiles(this);
+  FileMgr_changeDirectory(this, this->rootPath);
+  this->files = FileMgr_listAllFiles(this);
 }
 
 /**************************************************
@@ -147,26 +153,21 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
   List* result = NULL;
   String* currentDirName = NULL;
   
-  if (this->activePath)
-  {
-    result = List_new();
-    currentDirName = FileMgr_getCurrentDir(this);
-    // List all files and add to list of all files
-    allFilesInDir = FileMgr_listFilesInDir(this);
-    List_merge(result, allFilesInDir);
-    List_delete(allFilesInDir, NULL);
-    // for each dir in list Dir call FileMgr_listAllFiles();
-    allDirInDir = FileMgr_listDirInDir(this);
-    // For each dir in allDirInDir
-    // change dir to dir
-    // list all files
-    //List_delete(allDirInDir, NULL);
-    closedir(this->activeDir);
-  }
-  else
-  {
-    printf("FileMgr.c: No current active directory\n");
-  }
+  result = List_new();
+  //currentDirName = FileMgr_getCurrentDir(this); <= incorrect
+  // List all files and add to list of all files
+  allFilesInDir = FileMgr_listFilesInDir(this);
+  #if 0
+  List_merge(result, allFilesInDir);
+  List_delete(allFilesInDir, NULL);
+  // for each dir in list Dir call FileMgr_listAllFiles();
+  allDirInDir = FileMgr_listDirInDir(this);
+  // For each dir in allDirInDir
+  // change dir to dir
+  // list all files
+  //List_delete(allDirInDir, NULL);
+  #endif
+  closedir(this->activeDir);
 
   return result;
 }
@@ -186,7 +187,6 @@ void FileMgr_changeDirectory(FileMgr* this, String* newDir)
   {
     closedir(this->activeDir);
   }
-  
   if (newDir->buffer[0] == '/')
   {
     this->activePath = newDir;
@@ -195,12 +195,8 @@ void FileMgr_changeDirectory(FileMgr* this, String* newDir)
   }
   else
   {
-    String_cat(this->activePath, "/");
-    String_append(this->activePath, newDir);
-    memcpy(directory, this->activePath->buffer, this->activePath->length);
-    this->activeDir = opendir(directory);
+    printf("FileMgr.c: only accepting absolute path\n");
   }
-  //this->activePath = FileMgr_getCurrentDir(this);
 }
 
 /**************************************************
@@ -214,19 +210,22 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
   
   result = List_new();
   
-  while (((dir = readdir(this->activeDir)) != NULL) && (dir->d_type != DT_DIR))
+  while ((dir = readdir(this->activeDir)) != NULL) 
   {
-    fileDesc = Memory_alloc(sizeof(FileDesc));
-    fileDesc->fullName =  String_dup(this->activePath);
-    String_cat(fileDesc->fullName, "/");
-    //String_append(fileDesc->fullName, fileName);
-	  directoryItem=String_new(dir->d_name);
+    if (dir->d_type != DT_DIR)
+    {
+      directoryItem=String_new(dir->d_name);
+      fileDesc = Memory_alloc(sizeof(FileDesc));
+      fileDesc->fullName =  String_dup(this->activePath);
+      FileMgr_mergePath(this, fileDesc->fullName, directoryItem);
     
-    List_insert(result, (void*)fileDesc);
+      List_insert(result, (void*)fileDesc);
+    }
   }
   
   return result;
 }
+
 
 /**************************************************
 **************************************************/
@@ -236,22 +235,25 @@ PRIVATE List* FileMgr_listDirInDir(FileMgr* this)
   FileDesc* fileDesc = NULL;
   List* result = NULL;
   String* directoryItem = NULL;
+  String* path = NULL;
   
   result = List_new();
   
-  while (((dir = readdir(this->activeDir)) != NULL) && (dir->d_type == DT_DIR))
+  while ((dir = readdir(this->activeDir)) != NULL)
   {
-    fileDesc = Memory_alloc(sizeof(FileDesc));
-    fileDesc->fullName =  String_dup(this->activePath);
-    String_cat(fileDesc->fullName, "/");
-    //String_append(fileDesc->fullName, fileName);
-	  directoryItem=String_new(dir->d_name);
-    
-    List_insert(result, (void*)fileDesc);
+    if (dir->d_type == DT_DIR)
+    {
+      directoryItem=String_new(dir->d_name);
+      path =  String_dup(this->activePath);
+      FileMgr_mergePath(this, path, directoryItem);
+	    
+      List_insert(result, (void*)path);
+    }
   }
   
   return result;
 }
+
 
 /**************************************************
  @brief FileMgr_mergePath
@@ -262,7 +264,7 @@ PRIVATE List* FileMgr_listDirInDir(FileMgr* this)
  @param [in]     path2: String* - Path to merge
  @return: none
 **************************************************/
-PRIVATE void FileMgr_mergePath(String* path1, String* path2)
+PRIVATE void FileMgr_mergePath(FileMgr* this, String* path1, String* path2)
 {
   unsigned int p2_idx = 0;
   unsigned int p1_idx = path1->length;
@@ -311,6 +313,7 @@ PRIVATE void FileMgr_mergePath(String* path1, String* path2)
     }
   }
   
+  //Place merged path into path1
   Memory_free(path1->buffer, path1->length);
   path1->length = p1_idx;
   path1->buffer = Memory_alloc(path1->length);
