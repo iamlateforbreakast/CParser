@@ -53,7 +53,8 @@ void CParser_parse(CParser* this, const char* dirName)
   
   // Initialise root location
   FileMgr_initialise(fileMgr, &stringDirName);
-  this->initialLocation = fileMgr->rootPath;
+  this->initialLocation = FileMgr_getRootPath(fileMgr);
+  FileMgr_printAllFiles(fileMgr);
   
   // Open DB
   this->sdbName = String_new("TESTDB");
