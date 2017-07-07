@@ -11,6 +11,9 @@ List* List_new()
   List* this = NULL;
 
   this = (List*)Memory_alloc(sizeof(List));
+  this->head = NULL;
+  this->current = NULL;
+  
   return this;
 }
 
@@ -23,7 +26,8 @@ void List_delete(List* this, void (*f_delete)(void*))
   while (p!=NULL)
   {
     this->head = p->next;
-	  (*f_delete)(p);
+	  (*f_delete)(p->item);
+    Memory_free(p, sizeof(ListNode));
     p = this->head;
   }
   
@@ -75,14 +79,18 @@ void List_iterator(List* this, void *(f)(void* t))
 **************************************************/
 void List_merge(List* this, List* l1)
 {
-  ListNode* iterator = l1->head;
+  ListNode* iterator = NULL;
   
-  while (iterator->next!=NULL)
+  if ((l1!=NULL) && (l1->head!=NULL))
   {
-    iterator = iterator->next;
+    iterator = l1->head;
+  
+    while (iterator->next!=NULL)
+    {
+      iterator = iterator->next;
+    }
+  
+    iterator->next = this->head;
+    this->head = l1->head;
   }
-  
-  iterator->next = this->head;
-  this->head = l1->head;
-  
 }

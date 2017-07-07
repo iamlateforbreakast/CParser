@@ -4,6 +4,7 @@
 
 #include <string.h>
 
+unsigned int Memory_isTracingEnabled = 0;
 unsigned int Memory_nbBytesAllocated = 0;
 unsigned int Memory_maxNbBytesAllocated = 0;
 unsigned int Memory_allocRequestId = 0;
@@ -21,7 +22,10 @@ void* Memory_alloc(unsigned int nbBytes)
     if (Memory_nbBytesAllocated>Memory_maxNbBytesAllocated) Memory_maxNbBytesAllocated = Memory_nbBytesAllocated;
     Memory_allocRequestId++;
     
-    //printf("Memory: Malloc %d|%d %x\n", Memory_allocRequestId, nbBytes,p);
+    if (Memory_isTracingEnabled) 
+    {
+      printf("Memory: Malloc %d|%d %x\n", Memory_allocRequestId, nbBytes,p);
+    }
     if (p+nbBytes> (void*)Memory_maxAddress) Memory_maxAddress = p + nbBytes;
     return p;
 }
@@ -32,12 +36,23 @@ void Memory_free(void* p, unsigned int nbBytes)
     if (p!=NULL)
     {
         Memory_freeRequestId++;
-        //printf("Memory: Free %d|%d %x\n", Memory_freeRequestId, nbBytes,p);
+        if (Memory_isTracingEnabled) 
+        {
+          printf("Memory: Free %d|%d %x\n", Memory_freeRequestId, nbBytes,p);
+        }
         free(p);
 
         Memory_nbBytesAllocated = Memory_nbBytesAllocated - nbBytes;
-        if (p<Memory_minAddress) Memory_minAddress = p;
+        if (p<Memory_minAddress) 
+        {
+          Memory_minAddress = p;
+        }
     }
+}
+
+void Memory_enableTracing(unsigned int isEnabled)
+{
+  if (isEnabled < 2) Memory_isTracingEnabled = isEnabled;
 }
 
 void Memory_set(void* p, unsigned int val, unsigned int size)

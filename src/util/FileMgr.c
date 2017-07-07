@@ -37,6 +37,12 @@ PRIVATE void FileMgr_mergePath(FileMgr* this, String* path1, String* path2);
 PRIVATE void FileMgr_changeDirectory(FileMgr* this, String* newDir);
 
 /**************************************************
+ @brief FileMgr_new
+ 
+ This function allocate a FileMgr object.
+ 
+ @param: none
+ @return: FileMgr* - New allocated FileMgr pointer
 **************************************************/
 PUBLIC FileMgr* FileMgr_new()
 {
@@ -48,6 +54,8 @@ PUBLIC FileMgr* FileMgr_new()
     this->activePath = NULL;
     this->activeDir = NULL;
     this->rootPath = NULL;
+    this->refCount = 0;
+    
     return this;
 }
 
@@ -61,24 +69,29 @@ PUBLIC void FileMgr_delete(FileMgr* this)
   
   if (this->refCount==0)
   {
-    pNode = this->files->head;
-    while (pNode!=NULL)
+    // Only destroy the file list if not null
+    if (this->files!=NULL)
     {
-      this->files->head = pNode->next;
-      String_delete(((FileDesc*)pNode->item)->name);
-      String_delete(((FileDesc*)pNode->item)->fullName);
-      Memory_free(pNode->item, sizeof(FileDesc));
-      Memory_free(pNode, sizeof(ListNode));
       pNode = this->files->head;
+      while (pNode!=NULL)
+      {
+        this->files->head = pNode->next;
+        String_delete(((FileDesc*)pNode->item)->name);
+        String_delete(((FileDesc*)pNode->item)->fullName);
+        Memory_free(pNode->item, sizeof(FileDesc));
+        Memory_free(pNode, sizeof(ListNode));
+        pNode = this->files->head;
+      }
     }
     if (this->activeDir!=NULL)
     {
       closedir(this->activeDir);
     }
-    //String_delete(this->activePath);
-    //String_delete(this->rootPath);
     Memory_free(this, sizeof(FileMgr));
+    //String_delete(this->activePath);
+    String_delete(this->rootPath);
   }
+
 }
 
 /**************************************************
@@ -152,6 +165,7 @@ String* FileMgr_getCurrentDir(FileMgr* this)
 **************************************************/
 PUBLIC void FileMgr_initialise(FileMgr* this, String* initialPath)
 {
+
   this->rootPath = FileMgr_getCurrentDir(this);
   // Merge current dir with initialPath
   FileMgr_mergePath(this, this->rootPath, initialPath);
@@ -176,13 +190,21 @@ PUBLIC unsigned int FileMgr_isFile(FileMgr* this, String* fullFileName)
 **************************************************/
 PUBLIC void FileMgr_printAllFiles(FileMgr* this)
 {
-  ListNode* pFile = this->files->head;
+  ListNode* pFile = NULL;
   
-  printf("List all files\n");
-  while (pFile!=NULL)
+  printf("FileMgr: List all files\n");
+  if (this->files!=NULL)
   {
-    String_print(((FileDesc*)pFile->item)->fullName, "File ");
-    pFile = pFile->next;
+    pFile = this->files->head;
+    while (pFile!=NULL)
+    {
+      String_print(((FileDesc*)pFile->item)->fullName, "File ");
+      pFile = pFile->next;
+    }
+  }
+  else
+  {
+     printf("No files\n");
   }
 }
 
@@ -194,14 +216,18 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
   List* allDirInDir = NULL;
   List* result = NULL;
   ListNode* pNode = NULL;
-  
+
   result = List_new();
   //currentDirName = FileMgr_getCurrentDir(this); <= incorrect
   // List all files and add to list of all files
   allFilesInDir = FileMgr_listFilesInDir(this);
+
   List_merge(result, allFilesInDir);
+  #if 0
+  //Memory_enableTracing(1);
   // for each dir in list Dir call FileMgr_listAllFiles();
   allDirInDir = FileMgr_listDirInDir(this);
+
   pNode = allDirInDir->head;
   while (pNode!=NULL)
   {
@@ -211,7 +237,9 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
     pNode = pNode->next;
   }
   List_delete(allDirInDir, &String_delete);
-
+  #endif
+  //Memory_enableTracing(0);
+  
   closedir(this->activeDir);
 
   return result;
@@ -273,7 +301,7 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
 **************************************************/
 PUBLIC String* FileMgr_getRootPath(FileMgr* this)
 {
-  return (this->rootPath);
+  return String_dup(this->rootPath);
 }
 
 /**************************************************
@@ -301,9 +329,9 @@ PRIVATE List* FileMgr_listDirInDir(FileMgr* this)
       {
         path =  String_dup(this->activePath);
         FileMgr_mergePath(this, path, directoryItem);
-	    
         List_insert(result, (void*)path);
       }
+      String_delete(directoryItem);
     }
   }
   
