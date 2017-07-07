@@ -22,8 +22,9 @@ void List_delete(List* this, void (*f_delete)(void*))
   
   while (p!=NULL)
   {
-	(*f_delete)(p);
-	this->head = p->next;
+    this->head = p->next;
+	  (*f_delete)(p);
+    p = this->head;
   }
   
   Memory_free(this, sizeof(List));   
@@ -76,7 +77,7 @@ void List_merge(List* this, List* l1)
 {
   ListNode* iterator = l1->head;
   
-  while (iterator!=NULL)
+  while (iterator->next!=NULL)
   {
     iterator = iterator->next;
   }
