@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
+//#include <stat.H>
 
 PRIVATE FileMgr* fileMgr = NULL;
 
@@ -26,6 +27,7 @@ typedef struct FileDesc
 {
   String* name;
   String* fullName;
+  // struct stat stat;
 } FileDesc;
 
 /**************************************************
@@ -288,6 +290,7 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
       fileDesc = Memory_alloc(sizeof(fileDesc));
       fileDesc->name = String_new(dir->d_name);
       fileDesc->fullName = String_dup(this->activePath);
+      // fileDesc->stat = FileMgr_fileStat(this, fileDesc->fullName);
       FileMgr_mergePath(this, fileDesc->fullName, fileDesc->name);
       List_insert(result, (void*)fileDesc);
     } 
