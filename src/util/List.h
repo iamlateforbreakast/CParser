@@ -16,6 +16,7 @@ typedef struct List
 {
   ListNode* head;
   ListNode* current;
+  unsigned int nbNodes;
 } List;
 
 List* List_new();
