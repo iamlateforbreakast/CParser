@@ -89,9 +89,9 @@ PUBLIC void FileMgr_delete(FileMgr* this)
     {
       closedir(this->activeDir);
     }
-    Memory_free(this, sizeof(FileMgr));
     //String_delete(this->activePath);
     String_delete(this->rootPath);
+    Memory_free(this, sizeof(FileMgr));
   }
 
 }
@@ -222,11 +222,13 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
   result = List_new();
   //currentDirName = FileMgr_getCurrentDir(this); <= incorrect
   // List all files and add to list of all files
+  Memory_enableTracing(1);
   allFilesInDir = FileMgr_listFilesInDir(this);
 
   List_merge(result, allFilesInDir);
+  //Memory_enableTracing(0);
   #if 0
-  //Memory_enableTracing(1);
+  
   // for each dir in list Dir call FileMgr_listAllFiles();
   allDirInDir = FileMgr_listDirInDir(this);
 
@@ -238,9 +240,11 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
     List_merge(result, allFilesInDir);
     pNode = pNode->next;
   }
+   #endif 
+
   List_delete(allDirInDir, &String_delete);
-  #endif
-  //Memory_enableTracing(0);
+
+  
   
   closedir(this->activeDir);
 
@@ -281,16 +285,16 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
   List* result = NULL;
   String* directoryItem = NULL;
   
+  if (this->activeDir == NULL) String_print(this->activePath, "FileMgr: Unable to open directory ");
   result = List_new();
   
-  while ((dir = readdir(this->activeDir)) != NULL) 
+  while ((this->activeDir != NULL) && (dir = readdir(this->activeDir)) != NULL) 
   {
     if (dir->d_type != DT_DIR)
     {
-      fileDesc = Memory_alloc(sizeof(fileDesc));
+      fileDesc = Memory_alloc(sizeof(FileDesc));
       fileDesc->name = String_new(dir->d_name);
       fileDesc->fullName = String_dup(this->activePath);
-      // fileDesc->stat = FileMgr_fileStat(this, fileDesc->fullName);
       FileMgr_mergePath(this, fileDesc->fullName, fileDesc->name);
       List_insert(result, (void*)fileDesc);
     } 
@@ -321,9 +325,10 @@ PRIVATE List* FileMgr_listDirInDir(FileMgr* this)
   memcpy(directory, this->activePath->buffer, this->activePath->length);
   this->activeDir = opendir(directory);
   
+  if (this->activeDir == NULL) String_print(this->activePath, "FileMgr: Unable to open directory ");
   result = List_new();
   
-  while ((dir = readdir(this->activeDir)) != NULL)
+  while ((this->activeDir!=NULL) && (dir = readdir(this->activeDir)) != NULL)
   {
     if (dir->d_type == DT_DIR)
     {
@@ -369,27 +374,29 @@ PRIVATE void FileMgr_mergePath(FileMgr* this, String* path1, String* path2)
   {
     if ((path2->buffer[p2_idx] == '/') || (p2_idx > (path2->length - 1)))
     {
-      //Ignore ./ in path2
-      if (memcmp(token, ".", 1) == 0)
-      {
-        p1_idx = p1_idx - 1;
-        token = path2->buffer + p2_idx + 1;
-      }
       //Take ../ into account
-      else if (memcmp(token, "..", 2) == 0)
+      if (memcmp(token, "..", 2) == 0)
       {
-        p1_idx = p1_idx - 3;
+        p1_idx = p1_idx - 4;
         while ((path1->buffer[p1_idx] != '/') && (p1_idx > 0))
         {
           p1_idx = p1_idx - 1;
         }
-        p2_idx = p2_idx + 1;
-        token = path2->buffer + p2_idx;
+        p1_idx = p1_idx + 1;
+        token = path2->buffer + p2_idx + 1;
+      }
+      //Ignore ./ in path2
+      else if (memcmp(token, ".", 1) == 0)
+      {
+        p1_idx = p1_idx - 1;
+        token = path2->buffer + p2_idx + 1;
       }
       else
       {
-        p2_idx = p2_idx + 1;
-        token = path2->buffer + p2_idx;
+        //p2_idx = p2_idx + 1;
+        token = path2->buffer + p2_idx + 1;
+        buffer[p1_idx] = '/';
+        p1_idx++;
       }
     }
     else
@@ -405,4 +412,5 @@ PRIVATE void FileMgr_mergePath(FileMgr* this, String* path1, String* path2)
   path1->length = p1_idx;
   path1->buffer = Memory_alloc(path1->length);
   memcpy(path1->buffer, buffer, path1->length);
+  String_print(path1, "FileMgr: active path ");
 }
