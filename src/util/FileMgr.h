@@ -17,7 +17,6 @@ PUBLIC void FileMgr_delete(FileMgr* this);
 PUBLIC String* FileMgr_load(FileMgr* this, String* fileName);
 PUBLIC void FileMgr_close(FileMgr* this, String* fileName);
 PUBLIC FileMgr* FileMgr_getFileMgr();
-PUBLIC String* FileMgr_getCurrentDir(FileMgr* this);
 PUBLIC void FileMgr_initialise(FileMgr* this, String* initialPath);
 PUBLIC void FileMgr_printAllFiles(FileMgr* this);
 PUBLIC String* FileMgr_getRootPath(FileMgr* this);

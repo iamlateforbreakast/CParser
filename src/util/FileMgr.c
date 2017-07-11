@@ -149,7 +149,7 @@ PUBLIC FileMgr* FileMgr_getFileMgr()
 
 /**************************************************
 **************************************************/
-String* FileMgr_getCurrentDir(FileMgr* this)
+PRIVATE String* FileMgr_getCurrentDir(FileMgr* this)
 {
   String* result = NULL;
   char buffer[255] = { 0 };
@@ -226,8 +226,9 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
   allFilesInDir = FileMgr_listFilesInDir(this);
 
   List_merge(result, allFilesInDir);
+  // should be deleted
   //Memory_enableTracing(0);
-  #if 0
+
   
   // for each dir in list Dir call FileMgr_listAllFiles();
   allDirInDir = FileMgr_listDirInDir(this);
@@ -240,11 +241,8 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
     List_merge(result, allFilesInDir);
     pNode = pNode->next;
   }
-   #endif 
 
   List_delete(allDirInDir, &String_delete);
-
-  
   
   closedir(this->activeDir);
 
