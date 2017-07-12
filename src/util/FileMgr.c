@@ -37,7 +37,8 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this);
 PRIVATE List* FileMgr_listDirInDir(FileMgr* this);
 PRIVATE void FileMgr_mergePath(FileMgr* this, String* path1, String* path2);
 PRIVATE void FileMgr_changeDirectory(FileMgr* this, String* newDir);
-
+PRIVATE String* FileMgr_getCurrentDir(FileMgr* this);
+PRIVATE unsigned int FileMgr_matchWildcard(FileMgr* this, String* fileName, String* filter);
 /**************************************************
  @brief FileMgr_new
  
@@ -97,6 +98,12 @@ PUBLIC void FileMgr_delete(FileMgr* this)
 }
 
 /**************************************************
+ @brief FileMgr_load
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PUBLIC String* FileMgr_load(FileMgr* this, String* fileName)
 {
@@ -104,6 +111,7 @@ PUBLIC String* FileMgr_load(FileMgr* this, String* fileName)
 
   char buffer[255] = { 0 };
 
+  // find filename in list of files
   fileContent = (String*)Memory_alloc(sizeof(String));
   memcpy(buffer, fileName->buffer, fileName->length);
   
@@ -128,12 +136,55 @@ PUBLIC String* FileMgr_load(FileMgr* this, String* fileName)
 }
 
 /**************************************************
+ @brief FileMgr_filterFiles
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
+**************************************************/
+PUBLIC List* FileMgr_filterFiles(FileMgr* this, String* filter)
+{
+  List* result = NULL;
+  ListNode* pNode = NULL;
+  
+  if (this->files != NULL)
+  {
+    pNode = this->files->head;
+    result = List_new();
+  
+    while(pNode!=NULL)
+    {
+      if (FileMgr_matchWildcard(this, ((FileDesc*)pNode->item)->name, filter))
+      {
+        List_insert(result, ((FileDesc*)pNode->item)->fullName);
+      }
+      pNode = pNode->next;
+    }
+  }
+  
+  return result;
+}
+
+/**************************************************
+ @brief FileMgr_close
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 void FileMgr_close(FileMgr* this, String* fileName)
 {
 }
 
 /**************************************************
+ @brief FileMgr_getFileMgr
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PUBLIC FileMgr* FileMgr_getFileMgr()
 {
@@ -148,6 +199,12 @@ PUBLIC FileMgr* FileMgr_getFileMgr()
 }
 
 /**************************************************
+ @brief FileMgr_getCurrentDir
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PRIVATE String* FileMgr_getCurrentDir(FileMgr* this)
 {
@@ -157,7 +214,6 @@ PRIVATE String* FileMgr_getCurrentDir(FileMgr* this)
   if (getcwd(buffer, sizeof(buffer)) != NULL)
   {
     result=String_new(buffer);
-    String_print(result, "Current Directory is ");
   }
   
   return result;
@@ -189,6 +245,12 @@ PUBLIC unsigned int FileMgr_isFile(FileMgr* this, String* fullFileName)
 }
 
 /**************************************************
+ @brief FileMgr_printAllFiles
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PUBLIC void FileMgr_printAllFiles(FileMgr* this)
 {
@@ -211,6 +273,25 @@ PUBLIC void FileMgr_printAllFiles(FileMgr* this)
 }
 
 /**************************************************
+ @brief FileMgr_getRootPath
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
+**************************************************/
+PUBLIC String* FileMgr_getRootPath(FileMgr* this)
+{
+  return String_dup(this->rootPath);
+}
+
+/**************************************************
+ @brief FileMgr_listAllFiles
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
 {
@@ -220,15 +301,9 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
   ListNode* pNode = NULL;
 
   result = List_new();
-  //currentDirName = FileMgr_getCurrentDir(this); <= incorrect
   // List all files and add to list of all files
-  Memory_enableTracing(1);
   allFilesInDir = FileMgr_listFilesInDir(this);
-
   List_merge(result, allFilesInDir);
-  // should be deleted
-  //Memory_enableTracing(0);
-
   
   // for each dir in list Dir call FileMgr_listAllFiles();
   allDirInDir = FileMgr_listDirInDir(this);
@@ -250,6 +325,12 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
 }
 
 /**************************************************
+ @brief FileMgr_changeDirectory
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PRIVATE void FileMgr_changeDirectory(FileMgr* this, String* newDir)
 {
@@ -275,13 +356,18 @@ PRIVATE void FileMgr_changeDirectory(FileMgr* this, String* newDir)
 }
 
 /**************************************************
+ @brief FileMgr_listFilesInDir
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
 {
   struct dirent *dir = NULL;
   FileDesc* fileDesc = NULL;
   List* result = NULL;
-  String* directoryItem = NULL;
   
   if (this->activeDir == NULL) String_print(this->activePath, "FileMgr: Unable to open directory ");
   result = List_new();
@@ -301,20 +387,18 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
   return result;
 }
 
-
 /**************************************************
-**************************************************/
-PUBLIC String* FileMgr_getRootPath(FileMgr* this)
-{
-  return String_dup(this->rootPath);
-}
-
-/**************************************************
+ @brief FileMgr_listDirInDir
+ 
+ This function lists all directories in the 
+ active directory.
+ 
+ @param: none
+ @return: List* - List of directories names.
 **************************************************/
 PRIVATE List* FileMgr_listDirInDir(FileMgr* this)
 {
   struct dirent *dir = NULL;
-  FileDesc* fileDesc = NULL;
   List* result = NULL;
   String* directoryItem = NULL;
   String* path = NULL;
@@ -410,5 +494,51 @@ PRIVATE void FileMgr_mergePath(FileMgr* this, String* path1, String* path2)
   path1->length = p1_idx;
   path1->buffer = Memory_alloc(path1->length);
   memcpy(path1->buffer, buffer, path1->length);
-  String_print(path1, "FileMgr: active path ");
+  //String_print(path1, "FileMgr: active path ");
+}
+
+/**************************************************
+ @brief FileMgr_matchWildcard
+ 
+ TBD
+ 
+ @param [in]     fileName: String* - fileName
+ @param [in]     filter: String* - wildcard filter
+ @return: unsigned int: 0 no match, 1 match
+**************************************************/
+PRIVATE unsigned int FileMgr_matchWildcard(FileMgr* this, String* fileName, String* wildcard)
+{
+  unsigned int isMatch = 1;
+  unsigned int f_idx = 0;
+  unsigned int w_idx = 0;
+ 
+  for (w_idx = 0; (w_idx < wildcard->length) && (isMatch == 1); w_idx++)
+  {
+    if ((wildcard->buffer[w_idx]=='*') && (w_idx + 1 < wildcard->length))
+    {  
+      while ((f_idx < fileName->length) && (fileName->buffer[f_idx]!= wildcard->buffer[w_idx+1]))
+      {
+        f_idx++;
+      }
+      if (f_idx == fileName->length) isMatch = 0;
+    }
+    else if (wildcard->buffer[w_idx]=='?')
+    {
+    }
+    else if (wildcard->buffer[w_idx]=='[')
+    {
+    }
+    else if (wildcard->buffer[w_idx]==']')
+    {
+    }
+    else if (fileName->buffer[f_idx]!= wildcard->buffer[w_idx])
+    {
+      isMatch = 0; 
+    } else
+    {
+      if (f_idx < fileName->length) f_idx++;
+    }
+  }
+  
+  return isMatch;
 }
