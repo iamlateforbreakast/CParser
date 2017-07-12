@@ -539,6 +539,8 @@ PRIVATE unsigned int FileMgr_matchWildcard(FileMgr* this, String* fileName, Stri
       if (f_idx < fileName->length) f_idx++;
     }
   }
+  // Still some char in fileName not matched by filter
+  if (f_idx < fileName->length) isMatch = 0;
   
   return isMatch;
 }
