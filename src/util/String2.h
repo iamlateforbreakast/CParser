@@ -5,6 +5,8 @@
 
 #include "Common.h"
 
+#include <string.h>
+
 typedef struct String
 {
     char* buffer;

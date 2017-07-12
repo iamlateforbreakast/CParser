@@ -24,7 +24,7 @@ void* Memory_alloc(unsigned int nbBytes)
     
     if (Memory_isTracingEnabled) 
     {
-      printf("Memory: Malloc %d|%d %x\n", Memory_allocRequestId, nbBytes,p);
+      printf("Memory: Malloc %d|%d %p\n", Memory_allocRequestId, nbBytes,p);
     }
     if (p+nbBytes> (void*)Memory_maxAddress) Memory_maxAddress = p + nbBytes;
     return p;
@@ -38,7 +38,7 @@ void Memory_free(void* p, unsigned int nbBytes)
         Memory_freeRequestId++;
         if (Memory_isTracingEnabled) 
         {
-          printf("Memory: Free %d|%d %x\n", Memory_freeRequestId, nbBytes,p);
+          printf("Memory: Free %d|%d %p\n", Memory_freeRequestId, nbBytes,p);
         }
         free(p);
 
@@ -66,6 +66,6 @@ void Memory_report()
   printf("Max nb bytes used: %d\n", Memory_maxNbBytesAllocated);
   printf("Nb alloc request %d\n", Memory_allocRequestId);
   printf("Nb free requests %d\n", Memory_freeRequestId);
-  printf("Lower Address 0x%p\n", Memory_minAddress);
-  printf("Upper Address 0x%p\n", Memory_maxAddress);
+  printf("Lower Address %p\n", Memory_minAddress);
+  printf("Upper Address %p\n", Memory_maxAddress);
 }
