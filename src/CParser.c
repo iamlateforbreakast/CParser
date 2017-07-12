@@ -44,20 +44,22 @@ void CParser_parse(CParser* this, char* dirName)
 {
   String* cFileName = NULL;
   Token* newToken = NULL;
-  SdbMgr* sdbMgr = NULL;
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
   FileMgr* fileMgr = FileMgr_getFileMgr();
   String* sdbCmd = NULL;
   String stringDirName = { .buffer = dirName, .length = strlen(dirName) };
   String filter = { .buffer = "*.c", .length = 3 };
+
   
   // Initialise root location
+    
   FileMgr_initialise(fileMgr, &stringDirName);
   this->initialLocation = FileMgr_getRootPath(fileMgr);
   FileMgr_printAllFiles(fileMgr);
-  
+ 
+
   // Open DB
   this->sdbName = String_new("TESTDB");
-  sdbMgr = SdbMgr_getSdbMgr();
   SdbMgr_open(sdbMgr, this->sdbName);
   
   SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( \
@@ -68,7 +70,7 @@ void CParser_parse(CParser* this, char* dirName)
                                     VALUES ('%s')");
   
   String_delete(sdbCmd);
-  
+
   // List all C files in newDirName and sub directories
   FileList_list(this->fileList, this->initialLocation, &filter);
 
@@ -97,6 +99,7 @@ void CParser_parse(CParser* this, char* dirName)
     
     cFileName = FileList_loadNextFile(this->fileList);
   }
-  //String_delete(currPath);
+
   FileMgr_delete(fileMgr);
+  SdbMgr_delete(sdbMgr);
 }
