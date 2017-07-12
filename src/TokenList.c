@@ -4,6 +4,8 @@
 #include "Common.h"
 #include "Token.h"
 
+#include <stdint.h>
+
 Token* TokenList_checkKeyword(TokenList* this);
 Token* TokenList_checkIntegerConstant(TokenList* this);
 Token* TokenList_checkIdentifier(TokenList* this);
@@ -74,7 +76,7 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
       }
       else if ((c!=10) && (c!=32))
       {
-        nextToken = Token_new(TOK_UNKNOWN, (void*)((int)c), NULL);
+        nextToken = Token_new(TOK_UNKNOWN, (void*)((intptr_t)c), NULL);
         //printf("Accepted: Read char: %c %d\n",c,c);
       }
       else
@@ -117,7 +119,7 @@ Token* TokenList_checkIntegerConstant(TokenList* this)
   {
     tmpInt = String_toInt(tmpStr);
     String_delete(tmpStr);
-    result = Token_new(TOK_CONSTANT, (void*)tmpInt, NULL);
+    result = Token_new(TOK_CONSTANT, (void*)((uintptr_t)tmpInt), NULL);
   }
   
   return result;

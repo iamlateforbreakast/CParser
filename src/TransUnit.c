@@ -79,7 +79,7 @@ unsigned int TransUnit_readMultiLineComment(TransUnit* this)
 {
   unsigned int result = 0;
   unsigned int isFound = 0;
-  unsigned char c;
+  unsigned char c = 0;
   
   String* multiLineStartToken;
   String* multiLineEndToken;

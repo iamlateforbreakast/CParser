@@ -40,16 +40,15 @@ void CParser_delete(CParser* this)
 
 /**************************************************
 **************************************************/
-void CParser_parse(CParser* this, const char* dirName)
+void CParser_parse(CParser* this, char* dirName)
 {
-  String* filter=NULL;
-  //String* currPath = NULL;
   String* cFileName = NULL;
   Token* newToken = NULL;
   SdbMgr* sdbMgr = NULL;
   FileMgr* fileMgr = FileMgr_getFileMgr();
   String* sdbCmd = NULL;
   String stringDirName = { .buffer = dirName, .length = strlen(dirName) };
+  String filter = { .buffer = "*.c", .length = 3 };
   
   // Initialise root location
   FileMgr_initialise(fileMgr, &stringDirName);
@@ -67,13 +66,11 @@ void CParser_parse(CParser* this, const char* dirName)
                          
   sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory ) \
                                     VALUES ('%s')");
-  /*SdbMgr_execute(sdbMgr, "INSERT INTO Root_Location ( directory )" \
-                         "VALUES ('C:/\Temp/\CParser2')"); */
+  
   String_delete(sdbCmd);
   
   // List all C files in newDirName and sub directories
-  filter = String_new(".c");
-  FileList_list(this->fileList, this->initialLocation, filter);
+  FileList_list(this->fileList, this->initialLocation, &filter);
 
   // for each C file add to the TokenList
   cFileName = FileList_loadNextFile(this->fileList);
@@ -101,6 +98,5 @@ void CParser_parse(CParser* this, const char* dirName)
     cFileName = FileList_loadNextFile(this->fileList);
   }
   //String_delete(currPath);
-  String_delete(filter);
   FileMgr_delete(fileMgr);
 }

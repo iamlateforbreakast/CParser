@@ -5,6 +5,8 @@
 #include "Common.h"
 #include "Token.h"
 
+#include <stdint.h>
+
 unsigned int Grammar_matchExternalDeclaration(Grammar* this, Token* token);
 unsigned int Grammar_matchFunctionDeclaration(Grammar* this, Token* token);
 unsigned int Grammar_matchDeclaration(Grammar* this, Token* token);
@@ -171,7 +173,7 @@ unsigned int Grammar_matchDeclaration(Grammar* this, Token* token)
       {
         this->declarationCnt = 2 ;
       }
-      else if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == ';'))
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ';'))
       {
         // Must be typedef
         result = 1;
@@ -186,7 +188,7 @@ unsigned int Grammar_matchDeclaration(Grammar* this, Token* token)
       {
         // Keep matching until ';'
       }
-      else if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == ';'))
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ';'))
       {
         //printf("YEAHHHHHHHH!\n");
         String_print(this->declarator.name,"Var. Declaration: ");
@@ -256,7 +258,7 @@ unsigned int Grammar_matchInitDeclaratorList(Grammar* this, Token* token)
       {
         result = 1;
       }
-      else if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == ','))
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ','))
       {
       }
       else
@@ -331,7 +333,7 @@ unsigned int Grammar_matchDirectDeclarator(Grammar* this, Token* token)
         this->directDeclaratorCnt = 1;
         this->declarator.name = String_dup((String*)token->value);
       }
-      else if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == '('))
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
       {
         // Not supported
       }
@@ -341,17 +343,17 @@ unsigned int Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       }
       break;
     case 1:
-      if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == '['))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '['))
       {
         this->directDeclaratorCnt = 2;
       }
-      else if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == '('))
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
       {
         this->directDeclaratorCnt = 3;
       }
       break;
     case 2:
-      if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == ']'))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ']'))
       {
       }
       else if (Grammar_matchConstantExpression(this, token))
@@ -360,7 +362,7 @@ unsigned int Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       }
       break;
     case 3:
-      if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == ')'))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ')'))
       {
         result = 1;
       }
@@ -472,7 +474,7 @@ unsigned int Grammar_matchPointer(Grammar* this, Token* token)
 {
   unsigned int result = 0;
   
-  result = 0;
+  result += 0;
   
   return 0;
 }
@@ -492,13 +494,13 @@ unsigned int Grammar_matchCompountStatement(Grammar* this, Token* token)
   switch(this->compountStatementCnt)
   {
     case 0:
-      if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == '{'))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
       {
         this->compountStatementCnt = 1;
         result = 1;
       }
     case 1:
-      if ((token->id == TOK_UNKNOWN) && ((unsigned int)token->value == '}'))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '}'))
       {
         result = 1;
       }
