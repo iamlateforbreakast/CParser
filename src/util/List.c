@@ -101,5 +101,10 @@ void List_merge(List* this, List* l1)
     iterator->next = this->head;
     this->head = l1->head;
     this->nbNodes += l1->nbNodes;
+
   }
+  l1->nbNodes = 0;
+  l1->current = NULL;
+  l1->head = NULL;
+  Memory_free(l1, sizeof(List));
 }
