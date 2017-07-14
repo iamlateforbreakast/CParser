@@ -90,6 +90,7 @@ PUBLIC void FileMgr_delete(FileMgr* this)
     {
       closedir(this->activeDir);
     }
+    Memory_free(this->files, sizeof(List));
     //String_delete(this->activePath);
     String_delete(this->rootPath);
     Memory_free(this, sizeof(FileMgr));
@@ -300,7 +301,7 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
   List* result = NULL;
   ListNode* pNode = NULL;
 
-  result = List_new();
+  result = List_new(); // Memory leak
   // List all files and add to list of all files
   allFilesInDir = FileMgr_listFilesInDir(this);
   List_merge(result, allFilesInDir);
@@ -317,7 +318,7 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
     pNode = pNode->next;
   }
 
-  List_delete(allDirInDir, (void (*)(void *))&String_delete);
+  List_delete(allDirInDir, &String_delete);
   
   closedir(this->activeDir);
 
@@ -377,7 +378,7 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
     if (dir->d_type != DT_DIR)
     {
       fileDesc = Memory_alloc(sizeof(FileDesc));
-      fileDesc->name = String_new(dir->d_name);
+      fileDesc->name = String_new(dir->d_name); // main.exe memory leak?
       fileDesc->fullName = String_dup(this->activePath);
       FileMgr_mergePath(this, fileDesc->fullName, fileDesc->name);
       List_insert(result, (void*)fileDesc);
@@ -500,7 +501,8 @@ PRIVATE void FileMgr_mergePath(FileMgr* this, String* path1, String* path2)
 /**************************************************
  @brief FileMgr_matchWildcard
  
- TBD
+ This function matches a fileName with a wildcard
+ pattern
  
  @param [in]     fileName: String* - fileName
  @param [in]     filter: String* - wildcard filter
