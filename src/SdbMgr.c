@@ -15,7 +15,6 @@ SdbMgr* SdbMgr_new()
 
     this = (SdbMgr*)Memory_alloc(sizeof(SdbMgr));
     this->refCount = 0;
-    this->name = NULL;
     
     return this;
 }
@@ -27,7 +26,6 @@ void SdbMgr_delete(SdbMgr* this)
     if (this->refCount==0)
     {
       SdbMgr_close(this);
-      String_delete(this->name);
       Memory_free(this, sizeof(SdbMgr));
     }
 }
@@ -54,8 +52,6 @@ unsigned int SdbMgr_open(SdbMgr* this, String* sdbName)
   unsigned int result = 0;
   
   result = sqlite3_open(sdbName->buffer, &(this->db));
-  
-  this->name = sdbName;
   
   return result;
 }

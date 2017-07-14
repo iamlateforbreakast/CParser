@@ -5,13 +5,11 @@
 
 //#include "ElementTable.h"
 #include "TokenList.h"
-#include "FileList.h"
 #include "Grammar.h"
 
 typedef struct CParser
 {
     TokenList* tokenList;
-    FileList* fileList;
 	Grammar* grammar;
 	String* initialLocation;
 	String* sdbName;
