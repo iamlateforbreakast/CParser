@@ -87,6 +87,8 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
                          )");                 
   sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory ) \
                                     VALUES ('%s')");
+  SdbMgr_execute(sdbMgr, sdbCmd->buffer);
+  
   String_delete(sdbCmd);
   
   l = FileMgr_filterFiles(fileMgr, &filter);
