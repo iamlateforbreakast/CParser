@@ -20,4 +20,6 @@ PUBLIC FileMgr* FileMgr_getFileMgr();
 PUBLIC void FileMgr_initialise(FileMgr* this, String* initialPath);
 PUBLIC void FileMgr_printAllFiles(FileMgr* this);
 PUBLIC String* FileMgr_getRootPath(FileMgr* this);
+PUBLIC List* FileMgr_filterFiles(FileMgr* this, String* filter);
+PUBLIC String* FileMgr_searchAndLoad(FileMgr* this, String* fileName);
 #endif
