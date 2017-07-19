@@ -137,6 +137,36 @@ PUBLIC String* FileMgr_load(FileMgr* this, String* fileName)
 }
 
 /**************************************************
+ @brief FileMgr_searchFile
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
+**************************************************/
+PUBLIC String* FileMgr_searchAndLoad(FileMgr* this, String* fileName)
+{
+  ListNode* pNode = NULL;
+  String* result = NULL;
+  
+  if (this->files != NULL)
+  {
+    pNode = this->files->head;
+  
+    while(pNode!=NULL)
+    {
+      if (String_match(fileName, 0,((FileDesc*)pNode->item)->name) || String_match(fileName, 0,((FileDesc*)pNode->item)->fullName))
+      {
+        result =FileMgr_load(this,((FileDesc*)pNode->item)->fullName);
+      }
+      pNode = pNode->next;
+    }
+  }
+  
+  return result;
+}
+
+/**************************************************
  @brief FileMgr_filterFiles
  
  TBD
@@ -301,7 +331,7 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
   List* result = NULL;
   ListNode* pNode = NULL;
 
-  result = List_new(); // Memory leak
+  result = List_new();
   // List all files and add to list of all files
   allFilesInDir = FileMgr_listFilesInDir(this);
   List_merge(result, allFilesInDir);
@@ -318,7 +348,7 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
     pNode = pNode->next;
   }
 
-  List_delete(allDirInDir, &String_delete);
+  List_delete(allDirInDir, (void (*)(void *))&String_delete);
   
   closedir(this->activeDir);
 
@@ -378,7 +408,7 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
     if (dir->d_type != DT_DIR)
     {
       fileDesc = Memory_alloc(sizeof(FileDesc));
-      fileDesc->name = String_new(dir->d_name); // main.exe memory leak?
+      fileDesc->name = String_new(dir->d_name);
       fileDesc->fullName = String_dup(this->activePath);
       FileMgr_mergePath(this, fileDesc->fullName, fileDesc->name);
       List_insert(result, (void*)fileDesc);
