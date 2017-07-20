@@ -12,6 +12,15 @@ unsigned int StringProcessor_readFileName(StringProcessor* this, String** includ
 unsigned int StringProcessor_readSpaces(StringProcessor* this);
 void StringProcessor_readDefine(StringProcessor* this);
 void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName);
+PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, String* fileName);
+
+/**************************************************
+**************************************************/
+static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
+                                           { .buffer="string.h", .length=8 },
+                                           { .buffer="stdlib.h", .length=8 },
+                                           { .buffer="errno.h", .length=7 },
+                                           { .buffer="unistd.h", .length=8 } };
 
 /**************************************************
 @brief StringProcessor_new - TBD
@@ -128,7 +137,10 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
     result = result + StringProcessor_match(this, quoteToken) + StringProcessor_match(this, bracketCloseToken);
     if (result)
     {
-      StringProcessor_openNewBufferFromFile(this, includeFileName);
+      if (!StringProcessor_isIncFileIgnored(this, includeFileName))
+      {
+        StringProcessor_openNewBufferFromFile(this, includeFileName);
+      }
       String_delete(includeFileName);
     }
   } 
@@ -301,26 +313,28 @@ void StringProcessor_readDefine(StringProcessor* this)
     c = StringBuffer_peekChar(this->currentBuffer);
   }
   
-  //printf("Read define: result=%d\n", result);
+
   
   defineMacro = StringBuffer_readback(this->currentBuffer, result);
   String_print(defineMacro, "#define: ");
 
-  (void)StringProcessor_readSpaces(this);
-  result =0;
-  
-  c = StringBuffer_peekChar(this->currentBuffer);
-    
-  while (c!=10)
+  if (c!=10)
   {
-    result++;
-    c = StringBuffer_readChar(this->currentBuffer);
-    c = StringBuffer_peekChar(this->currentBuffer);
-  }
-  //printf("Read define: result=%d\n", result);
-  macroBody = StringBuffer_readback(this->currentBuffer, result);
-  String_print(macroBody, "#define: ");
+    (void)StringProcessor_readSpaces(this);
+    result =0;
   
+    c = StringBuffer_peekChar(this->currentBuffer);
+    
+    while (c!=10)
+    {
+      result++;
+      c = StringBuffer_readChar(this->currentBuffer);
+      c = StringBuffer_peekChar(this->currentBuffer);
+    }
+    //printf("Read define: result=%d\n", result);
+    macroBody = StringBuffer_readback(this->currentBuffer, result);
+    String_print(macroBody, "#define: ");
+  }
   if (!Map_insert(this->macros, defineMacro, (void*)macroBody))
   {
     String_print(defineMacro, "StringProcessor.c: Could not store macro ");
@@ -341,12 +355,20 @@ void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileNa
   if (this->nbOpenBuffers < NB_MAX_BUFFERS)
   {
     fileContent = FileMgr_searchAndLoad(fileMgr, fileName);
-    this->buffers[this->nbOpenBuffers] = StringBuffer_new(fileContent);
-    this->currentBuffer = this->buffers[this->nbOpenBuffers];
+    if (fileContent!=NULL)
+    {
+      this->buffers[this->nbOpenBuffers] = StringBuffer_new(fileContent);
+      this->currentBuffer = this->buffers[this->nbOpenBuffers];
 
-    String_print(fileName, "Processing file ");
-    printf("-----------------------------------------------\n");
-    this->nbOpenBuffers++;
+      String_print(fileName, "Processing file ");
+      printf("-----------------------------------------------\n");
+      this->nbOpenBuffers++;
+    }
+    else
+    {
+      String_print(fileName,"StringProcessor.c: Cannot load ");
+      String_print(fileName,"StringProcessor.c: Ignoring ");
+    }      
   }
   else
   {
@@ -354,4 +376,18 @@ void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileNa
   }
   
   FileMgr_delete(fileMgr);
+}
+
+/**************************************************
+**************************************************/
+PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, String* fileName)
+{
+  unsigned int isFound = 0;
+  unsigned int i = 0;
+  
+  for (i=0; (i<sizeof(incFilesToIgnore)/sizeof(String) && (!isFound)); i++)
+  {
+    if (String_match(fileName, 0, &(incFilesToIgnore[i]))) isFound = 1;
+  }
+  return isFound;
 }
