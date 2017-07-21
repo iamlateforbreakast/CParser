@@ -13,7 +13,7 @@ unsigned int StringProcessor_readSpaces(StringProcessor* this);
 void StringProcessor_readDefine(StringProcessor* this);
 void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, String* fileName);
-
+PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -111,16 +111,19 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
   String* includeToken = NULL;
   String* defineToken = NULL;
   String* ifdefToken = NULL;
+  String* ifndefToken = NULL;
   String* endifToken = NULL;
   String* elifToken = NULL;
   String* quoteToken = NULL;
   String* bracketOpenToken = NULL;
   String* bracketCloseToken = NULL;
   String* includeFileName = NULL;
+  unsigned char c = 0;
   
   includeToken = String_new("#include");
   defineToken = String_new("#define");
   ifdefToken = String_new("#ifdef");
+  ifndefToken = String_new("#ifndef");
   endifToken = String_new("#endif");
   elifToken = String_new("#elif");
   quoteToken = String_new("\"");
@@ -152,15 +155,32 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
   else if (StringProcessor_match(this, ifdefToken))
   {  //       evaluate condition
   // 5. If StringBuffer_compare(current, "#endif") and isProcessingCondtion = TRUE
+  }
+  else if (StringProcessor_match(this, ifndefToken))
+  {  //       evaluate condition
+    if (!StringProcessor_evaluateCondition(this))
+	{
+	  //this->isProcessingCondition = TRUE;
+	}
+	else
+	{
+	  // Jump to elif or endif
+	  while (!StringProcessor_match(this, endifToken))
+	  {
+	    c = StringBuffer_readChar(this->currentBuffer);
+	  }
+	}
+  // 5. If StringBuffer_compare(current, "#endif") and isProcessingCondtion = TRUE
   } 
   else if (StringProcessor_match(this, endifToken))
   {
-    //       isProcessingCOndtion = FALSE
+    //       isProcessingCondition = FALSE
   }
 
   String_delete(includeToken);
   String_delete(defineToken);
   String_delete(ifdefToken);
+  String_delete(ifndefToken);
   String_delete(endifToken);
   String_delete(elifToken);
   String_delete(quoteToken);
@@ -339,7 +359,7 @@ void StringProcessor_readDefine(StringProcessor* this)
   {
     String_print(defineMacro, "StringProcessor.c: Could not store macro ");
   }
-  if (Map_find(this->macros, defineMacro))
+  if (Map_find(this->macros, defineMacro, NULL))
   {
     String_print(defineMacro, "StringProcessor.c: Found the macro again->");
   }
@@ -390,4 +410,35 @@ PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, Str
     if (String_match(fileName, 0, &(incFilesToIgnore[i]))) isFound = 1;
   }
   return isFound;
+}
+
+/**************************************************
+**************************************************/
+PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this)
+{
+  unsigned int result = 0;
+  unsigned char c = 0;
+  String* macroName = NULL;
+  
+  c = StringBuffer_peekChar(this->currentBuffer);
+  
+  while (c==32)
+  {
+    c = StringBuffer_readChar(this->currentBuffer);
+	c = StringBuffer_peekChar(this->currentBuffer);
+  }
+    
+  while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) ||
+         ((c>='0') && (c<='9')) || (c=='_'))
+  {
+    result++;
+    c = StringBuffer_readChar(this->currentBuffer);
+    c = StringBuffer_peekChar(this->currentBuffer);
+  }
+  
+  macroName = StringBuffer_readback(this->currentBuffer, result);
+  
+  result = Map_find(this->macros, macroName, NULL);
+
+  return result;
 }
