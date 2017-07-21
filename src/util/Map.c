@@ -41,7 +41,7 @@ unsigned int Map_insert(Map* this,String* s, void* p)
     subString = String_subString(s,0,i);
     key = Map_hash(this,subString, i);
     String_delete(subString);
-    if (this->htable[key].p == NULL)
+    if (this->htable[key].s == NULL)
     {
       this->htable[key].s = s;
       this->htable[key].p = p;
@@ -58,9 +58,9 @@ unsigned int Map_insert(Map* this,String* s, void* p)
   return result;
 }
 
-void* Map_find(Map* this, String* s)
+unsigned int Map_find(Map* this, String* s, String** p)
 {
-  void* result = NULL;
+  unsigned int result = NULL;
   String* subString = NULL;
   unsigned int key = 0;
   unsigned int i = 0;
@@ -78,7 +78,12 @@ void* Map_find(Map* this, String* s)
     {
       if (String_match(this->htable[key].s, 0, s))
       {
-        result = this->htable[key].p;
+        if (p) 
+		{
+		  *p = this->htable[key].p;
+		}
+		i = s->length+1; //Exit FOR loop
+		result = 1;
       }
       else
       {
