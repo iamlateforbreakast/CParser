@@ -351,6 +351,7 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
   List_delete(allDirInDir, (void (*)(void *))&String_delete);
   
   closedir(this->activeDir);
+  this->activeDir = NULL;
 
   return result;
 }
