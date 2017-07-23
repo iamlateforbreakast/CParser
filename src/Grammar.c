@@ -22,6 +22,7 @@ unsigned int Grammar_matchTypeQualifier(Grammar* this, Token* token);
 unsigned int Grammar_matchCompountStatement(Grammar* this, Token* token);
 unsigned int Grammar_matchStructOrUnion(Grammar* this, Token* token);
 unsigned int Grammar_matchStructDeclarationList(Grammar* this, Token* token);
+unsigned int Grammar_matchEnumSpecifier(Grammar* this, Token* token);
 void Grammar_reset(Grammar* this);
 
 /****************************************************************************
@@ -178,6 +179,7 @@ unsigned int Grammar_matchDeclaration(Grammar* this, Token* token)
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ';'))
       {
         // Must be typedef
+        printf("typedef found.\n");
         result = 1;
         this->declarationCnt = 0 ;
       }
@@ -440,7 +442,6 @@ unsigned int Grammar_matchTypeSpecifier(Grammar* this, Token* token)
   {
     //String_print((String*)token->value, "Hey I am here ");
     if (String_cmp((String*)token->value,"Uint")) result = 1;
-    //result = 1;
   }
   else
   {
@@ -532,16 +533,16 @@ unsigned int Grammar_matchStructOrUnion(Grammar* this, Token* token)
       if ((token->id == TOK_STRUCT) || (token->id == TOK_UNION))
       {
         this->structOrUnionCnt = 1;
-        result = 1;
       }
       break;
     case 1:
       if ((token->id == TOK_IDENTIFIER))
       {
-
-      } else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
+        result = 1;
+      }
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
       {
-
+        this->structOrUnionCnt = 2;
       }
       break;
     case 2:
@@ -550,7 +551,7 @@ unsigned int Grammar_matchStructOrUnion(Grammar* this, Token* token)
       }
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '}'))
       {
-
+        result = 1;
       }
   }
   return result;
@@ -567,6 +568,39 @@ struct_declaration
   ;
 ****************************************************************************/
 unsigned int Grammar_matchStructDeclarationList(Grammar* this, Token* token)
+{
+  unsigned int result = 0;
+
+  switch (this->structDeclarationListCnt)
+  {
+    case 0:
+      break;
+    case 1:
+      break;
+    case 2:
+      break;
+  }
+  return result;
+}
+
+/****************************************************************************
+enum_specifier
+	: ENUM '{' enumerator_list '}'
+	| ENUM IDENTIFIER '{' enumerator_list '}'
+	| ENUM IDENTIFIER
+	;
+
+enumerator_list
+	: enumerator
+	| enumerator_list ',' enumerator
+	;
+
+enumerator
+	: IDENTIFIER
+	| IDENTIFIER '=' constant_expression
+	;
+****************************************************************************/
+unsigned int Grammar_matchEnumSpecifier(Grammar* this, Token* token)
 {
   unsigned int result = 0;
 

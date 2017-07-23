@@ -20,6 +20,7 @@ typedef struct Grammar{
   unsigned int functionDeclarationCnt;
   unsigned int compountStatementCnt;
   unsigned int structOrUnionCnt;
+  unsigned int structDeclarationListCnt;
   unsigned int evaluatedDeclarationSpecifiers;
   unsigned int resultDeclarationSpecifiers;
   unsigned int evaluatedDeclarator;
