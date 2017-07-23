@@ -20,6 +20,8 @@ unsigned int Grammar_matchPointer(Grammar* this, Token* token);
 unsigned int Grammar_matchConstantExpression(Grammar* this, Token* token);
 unsigned int Grammar_matchTypeQualifier(Grammar* this, Token* token);
 unsigned int Grammar_matchCompountStatement(Grammar* this, Token* token);
+unsigned int Grammar_matchStructOrUnion(Grammar* this, Token* token);
+unsigned int Grammar_matchStructDeclarationList(Grammar* this, Token* token);
 void Grammar_reset(Grammar* this);
 
 /****************************************************************************
@@ -27,13 +29,13 @@ void Grammar_reset(Grammar* this);
 Grammar* Grammar_new()
 {
   Grammar* this = NULL;
-  
+
   this = (Grammar*)Memory_alloc(sizeof(Grammar));
   // New typelist hash
   // New function hash
   // New Global Var hash
   Grammar_reset(this);
-  
+
   return this;
 }
 
@@ -80,13 +82,13 @@ external_declaration
 unsigned int Grammar_matchExternalDeclaration(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   if (Grammar_matchDeclaration(this, token))
   {
   } else if (Grammar_matchFunctionDeclaration(this, token))
   {
   }
-  
+
   return result;
 }
 
@@ -101,7 +103,7 @@ function_definition
 unsigned int Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   switch(this->functionDeclarationCnt)
   {
     case 0:
@@ -148,7 +150,7 @@ declaration
 unsigned int Grammar_matchDeclaration(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   switch(this->declarationCnt)
   {
     case 0:
@@ -238,7 +240,7 @@ unsigned int Grammar_matchDeclarationSpecifiers(Grammar* this, Token* token)
 	  }
 	  this->evaluatedDeclarationSpecifiers = 1;
   }
-  
+
   return this->resultDeclarationSpecifiers;
 }
 
@@ -250,7 +252,7 @@ init_declarator_list
 unsigned int Grammar_matchInitDeclaratorList(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   switch (this->initDeclaratorListCnt)
   {
     case 0:
@@ -306,7 +308,7 @@ unsigned int Grammar_matchDeclarator(Grammar* this, Token* token)
   }
      this->evaluatedDeclarator = 1;
    }
-  
+
   return this->resultDeclarator;
 }
 
@@ -323,7 +325,7 @@ direct_declarator
 unsigned int Grammar_matchDirectDeclarator(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   switch (this->directDeclaratorCnt)
   {
     case 0:
@@ -386,14 +388,14 @@ storage_class_specifier
 unsigned int Grammar_matchStorageClass(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   if ((token->id == TOK_EXTERN) || (token->id == TOK_TYPEDEF) ||
       (token->id == TOK_STATIC) || (token->id == TOK_AUTO) ||
-      (token->id == TOK_REGISTER)) 
+      (token->id == TOK_REGISTER))
   {
     result = 1;
   }
-  
+
   return result;
 }
 
@@ -402,7 +404,7 @@ unsigned int Grammar_matchStorageClass(Grammar* this, Token* token)
 unsigned int Grammar_matchConstantExpression(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   return result;
 }
 
@@ -425,12 +427,12 @@ type_specifier
 unsigned int Grammar_matchTypeSpecifier(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   if ((token->id == TOK_VOID) || (token->id == TOK_CHAR) ||
       (token->id == TOK_SHORT) || (token->id == TOK_INT) ||
       (token->id == TOK_LONG) || (token->id == TOK_FLOAT) ||
       (token->id == TOK_DOUBLE) || (token->id == TOK_SIGNED) ||
-      (token->id == TOK_UNSIGNED)) 
+      (token->id == TOK_UNSIGNED))
   {
     result = 1;
   }
@@ -440,7 +442,11 @@ unsigned int Grammar_matchTypeSpecifier(Grammar* this, Token* token)
     if (String_cmp((String*)token->value,"Uint")) result = 1;
     //result = 1;
   }
-  
+  else
+  {
+    result = Grammar_matchStructOrUnion(this, token);
+  }
+
   return result;
 }
 
@@ -453,12 +459,12 @@ type_qualifier
 unsigned int Grammar_matchTypeQualifier(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
-  if ((token->id == TOK_CONST) || (token->id == TOK_VOLATILE)) 
+
+  if ((token->id == TOK_CONST) || (token->id == TOK_VOLATILE))
   {
     return 1;
   }
-  
+
   return result;
 }
 
@@ -473,9 +479,9 @@ pointer
 unsigned int Grammar_matchPointer(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   result += 0;
-  
+
   return 0;
 }
 
@@ -490,7 +496,7 @@ compound_statement
 unsigned int Grammar_matchCompountStatement(Grammar* this, Token* token)
 {
   unsigned int result = 0;
-  
+
   switch(this->compountStatementCnt)
   {
     case 0:
@@ -505,8 +511,64 @@ unsigned int Grammar_matchCompountStatement(Grammar* this, Token* token)
         result = 1;
       }
   }
-  
+
   return result;
 }
-#if 0
-#endif
+
+/****************************************************************************
+struct_or_union_specifier
+	: struct_or_union IDENTIFIER '{' struct_declaration_list '}'
+	| struct_or_union '{' struct_declaration_list '}'
+	| struct_or_union IDENTIFIER
+  ;
+****************************************************************************/
+unsigned int Grammar_matchStructOrUnion(Grammar* this, Token* token)
+{
+  unsigned int result = 0;
+
+  switch (this->structOrUnionCnt)
+  {
+    case 0:
+      if ((token->id == TOK_STRUCT) || (token->id == TOK_UNION))
+      {
+        this->structOrUnionCnt = 1;
+        result = 1;
+      }
+      break;
+    case 1:
+      if ((token->id == TOK_IDENTIFIER))
+      {
+
+      } else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
+      {
+
+      }
+      break;
+    case 2:
+      if (Grammar_matchStructDeclarationList(this, token))
+      {
+      }
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '}'))
+      {
+
+      }
+  }
+  return result;
+}
+
+/****************************************************************************
+struct_declaration_list
+	: struct_declaration
+	| struct_declaration_list struct_declaration
+	;
+
+struct_declaration
+	: specifier_qualifier_list struct_declarator_list ';' struct_or_union IDENTIFIER
+  ;
+****************************************************************************/
+unsigned int Grammar_matchStructDeclarationList(Grammar* this, Token* token)
+{
+  unsigned int result = 0;
+
+  return result;
+}
