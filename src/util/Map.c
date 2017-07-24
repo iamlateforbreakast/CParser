@@ -60,7 +60,7 @@ unsigned int Map_insert(Map* this,String* s, void* p)
 
 unsigned int Map_find(Map* this, String* s, String** p)
 {
-  unsigned int result = NULL;
+  unsigned int result = 0;
   String* subString = NULL;
   unsigned int key = 0;
   unsigned int i = 0;
