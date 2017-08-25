@@ -37,7 +37,6 @@ void TransUnit_loadFromFile(TransUnit* this, const char* fileName)
 unsigned char TransUnit_readCharFromProcessedStream(TransUnit* this)
 {
   unsigned char c;
-  unsigned int isComment = 1;
   
   //removedSpaces = StringProcessor_readSpaces(this->processor);
   //while (isComment)

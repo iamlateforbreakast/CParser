@@ -121,6 +121,7 @@ void Grammar_matchDeclarationList(Grammar* this, Token* token);
 void Grammar_matchDeclarationList(Grammar* this, Token* token);
 void Grammar_matchParameterDeclaration(Grammar* this, Token* token);
 void Grammar_matchConstantExpresion(Grammar* this, Token* token);
+void Grammar_printDeclarator(Grammar* this);
 void Grammar_reset(Grammar* this);
 
 MatchRule rules[] = { { E_EXTERNAL_DECLARATION , 0 , 0, &Grammar_matchExternalDeclaration, 0 },
@@ -185,12 +186,15 @@ void Grammar_reset(Grammar* this)
   unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
   unsigned int i = 0;
   
+  printf("Grammar Reset\n");
   for (i=0; i<nbRules; i++)
   {
     rules[i].isMatched = 0;
     rules[i].isEvaluated = 0;
     rules[i].count = 0;
   }
+  this->declarator.name = NULL;
+  this->declarator.class = E_UNKNOWN_DECLARATOR;
 }
 
 /****************************************************************************
@@ -209,8 +213,8 @@ void Grammar_pushToken(Grammar* this, Token* token)
   
   if (rules[E_EXTERNAL_DECLARATION].isMatched)
   {
-    Grammar_reset(this);
     Grammar_printDeclarator(this);
+    Grammar_reset(this);
   }
   for (i=0; i<nbRules; i++)
   {
@@ -614,8 +618,6 @@ void Grammar_matchTypeSpecifier(Grammar* this, Token* token)
   }
   else if (token->id == TOK_IDENTIFIER)
   {
-    String_print((String*)token->value, "Hey I am here ");
-    this->declarator.name = String_dup((String*)token->value); // Not freed
     rules[E_TYPE_SPECIFIER].isMatched = 1;
   }
   else if (rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched)
@@ -1122,7 +1124,7 @@ void Grammar_printDeclarator(Grammar* this)
       String_delete(this->declarator.name);
       break;
     case E_VARIABLE_DECLARATOR:
-      String_print(this->declarator.name,"Function declaration found: ");
+      String_print(this->declarator.name,"Variable declaration found: ");
       String_delete(this->declarator.name);
       break;
     case E_UNKNOWN_DECLARATOR:
