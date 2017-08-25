@@ -503,7 +503,10 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
         rules[E_DIRECT_DECLARATOR].count = 1;
         this->declarator.name = String_dup((String*)token->value);
-        this->declarator.class = E_VARIABLE_DECLARATOR;
+        if (this->declarator.class!=E_TYPE_DECLARATOR)
+        {
+          this->declarator.class = E_VARIABLE_DECLARATOR;
+        }
       }
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
       {
@@ -576,9 +579,8 @@ void Grammar_matchStorageClass(Grammar* this, Token* token)
 {
   rules[E_STORAGE_CLASS].isMatched = 0;
   
-  if ((token->id == TOK_EXTERN) || (token->id == TOK_TYPEDEF) ||
-      (token->id == TOK_STATIC) || (token->id == TOK_AUTO) ||
-      (token->id == TOK_REGISTER))
+  if ((token->id == TOK_EXTERN) || (token->id == TOK_STATIC) ||
+      (token->id == TOK_AUTO) || (token->id == TOK_REGISTER))
   {
     rules[E_STORAGE_CLASS].isMatched = 1;
   }
