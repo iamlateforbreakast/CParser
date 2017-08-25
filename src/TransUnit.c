@@ -40,15 +40,16 @@ unsigned char TransUnit_readCharFromProcessedStream(TransUnit* this)
   unsigned int isComment = 1;
   
   //removedSpaces = StringProcessor_readSpaces(this->processor);
-  while (isComment)
-  {
-    isComment = TransUnit_readSingleLineComment(this);
-    isComment = isComment + TransUnit_readMultiLineComment(this);
-    isComment=0;
-  }
+  //while (isComment)
+  // {
+  //  isComment = TransUnit_readSingleLineComment(this);
+  //  isComment = isComment + TransUnit_readMultiLineComment(this);
+    //isComment=0;
+  //}
   
   c = StringProcessor_readTransUnitChar(this->processor);  
-
+  //printf("TransUNit.c: Character read is %c\n",c);
+  
   return c;
 }
 
@@ -67,6 +68,7 @@ unsigned int TransUnit_readSingleLineComment(TransUnit* this)
     while (c!=10)
     {
       c = StringProcessor_readTransUnitChar(this->processor);
+      result = 1;
     }
   }
   
@@ -104,6 +106,7 @@ unsigned int TransUnit_readMultiLineComment(TransUnit* this)
     {
       //c = StringProcessor_readTransUnitChar(this->processor);
       //c = StringProcessor_readTransUnitChar(this->processor);
+      result = 1;
     }
   }
   

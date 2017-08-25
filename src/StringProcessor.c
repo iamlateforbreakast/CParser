@@ -7,6 +7,14 @@
 
 #include <string.h>
 
+typedef enum{
+  E_INCLUDE=0,
+  E_DEFINE,
+  E_ENDIF,
+  E_IF,
+  E_ELSE
+} PreprocessorDirective;
+
 unsigned int  StringProcessor_processDirective(StringProcessor* this);
 unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName);
 unsigned int StringProcessor_readSpaces(StringProcessor* this);
@@ -14,6 +22,7 @@ void StringProcessor_readDefine(StringProcessor* this);
 void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this);
+PRIVATE unsigned int StringProcessor_processComment(StringProcessor* this);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -71,33 +80,42 @@ void StringProcessor_delete(StringProcessor* this)
 unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
 { 
   unsigned char current_c = 0;
-  //unsigned char peek_c = 0;
-  unsigned int isDirective = 1;
   unsigned int isExit = 0;
   
-  if (StringBuffer_isEOF(this->currentBuffer))
+  while ((!isExit) && (current_c==0))
   {
-    // Are there more buffers to process?
-    if (this->nbOpenBuffers>1)
+    current_c = 0;
+    
+    /* Check for End of current file */
+    if (StringBuffer_isEOF(this->currentBuffer))
     {
-      printf("Finished this H file!\n");
-      this->nbOpenBuffers--;
-      StringBuffer_delete(this->currentBuffer);
-      this->buffers[this->nbOpenBuffers] = NULL;
-      this->currentBuffer = this->buffers[this->nbOpenBuffers-1];
+      /* Are there more buffers to process? */
+      if (this->nbOpenBuffers>1)
+      {
+        printf("Finished this H file!\n");
+        this->nbOpenBuffers--;
+        StringBuffer_delete(this->currentBuffer);
+        this->buffers[this->nbOpenBuffers] = NULL;
+        this->currentBuffer = this->buffers[this->nbOpenBuffers-1];
+      }
+      else
+      {
+        printf("Changing C file!\n");
+        isExit = 1;
+      }
+    }
+    else if (StringProcessor_processComment(this))
+    {
+
+    }
+    else if (StringProcessor_processDirective(this))
+    {
     }
     else
     {
-      printf("Changing C file!\n");
-      isExit = 1;
+      current_c = StringBuffer_readChar(this->currentBuffer);
     }
   }
-  while ((isDirective) && (!isExit))
-  {
-    isDirective = StringProcessor_processDirective(this);
-    //isDirective = isDirective + StringProcessor_checkForMacro(peek_c);
-  }
-  if (!isExit) current_c = StringBuffer_readChar(this->currentBuffer);
   
   return current_c;
 }
@@ -439,6 +457,49 @@ PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this)
   macroName = StringBuffer_readback(this->currentBuffer, result);
   
   result = Map_find(this->macros, macroName, NULL);
+
+  return result;
+}
+
+/**************************************************
+**************************************************/
+PRIVATE unsigned int StringProcessor_processComment(StringProcessor* this)
+{
+  unsigned int result = 0;
+  String* singleLineComment = NULL;
+  String* multiLineStartToken = NULL;
+  String* multiLineEndToken = NULL;
+  unsigned int isFound = 0;
+  unsigned char c = 0;
+  
+  singleLineComment = String_new("//");
+  multiLineStartToken = String_new("/*");
+  multiLineEndToken = String_new("*/");
+  
+  if (StringProcessor_match(this, singleLineComment))
+  {
+    c = StringBuffer_readChar(this->currentBuffer);
+      
+    while (c!=10)
+    {
+      c = StringBuffer_readChar(this->currentBuffer);
+    }
+    result = 1;
+  }
+  else if (StringProcessor_match(this, multiLineStartToken))
+  {
+    isFound = StringProcessor_match(this, multiLineEndToken);
+    while (!isFound)
+    {
+      c = StringBuffer_readChar(this->currentBuffer);
+      isFound = StringProcessor_match(this, multiLineEndToken);
+    }
+    result = 1;
+  }
+  
+  String_delete(singleLineComment);
+  String_delete(multiLineStartToken);
+  String_delete(multiLineEndToken);
 
   return result;
 }

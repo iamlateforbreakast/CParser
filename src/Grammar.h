@@ -6,27 +6,7 @@
 #include "String2.h"
 #include "Token.h"
 
-typedef struct Declarator
-{
-  String* name;
-} Declarator;
-
-typedef struct Grammar{
-  unsigned int directDeclaratorCnt;
-  unsigned int declaratorCnt;
-  unsigned int initDeclaratorListCnt;
-  unsigned int declarationSpecifiersCnt;
-  unsigned int declarationCnt;
-  unsigned int functionDeclarationCnt;
-  unsigned int compountStatementCnt;
-  unsigned int structOrUnionCnt;
-  unsigned int structDeclarationListCnt;
-  unsigned int evaluatedDeclarationSpecifiers;
-  unsigned int resultDeclarationSpecifiers;
-  unsigned int evaluatedDeclarator;
-  unsigned int resultDeclarator;
-  Declarator declarator;
-} Grammar;
+typedef struct Grammar Grammar;
 
 Grammar* Grammar_new();
 void Grammar_delete(Grammar* this);
