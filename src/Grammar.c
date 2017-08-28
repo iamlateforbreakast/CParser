@@ -39,7 +39,8 @@ typedef enum
   E_ABSTRACT_DECLARATOR,
   E_DIRECT_ABSTRACT_DECLARATOR,
   E_DECLARATION_LIST,
-  E_PARAMETER_DECLARATION
+  E_PARAMETER_DECLARATION,
+  E_CONDITIONAL_EXPRESSION
 } RuleName;
 
 typedef enum{
@@ -121,6 +122,7 @@ void Grammar_matchDeclarationList(Grammar* this, Token* token);
 void Grammar_matchDeclarationList(Grammar* this, Token* token);
 void Grammar_matchParameterDeclaration(Grammar* this, Token* token);
 void Grammar_matchConstantExpresion(Grammar* this, Token* token);
+void Grammar_mathConditionalExpression(Grammar* this, Token* token);
 void Grammar_printDeclarator(Grammar* this);
 void Grammar_reset(Grammar* this);
 
@@ -153,7 +155,8 @@ MatchRule rules[] = { { E_EXTERNAL_DECLARATION , 0 , 0, &Grammar_matchExternalDe
                       { E_ABSTRACT_DECLARATOR, 0, 0, &Grammar_matchAbstractDeclarator, 0 },
                       { E_DIRECT_ABSTRACT_DECLARATOR, 0, 0, &Grammar_matchDirectAbstractDeclarator, 0 },
                       { E_DECLARATION_LIST, 0, 0, &Grammar_matchDeclarationList, 0 },
-                      { E_PARAMETER_DECLARATION, 0, 0, &Grammar_matchParameterDeclaration, 0 }
+                      { E_PARAMETER_DECLARATION, 0, 0, &Grammar_matchParameterDeclaration, 0 },
+		      { E_CONDITION_EXPRESSION, 0, 0, &Grammar_matchConditionalExpression, 0 }
                     };
 
 /****************************************************************************
@@ -1101,7 +1104,18 @@ void Grammar_matchConstantExpresion(Grammar* this, Token* token)
 {
     rules[E_CONSTANT_EXPRESSION].isMatched = 0;
 }
- 
+
+/****************************************************************************
+conditional_expression
+	: logical_or_expression
+	| logical_or_expression '?' expression ':' conditional_expression
+	;
+****************************************************************************/  
+void Grammar_matchConditionalExpresion(Grammar* this, Token* token)
+{
+    rules[E_CONDITIONAL_EXPRESSION].isMatched = 0;
+}
+
 /****************************************************************************
 ****************************************************************************/
 void Grammar_evaluateRule(Grammar* this, Token* token, RuleName r)
