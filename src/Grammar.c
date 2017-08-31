@@ -47,7 +47,8 @@ typedef enum
   E_EXPRESSION_STATEMENT,
   E_SELECTION_STATEMENT,
   E_ITERATION_STATEMENT,
-  E_JUMP_STATEMENT
+  E_JUMP_STATEMENT,
+  E_EXPRESSION
 } RuleName;
 
 typedef enum{
@@ -133,7 +134,6 @@ void Grammar_matchParameterList(Grammar* this, Token* token);
 void Grammar_matchAbstractDeclarator(Grammar* this, Token* token);
 void Grammar_matchDirectAbstractDeclarator(Grammar* this, Token* token);
 void Grammar_matchDeclarationList(Grammar* this, Token* token);
-void Grammar_matchDeclarationList(Grammar* this, Token* token);
 void Grammar_matchParameterDeclaration(Grammar* this, Token* token);
 void Grammar_matchConstantExpresion(Grammar* this, Token* token);
 void Grammar_matchConditionalExpression(Grammar* this, Token* token);
@@ -144,6 +144,7 @@ void Grammar_matchExpresionStatement(Grammar* this, Token* token);
 void Grammar_matchLabeledStatement(Grammar* this, Token* token);
 void Grammar_matchStatement(Grammar* this, Token* token);
 void Grammar_matchStatementList(Grammar* this, Token* token);
+void Grammar_matchExpression(Grammar* this, Token* token);
 void Grammar_printDeclarator(Grammar* this);
 void Grammar_reset(Grammar* this);
 
@@ -185,6 +186,7 @@ MatchRule rules[] = { { E_EXTERNAL_DECLARATION , 0 , 0, &Grammar_matchExternalDe
                       { E_SELECTION_STATEMENT, 0, 0, &Grammar_matchSelectionStatement, 0 },
                       { E_ITERATION_STATEMENT, 0, 0, &Grammar_matchIterationStatement, 0 },
                       { E_JUMP_STATEMENT, 0, 0, &Grammar_matchJumpStatement, 0 },
+                      { E_EXPRESSION, 0, 0, &Grammar_matchExpression, 0 }
                     };
 
 /****************************************************************************
@@ -198,7 +200,8 @@ Grammar* Grammar_new()
   // New function hash
   // New Global Var hash
   Grammar_reset(this);
-
+  this->scope = E_GLOBAL_SCOPE;
+  
   return this;
 }
 
@@ -208,6 +211,7 @@ void Grammar_delete(Grammar* this)
 {
   // delete Global var hash
   Memory_free(this, sizeof(Grammar));
+  
 }
 
 /****************************************************************************
@@ -215,18 +219,20 @@ void Grammar_delete(Grammar* this)
 void Grammar_reset(Grammar* this)
 {
   unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
-  unsigned int i = 0;
+  RuleName i = E_EXTERNAL_DECLARATION;
   
   printf("Grammar Reset\n");
-  for (i=0; i<nbRules; i++)
+  for (i=E_EXTERNAL_DECLARATION; i<nbRules; i++)
   {
-    rules[i].isMatched = 0;
-    rules[i].isEvaluated = 0;
-    rules[i].count = 0;
+    if ((this->scope==E_GLOBAL_SCOPE)||(i!=E_COMPOUND_STATEMENT))
+    {
+      rules[i].isMatched = 0;
+      rules[i].isEvaluated = 0;
+      rules[i].count = 0;
+    }
   }
   this->declarator.name = NULL;
   this->declarator.class = E_UNKNOWN_DECLARATOR;
-  this->scope = E_GLOBAL_SCOPE;
 }
 
 /****************************************************************************
@@ -815,6 +821,39 @@ statement
 void Grammar_matchStatement(Grammar* this, Token* token)
 {
   rules[E_STATEMENT].isMatched = 0;
+  
+  Grammar_evaluateRule(this, token, E_LABELED_STATEMENT);
+  //Grammar_evaluateRule(this, token, E_COMPOUND_STATEMENT);
+  Grammar_evaluateRule(this, token, E_EXPRESSION_STATEMENT);
+  Grammar_evaluateRule(this, token, E_SELECTION_STATEMENT);
+  Grammar_evaluateRule(this, token, E_ITERATION_STATEMENT);
+  Grammar_evaluateRule(this, token, E_JUMP_STATEMENT);
+  
+  if (rules[E_LABELED_STATEMENT].isMatched)
+  {
+    rules[E_STATEMENT].isMatched = 1;
+  }
+  else if (rules[E_COMPOUND_STATEMENT].isMatched)
+  {
+    rules[E_STATEMENT].isMatched = 1;
+    printf("matchStatement: watch out!\n");
+  }
+  else if (rules[E_EXPRESSION_STATEMENT].isMatched)
+  {
+    rules[E_STATEMENT].isMatched = 1;
+  }
+  else if (rules[E_SELECTION_STATEMENT].isMatched)
+  {
+    rules[E_STATEMENT].isMatched = 1;
+  }
+  else if (rules[E_ITERATION_STATEMENT].isMatched)
+  {
+    rules[E_STATEMENT].isMatched = 1;
+  }
+  else if (rules[E_ITERATION_STATEMENT].isMatched)
+  {
+    rules[E_STATEMENT].isMatched = 1;
+  }
 }
 
 /****************************************************************************
@@ -877,6 +916,34 @@ jump_statement
 void Grammar_matchJumpStatement(Grammar* this, Token* token)
 {
   rules[E_JUMP_STATEMENT].isMatched = 0;
+  
+  switch (rules[E_JUMP_STATEMENT].count)
+  {
+    case 0:
+      if (token->id == TOK_GOTO)
+      {
+      }
+      else if (token->id == TOK_CONTINUE)
+      {
+      }
+      else if (token->id == TOK_BREAK)      
+      {
+      }
+      else if (token->id == TOK_RETURN)
+      {
+        rules[E_JUMP_STATEMENT].count = 1;
+      }
+      break;
+    case 1:
+      if (rules[E_EXPRESSION].isMatched)
+      {
+      }      
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ';'))
+      {
+        rules[E_JUMP_STATEMENT].isMatched = 1;
+      }
+      break;
+  }
 }
 
 /****************************************************************************
@@ -1266,6 +1333,22 @@ void Grammar_evaluateRule(Grammar* this, Token* token, RuleName r)
     rules[r].evaluate(this, token);
     rules[r].isEvaluated = 1;
   }
+}
+
+/****************************************************************************
+expression
+	: assignment_expression
+	| expression ',' assignment_expression
+	;
+****************************************************************************/  
+void Grammar_matchExpression(Grammar* this, Token* token)
+{
+    rules[E_EXPRESSION].isMatched = 0;
+    if (token->id == TOK_IDENTIFIER)
+    {
+      rules[E_EXPRESSION].isMatched = 1;
+      printf("Matched expression\n");
+    }
 }
 
 /****************************************************************************
