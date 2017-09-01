@@ -7,7 +7,7 @@
 //s/tatic int nb = 0;
 //static int nbStr = 0;
 
-Token* Token_new(TokenId id, void* value, String* fileName)
+Token* Token_new(TokenId id, char* text, void* value, String* fileName)
 {
   Token* this = NULL;
 
@@ -15,6 +15,7 @@ Token* Token_new(TokenId id, void* value, String* fileName)
   this->id = id;
   this->value = value;
   this->fileName = fileName;
+  this->text = text;
   //if (this->id==TOK_IDENTIFIER)
   //{
   //  nbStr++;

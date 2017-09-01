@@ -71,12 +71,12 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
       c = TransUnit_readCharFromProcessedStream(this->transUnit);
       if (c==0)
       {
-        nextToken = Token_new(TOK_EOF, 0, NULL);
+        nextToken = Token_new(TOK_EOF, "EOF", 0, NULL);
         //printf("Read char EOF\n");
       }
       else if ((c!=10) && (c!=32))
       {
-        nextToken = Token_new(TOK_UNKNOWN, (void*)((intptr_t)c), NULL);
+        nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL);
         //printf("Accepted: Read char: %c %d\n",c,c);
       }
       else
@@ -101,7 +101,7 @@ Token* TokenList_checkKeyword(TokenList* this)
     if (TransUnit_match(this->transUnit, this->keyword[i]))
     {
       isFound = 1;
-      result = Token_new(i, 0, NULL);
+      result = Token_new(i, (char*)keywords[i], 0, NULL);
     }
   }
 
@@ -119,7 +119,7 @@ Token* TokenList_checkIntegerConstant(TokenList* this)
   {
     tmpInt = String_toInt(tmpStr);
     String_delete(tmpStr);
-    result = Token_new(TOK_CONSTANT, (void*)((uintptr_t)tmpInt), NULL);
+    result = Token_new(TOK_CONSTANT, "CONSTANT", (void*)((uintptr_t)tmpInt), NULL);
   }
 
   return result;
@@ -134,7 +134,7 @@ Token* TokenList_checkIdentifier(TokenList* this)
 
   if (identifierName!=NULL)
   {
-    result = Token_new(TOK_IDENTIFIER, (void*)identifierName, NULL);
+    result = Token_new(TOK_IDENTIFIER, "IDENTIFIER", (void*)identifierName, NULL);
     //String_print(identifierName, "Token identifier: ");
   }
 
