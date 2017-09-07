@@ -25,6 +25,7 @@ typedef enum
   E_TYPE_QUALIFIER,
   E_TYPE_QUALIFIER_LIST,
   E_STRUCT_OR_UNION_SPECIFIER,
+  E_STRUCT_OR_UNION_SPECIFIER2,
   E_STRUCT_DECLARATION_LIST,
   E_STRUCT_DECLARATION,
   E_SPECIFIER_QUALIFIER_LIST,
@@ -66,7 +67,7 @@ typedef enum
   E_LOCAL_SCOPE = 1,
   E_GLOBAL_SCOPE = 2
 } Scope;
-
+  
 typedef void (*EvalFunction)(Grammar* this, Token* token);
 
 typedef struct MatchRule
@@ -104,6 +105,7 @@ struct Grammar{
   unsigned int resultDeclarationSpecifiers;
   unsigned int evaluatedDeclarator;
   unsigned int resultDeclarator;
+  unsigned int isInStructDefinition;
   Scope scope;
   unsigned int tokenNumber;
   Declarator declarator;
@@ -126,6 +128,7 @@ void Grammar_matchTypeQualifier(Grammar* this, Token* token);
 void Grammar_matchTypeQualifierList(Grammar* this, Token* token);
 void Grammar_matchCompountStatement(Grammar* this, Token* token);
 void Grammar_matchStructOrUnionSpecifier(Grammar* this, Token* token);
+void Grammar_matchStructOrUnionSpecifier2(Grammar* this, Token* token);
 void Grammar_matchStructDeclarationList(Grammar* this, Token* token);
 void Grammar_matchSpecifierQualifierList(Grammar* this, Token* token);
 void Grammar_matchStructDeclaratorList(Grammar* this, Token* token);
@@ -172,6 +175,7 @@ MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, 
                       { E_TYPE_QUALIFIER , "TYPE_QUALIFIER", 0 , 0, &Grammar_matchTypeQualifier, 0 },
                       { E_TYPE_QUALIFIER_LIST , "TYPE_QUALIFIER_LIST", 0 , 0, &Grammar_matchTypeQualifierList, 0 },
                       { E_STRUCT_OR_UNION_SPECIFIER , "STRUCT_OR_UNION_SPECIFIER", 0 , 0, &Grammar_matchStructOrUnionSpecifier, 0 },
+                      { E_STRUCT_OR_UNION_SPECIFIER2 , "STRUCT_OR_UNION_SPECIFIER2", 0 , 0, &Grammar_matchStructOrUnionSpecifier2, 0 },
                       { E_STRUCT_DECLARATION_LIST , "STRUCT_DECLARATION_LIST ", 0 , 0, &Grammar_matchStructDeclarationList, 0 },
                       { E_STRUCT_DECLARATION , "STRUCT_DECLARATION", 0 , 0, &Grammar_matchStructDeclaration, 0 },
                       { E_SPECIFIER_QUALIFIER_LIST, "SPECIFIER_QUALIFIER_LIST", 0, 0, &Grammar_matchSpecifierQualifierList, 0 },
@@ -213,7 +217,8 @@ Grammar* Grammar_new()
   // New Global Var hash
   Grammar_reset(this);
   this->scope = E_GLOBAL_SCOPE;
-  this->tokenNumber = 0;
+  this->tokenNumber = 1;
+  this->isInStructDefinition = 0;
   return this;
 }
 
@@ -223,6 +228,7 @@ void Grammar_delete(Grammar* this)
 {
   // delete Global var hash
   Memory_free(this, sizeof(Grammar));
+  
 }
 
 /****************************************************************************
@@ -231,7 +237,7 @@ void Grammar_reset(Grammar* this)
 {
   unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
   RuleName i = E_EXTERNAL_DECLARATION;
-
+  
   printf("Grammar Reset\n");
   for (i=E_EXTERNAL_DECLARATION; i<nbRules; i++)
   {
@@ -249,12 +255,14 @@ void Grammar_pushToken(Grammar* this, Token* token)
 {
   unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
   unsigned int i = 0;
-
+  
+  printf("-- Processing token #%d: %s\n", this->tokenNumber, token->text);
+  
   Grammar_matchExternalDeclaration(this, token);
-
+  
   this->tokenNumber++;
   Grammar_printMatchingRules(this, token);
-
+  
   if (rules[E_EXTERNAL_DECLARATION].isMatched)
   {
     Grammar_printDeclarator(this);
@@ -274,11 +282,9 @@ external_declaration
 **************************************************/
 void Grammar_matchExternalDeclaration(Grammar* this, Token* token)
 {
-  rules[E_EXTERNAL_DECLARATION].isMatched = 0;
-
   if (this->scope == E_GLOBAL_SCOPE) Grammar_evaluateRule(this, token, E_DECLARATION);
   Grammar_evaluateRule(this, token, E_FUNCTION_DECLARATION);
-
+  
   if ((rules[E_DECLARATION].isMatched) && (this->scope == E_GLOBAL_SCOPE))
   {
     // Place Declarator structure in store
@@ -307,20 +313,27 @@ void Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
   {
     case 0:
       Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
+      if (rules[E_DECLARATION_SPECIFIERS].isMatched)
+      {
+        rules[E_FUNCTION_DECLARATION].count = 1;
+      }
+      break;
+    case 1:
+      Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
       Grammar_evaluateRule(this, token, E_DECLARATOR);
       if (rules[E_DECLARATION_SPECIFIERS].isMatched)
       {
       }
       else if ((rules[E_DECLARATOR].isMatched))
       {
-        rules[E_FUNCTION_DECLARATION].count = 1;
+        rules[E_FUNCTION_DECLARATION].count = 2;
       }
       else
       {
         // Syntax Error
       }
       break;
-    case 1:
+    case 2:
       Grammar_evaluateRule(this, token, E_DECLARATOR);
       Grammar_evaluateRule(this, token, E_COMPOUND_STATEMENT);
       if (rules[E_DECLARATOR].isMatched)
@@ -348,20 +361,35 @@ declaration
 void Grammar_matchDeclaration(Grammar* this, Token* token)
 {
   rules[E_DECLARATION].isMatched = 0;
-
+  
   switch(rules[E_DECLARATION].count)
   {
     case 0:
       Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
       if (rules[E_DECLARATION_SPECIFIERS].isMatched)
       {
-        rules[E_DECLARATION].count = 1 ;
-      }
-      else
-      {
+        rules[E_DECLARATION].count = 1;
       }
       break;
     case 1:
+      Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
+      Grammar_evaluateRule(this, token, E_INIT_DECLARATOR_LIST);
+      if (rules[E_DECLARATION_SPECIFIERS].isMatched)
+      {
+        
+      }
+      else if (rules[E_INIT_DECLARATOR_LIST].isMatched)
+      {
+        rules[E_DECLARATION].count = 2 ;
+      }
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ';'))
+      {
+        rules[E_DECLARATION].isMatched = 1;
+        rules[E_DECLARATION].count = 0 ;
+        printf("matchDeclaration count %d\n", rules[E_DECLARATION].count);
+      }
+      break;
+    case 2:
       Grammar_evaluateRule(this, token, E_INIT_DECLARATOR_LIST);
       if (rules[E_INIT_DECLARATOR_LIST].isMatched)
       {
@@ -377,6 +405,11 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
         rules[E_DECLARATION].count = 0 ;
       }
       break;
+  }
+  // Check if inside a struct definition
+  if (rules[E_STRUCT_OR_UNION_SPECIFIER].count != 0)
+  {
+    rules[E_DECLARATION].isMatched = 0;
   }
 }
 
@@ -396,7 +429,7 @@ void Grammar_matchDeclarationSpecifiers(Grammar* this, Token* token)
   Grammar_evaluateRule(this, token, E_STORAGE_CLASS);
   Grammar_evaluateRule(this, token, E_TYPE_SPECIFIER);
   Grammar_evaluateRule(this, token, E_TYPE_QUALIFIER);
-
+  
   if (rules[E_STORAGE_CLASS].isMatched)
   {
 	  rules[E_DECLARATION_SPECIFIERS].isMatched = 1;
@@ -447,7 +480,7 @@ init_declarator
 void Grammar_matchInitDeclarator(Grammar* this, Token* token)
 {
     rules[E_INIT_DECLARATOR].isMatched = 0;
-
+    
     switch (rules[E_INIT_DECLARATOR].count)
     {
       case 0:
@@ -487,7 +520,7 @@ declarator
 void Grammar_matchDeclarator(Grammar* this, Token* token)
 {
   rules[E_DECLARATOR].isMatched = 0;
-
+  
   switch (rules[E_DECLARATOR].count)
   {
     case 0:
@@ -505,6 +538,7 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
       {
         // Syntax Error
       }
+      break;
     case 1:
       Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
       if (rules[E_DIRECT_DECLARATOR].isMatched)
@@ -515,6 +549,7 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
       {
         // Syntax Error
       }
+      break;
   }
 }
 
@@ -542,7 +577,7 @@ direct_declarator
 void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
 {
   rules[E_DIRECT_DECLARATOR].isMatched = 0;
-
+  
   switch (rules[E_DIRECT_DECLARATOR].count)
   {
     case 0:
@@ -626,7 +661,7 @@ storage_class_specifier
 void Grammar_matchStorageClass(Grammar* this, Token* token)
 {
   rules[E_STORAGE_CLASS].isMatched = 0;
-
+  
   if ((token->id == TOK_EXTERN) || (token->id == TOK_STATIC) ||
       (token->id == TOK_AUTO) || (token->id == TOK_REGISTER))
   {
@@ -658,7 +693,7 @@ type_specifier
 void Grammar_matchTypeSpecifier(Grammar* this, Token* token)
 {
   rules[E_TYPE_SPECIFIER].isMatched = 0;
-
+  
   Grammar_evaluateRule(this, token, E_STRUCT_OR_UNION_SPECIFIER);
   Grammar_evaluateRule(this, token, E_ENUM_SPECIFIER);
   if ((token->id == TOK_VOID) || (token->id == TOK_CHAR) ||
@@ -669,14 +704,15 @@ void Grammar_matchTypeSpecifier(Grammar* this, Token* token)
   {
     rules[E_TYPE_SPECIFIER].isMatched = 1;
   }
-  else if (token->id == TOK_IDENTIFIER)
-  {
-    rules[E_TYPE_SPECIFIER].isMatched = 1;
-  }
   else if (rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched)
   {
     rules[E_TYPE_SPECIFIER].isMatched = 1;
     printf("THis is a struct here\n");
+  }
+  else if (token->id == TOK_IDENTIFIER)
+  {
+    //rules[E_TYPE_SPECIFIER].isMatched = 1;
+    String_print((String*)token->value, "TYPE SPECIFIER =");
   }
   else if (rules[E_ENUM_SPECIFIER].isMatched)
   {
@@ -694,13 +730,12 @@ type_qualifier
 void Grammar_matchTypeQualifier(Grammar* this, Token* token)
 {
   rules[E_TYPE_QUALIFIER].isMatched = 0;
-
+  
   if ((token->id == TOK_CONST) || (token->id == TOK_VOLATILE))
   {
     rules[E_TYPE_QUALIFIER].isMatched = 1;
   }
 
-  rules[E_TYPE_QUALIFIER].isEvaluated = 1;
 }
 
 /**************************************************
@@ -736,10 +771,11 @@ void Grammar_matchPointer(Grammar* this, Token* token)
       }
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '*'))
       {
-
+        
       }
       //Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIER);
       //Grammar_evaluateRule(this, token, E_DECLARATOR_LIST);
+      break;
     case 1:
       break;
   }
@@ -756,7 +792,7 @@ compound_statement
 void Grammar_matchCompountStatement(Grammar* this, Token* token)
 {
   rules[E_COMPOUND_STATEMENT].isMatched = 0;
-
+  
   switch(rules[E_COMPOUND_STATEMENT].count)
   {
     case 0:
@@ -796,7 +832,7 @@ statement_list
 void Grammar_matchStatementList(Grammar* this, Token* token)
 {
   rules[E_STATEMENT_LIST].isMatched = 0;
-
+  
   Grammar_evaluateRule(this, token, E_STATEMENT);
   if (rules[E_STATEMENT].isMatched)
   {
@@ -813,7 +849,7 @@ declaration_list
 void Grammar_matchDeclarationList(Grammar* this, Token* token)
 {
   rules[E_DECLARATION_LIST].isMatched = 0;
-
+  
   Grammar_evaluateRule(this, token, E_DECLARATION);
   if (rules[E_DECLARATION].isMatched)
   {
@@ -835,14 +871,14 @@ statement
 void Grammar_matchStatement(Grammar* this, Token* token)
 {
   rules[E_STATEMENT].isMatched = 0;
-
+  
   Grammar_evaluateRule(this, token, E_LABELED_STATEMENT);
   //Grammar_evaluateRule(this, token, E_COMPOUND_STATEMENT);
   Grammar_evaluateRule(this, token, E_EXPRESSION_STATEMENT);
   Grammar_evaluateRule(this, token, E_SELECTION_STATEMENT);
   Grammar_evaluateRule(this, token, E_ITERATION_STATEMENT);
   Grammar_evaluateRule(this, token, E_JUMP_STATEMENT);
-
+  
   if (rules[E_LABELED_STATEMENT].isMatched)
   {
     rules[E_STATEMENT].isMatched = 1;
@@ -935,7 +971,7 @@ jump_statement
 void Grammar_matchJumpStatement(Grammar* this, Token* token)
 {
   rules[E_JUMP_STATEMENT].isMatched = 0;
-
+  
   switch (rules[E_JUMP_STATEMENT].count)
   {
     case 0:
@@ -945,7 +981,7 @@ void Grammar_matchJumpStatement(Grammar* this, Token* token)
       else if (token->id == TOK_CONTINUE)
       {
       }
-      else if (token->id == TOK_BREAK)
+      else if (token->id == TOK_BREAK)      
       {
       }
       else if (token->id == TOK_RETURN)
@@ -956,7 +992,7 @@ void Grammar_matchJumpStatement(Grammar* this, Token* token)
     case 1:
       if (rules[E_EXPRESSION].isMatched)
       {
-      }
+      }      
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ';'))
       {
         rules[E_JUMP_STATEMENT].isMatched = 1;
@@ -971,48 +1007,102 @@ struct_or_union_specifier
 	| struct_or_union '{' struct_declaration_list '}'
 	| struct_or_union IDENTIFIER
   ;
-
+  
 struct_or_union
 	: STRUCT
 	| UNION
 	;
 ****************************************************************************/
 void Grammar_matchStructOrUnionSpecifier(Grammar* this, Token* token)
-{
+{ 
   rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 0;
-
+  
+  if (this->isInStructDefinition)
+  {
+    Grammar_evaluateRule(this, token, E_STRUCT_OR_UNION_SPECIFIER2);
+    if (rules[E_STRUCT_OR_UNION_SPECIFIER2].isMatched)
+    {
+      rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 1;
+    }
+  }
+  else
+  {
   switch (rules[E_STRUCT_OR_UNION_SPECIFIER].count)
   {
     case 0:
       if ((token->id == TOK_STRUCT) || (token->id == TOK_UNION))
       {
         rules[E_STRUCT_OR_UNION_SPECIFIER].count = 1;
-      }
+      } 
+      // else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '}') && (isInStructDefinition))
+      // {
+        // rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 1;
+        // rules[E_STRUCT_OR_UNION_SPECIFIER].count = 0;
+        // isInStructDefinition = 0;
+      // }
       break;
     case 1:
-      if ((token->id == TOK_IDENTIFIER))
+      if (token->id == TOK_IDENTIFIER)
       {
         rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 1;
+        rules[E_STRUCT_OR_UNION_SPECIFIER].count = 2;
       }
-      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
+      else
       {
-        rules[E_STRUCT_OR_UNION_SPECIFIER].count = 3;
+        rules[E_STRUCT_OR_UNION_SPECIFIER].count = 0;
       }
       break;
     case 2:
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
       {
         rules[E_STRUCT_OR_UNION_SPECIFIER].count = 3;
+        
+      }
+      else
+      {
+        // Error: unexpected token
+        rules[E_STRUCT_OR_UNION_SPECIFIER].count = 0;
       }
       break;
     case 3:
+      this->isInStructDefinition = 1;
       Grammar_evaluateRule(this, token, E_STRUCT_DECLARATION_LIST);
+      this->isInStructDefinition = 0;
       if (rules[E_STRUCT_DECLARATION_LIST].isMatched)
       {
       }
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '}'))
       {
         rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 1;
+        rules[E_STRUCT_OR_UNION_SPECIFIER].count = 0;
+      }
+      break;
+  }
+  }
+}
+
+/****************************************************************************
+struct_or_union_specifier2
+	: struct_or_union IDENTIFIER
+  ;
+****************************************************************************/
+void Grammar_matchStructOrUnionSpecifier2(Grammar* this, Token* token)
+{
+  rules[E_STRUCT_OR_UNION_SPECIFIER2].isMatched = 0;
+  
+  switch (rules[E_STRUCT_OR_UNION_SPECIFIER2].count)
+  {
+    case 0:
+      if ((token->id == TOK_STRUCT) || (token->id == TOK_UNION))
+      {
+        rules[E_STRUCT_OR_UNION_SPECIFIER2].count = 1;
+      } 
+      break;
+    case 1:
+      if ((token->id == TOK_IDENTIFIER))
+      {
+        rules[E_STRUCT_OR_UNION_SPECIFIER2].isMatched = 1;
+        rules[E_STRUCT_OR_UNION_SPECIFIER2].count = 0;
       }
       break;
   }
@@ -1043,7 +1133,7 @@ struct_declaration
 void Grammar_matchStructDeclaration(Grammar* this, Token* token)
 {
   rules[E_STRUCT_DECLARATION].isMatched = 0;
-
+  
   switch (rules[E_STRUCT_DECLARATION].count)
   {
     case 0:
@@ -1082,6 +1172,22 @@ specifier_qualifier_list
 void Grammar_matchSpecifierQualifierList(Grammar* this, Token* token)
 {
   rules[E_SPECIFIER_QUALIFIER_LIST].isMatched = 0;
+  
+  switch (rules[E_SPECIFIER_QUALIFIER_LIST].count)
+  {
+    case 0:
+      Grammar_evaluateRule(this, token, E_TYPE_SPECIFIER);
+      Grammar_evaluateRule(this, token, E_TYPE_QUALIFIER);
+      if (rules[E_TYPE_SPECIFIER].isMatched)
+      {
+        rules[E_SPECIFIER_QUALIFIER_LIST].isMatched = 1;
+      }
+      else if (rules[E_TYPE_QUALIFIER].isMatched)
+      {
+        rules[E_SPECIFIER_QUALIFIER_LIST].isMatched = 1;
+      }
+      break;
+  }
 }
 
 /****************************************************************************
@@ -1093,13 +1199,15 @@ struct_declarator_list
 void Grammar_matchStructDeclaratorList(Grammar* this, Token* token)
 {
   rules[E_STRUCT_DECLARATOR_LIST].isMatched = 0;
-
+  
   switch (rules[E_STRUCT_DECLARATOR_LIST].count)
   {
     case 0:
       Grammar_evaluateRule(this, token, E_STRUCT_DECLARATOR);
-      break;
-    case 1:
+      if (rules[E_STRUCT_DECLARATOR].isMatched)
+      {
+        rules[E_STRUCT_DECLARATOR_LIST].isMatched = 1;
+      }
       break;
   }
 }
@@ -1114,7 +1222,7 @@ struct_declarator
 void Grammar_matchStructDeclarator(Grammar* this, Token* token)
 {
   rules[E_STRUCT_DECLARATOR].isMatched = 0;
-
+  
   switch (rules[E_STRUCT_DECLARATOR].count)
   {
     case 0:
@@ -1147,7 +1255,7 @@ enum_specifier
 void Grammar_matchEnumSpecifier(Grammar* this, Token* token)
 {
   rules[E_ENUM_SPECIFIER].isMatched = 0;
-
+  
   switch (rules[E_ENUM_SPECIFIER].count)
   {
     case 0:
@@ -1156,12 +1264,12 @@ void Grammar_matchEnumSpecifier(Grammar* this, Token* token)
         rules[E_ENUM_SPECIFIER].count = 1;
       }
       break;
-    case 1:
+    case 1: 
       if (token->id == TOK_IDENTIFIER)
       {
         rules[E_ENUM_SPECIFIER].count = 2;
         rules[E_ENUM_SPECIFIER].isMatched = 1;
-      }
+      } 
       else if  ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
       {
         rules[E_ENUM_SPECIFIER].count = 2;
@@ -1184,6 +1292,7 @@ void Grammar_matchEnumSpecifier(Grammar* this, Token* token)
       {
         rules[E_ENUM_SPECIFIER].isMatched = 1;
       }
+      break;
   }
 }
 
@@ -1196,7 +1305,7 @@ enumerator_list
 void Grammar_matchEnumeratorList(Grammar* this, Token* token)
 {
   rules[E_ENUMERATOR_LIST].isMatched = 0;
-
+  
   switch (rules[E_ENUMERATOR_LIST].count)
   {
     case 0:
@@ -1223,7 +1332,7 @@ enumerator
 void Grammar_matchEnumerator(Grammar* this, Token* token)
 {
   rules[E_ENUMERATOR].isMatched = 0;
-
+  
   switch (rules[E_ENUMERATOR].count)
   {
     case 0:
@@ -1288,7 +1397,7 @@ parameter_type_list
 void Grammar_matchParameterTypeList(Grammar* this, Token* token)
 {
   rules[E_PARAMETER_TYPE_LIST].isMatched = 0;
-
+  
   switch (rules[E_PARAMETER_TYPE_LIST].count)
   {
     case 0:
@@ -1321,7 +1430,7 @@ void Grammar_matchParameterTypeList(Grammar* this, Token* token)
 void Grammar_matchParameterList(Grammar* this, Token* token)
 {
   rules[E_PARAMETER_LIST].isMatched = 0;
-
+  
   switch (rules[E_PARAMETER_LIST].count)
   {
     case 0:
@@ -1355,7 +1464,7 @@ parameter_declaration
 void Grammar_matchParameterDeclaration(Grammar* this, Token* token)
 {
   rules[E_PARAMETER_DECLARATION].isMatched = 0;
-
+  
   switch (rules[E_PARAMETER_DECLARATION].count)
   {
     case 0:
@@ -1413,7 +1522,7 @@ void Grammar_matchDirectAbstractDeclarator(Grammar* this, Token* token)
 constant_expression
 	: conditional_expression
 	;
-****************************************************************************/
+****************************************************************************/  
 void Grammar_matchConstantExpresion(Grammar* this, Token* token)
 {
     rules[E_CONSTANT_EXPRESSION].isMatched = 0;
@@ -1424,7 +1533,7 @@ conditional_expression
 	: logical_or_expression
 	| logical_or_expression '?' expression ':' conditional_expression
 	;
-****************************************************************************/
+****************************************************************************/  
 void Grammar_matchConditionalExpression(Grammar* this, Token* token)
 {
     rules[E_CONDITIONAL_EXPRESSION].isMatched = 0;
@@ -1446,7 +1555,7 @@ expression
 	: assignment_expression
 	| expression ',' assignment_expression
 	;
-****************************************************************************/
+****************************************************************************/  
 void Grammar_matchExpression(Grammar* this, Token* token)
 {
     rules[E_EXPRESSION].isMatched = 0;
@@ -1464,21 +1573,21 @@ void Grammar_printDeclarator(Grammar* this)
   switch (this->declarator.class)
   {
     case E_TYPE_DECLARATOR:
-      if (this->scope == E_GLOBAL_SCOPE)
+      if (this->scope == E_GLOBAL_SCOPE) 
       {
         String_print(this->declarator.name,"Global type declaration found: ");
       }
       String_delete(this->declarator.name);
       break;
     case E_FUNCTION_DECLARATOR:
-      if (this->scope == E_GLOBAL_SCOPE)
+      if (this->scope == E_GLOBAL_SCOPE) 
       {
         String_print(this->declarator.name,"Global function declaration found: ");
       }
       String_delete(this->declarator.name);
       break;
     case E_VARIABLE_DECLARATOR:
-      if (this->scope == E_GLOBAL_SCOPE)
+      if (this->scope == E_GLOBAL_SCOPE) 
       {
         String_print(this->declarator.name,"Global variable declaration found: ");
       }
@@ -1495,8 +1604,7 @@ void Grammar_printMatchingRules(Grammar* this, Token* token)
 {
   unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
   RuleName i = E_EXTERNAL_DECLARATION;
-
-  printf("-- Token #%d: %s\n", this->tokenNumber, token->text);
+  
   for (i=E_EXTERNAL_DECLARATION; i<nbRules; i++)
   {
     if (rules[i].isMatched)
