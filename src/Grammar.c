@@ -80,32 +80,42 @@ typedef struct MatchRule
   unsigned int count;
 } MatchRule;
 
+typedef struct TypeInfo TypeInfo;
+
+struct TypeInfo
+{
+  String* name;
+  unsigned int nbFields;
+  List* fields;
+};
+
 typedef struct Declarator Declarator;
 
 struct Declarator
 {
   DeclaratorClass class;
-  Declarator* type;
+  TypeInfo type;
   //DeclaratorQualifier qualifier;
   String* name;
   List* args;
 };
 
 struct Grammar{
-  unsigned int directDeclaratorCnt;
-  unsigned int declaratorCnt;
-  unsigned int initDeclaratorListCnt;
-  unsigned int declarationSpecifiersCnt;
-  unsigned int declarationCnt;
-  unsigned int functionDeclarationCnt;
-  unsigned int compountStatementCnt;
-  unsigned int structOrUnionCnt;
-  unsigned int structDeclarationListCnt;
-  unsigned int evaluatedDeclarationSpecifiers;
-  unsigned int resultDeclarationSpecifiers;
-  unsigned int evaluatedDeclarator;
-  unsigned int resultDeclarator;
+  // unsigned int directDeclaratorCnt;
+  // unsigned int declaratorCnt;
+  // unsigned int initDeclaratorListCnt;
+  // unsigned int declarationSpecifiersCnt;
+  // unsigned int declarationCnt;
+  // unsigned int functionDeclarationCnt;
+  // unsigned int compountStatementCnt;
+  // unsigned int structOrUnionCnt;
+  // unsigned int structDeclarationListCnt;
+  // unsigned int evaluatedDeclarationSpecifiers;
+  // unsigned int resultDeclarationSpecifiers;
+  // unsigned int evaluatedDeclarator;
+  // unsigned int resultDeclarator;
   unsigned int isInStructDefinition;
+  unsigned int requestReset;
   Scope scope;
   unsigned int tokenNumber;
   Declarator declarator;
@@ -158,7 +168,7 @@ void Grammar_matchStatementList(Grammar* this, Token* token);
 void Grammar_matchExpression(Grammar* this, Token* token);
 void Grammar_printDeclarator(Grammar* this);
 void Grammar_printMatchingRules(Grammar* this, Token* token);
-void Grammar_reset(Grammar* this);
+void Grammar_reset(Grammar* this, Scope scope);
 
 MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, &Grammar_matchExternalDeclaration, 0 },
                       { E_FUNCTION_DECLARATION , "FUNCTION_DECLARATION", 0 , 0, &Grammar_matchFunctionDeclaration, 0 },
@@ -215,10 +225,12 @@ Grammar* Grammar_new()
   // New typelist hash
   // New function hash
   // New Global Var hash
-  Grammar_reset(this);
+  Grammar_reset(this, E_GLOBAL_SCOPE);
   this->scope = E_GLOBAL_SCOPE;
   this->tokenNumber = 1;
+  this->requestReset = 0;
   this->isInStructDefinition = 0;
+  
   return this;
 }
 
@@ -233,7 +245,7 @@ void Grammar_delete(Grammar* this)
 
 /****************************************************************************
 ****************************************************************************/
-void Grammar_reset(Grammar* this)
+void Grammar_reset(Grammar* this, Scope scope)
 {
   unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
   RuleName i = E_EXTERNAL_DECLARATION;
@@ -241,9 +253,16 @@ void Grammar_reset(Grammar* this)
   printf("Grammar Reset\n");
   for (i=E_EXTERNAL_DECLARATION; i<nbRules; i++)
   {
-      rules[i].isMatched = 0;
-      rules[i].isEvaluated = 0;
-      rules[i].count = 0;
+      if ((scope == E_LOCAL_SCOPE) && ((i==E_FUNCTION_DECLARATION) || (i==E_STRUCT_OR_UNION_SPECIFIER) || (i==E_DECLARATION)))
+      {
+      }
+      else
+      {
+        rules[i].isMatched = 0;
+        rules[i].isEvaluated = 0;
+        if (rules[i].count!=0) printf("Set count to zero: %s\n", rules[i].description);
+        rules[i].count = 0;
+      }
   }
   this->declarator.name = NULL;
   this->declarator.class = E_UNKNOWN_DECLARATOR;
@@ -266,13 +285,19 @@ void Grammar_pushToken(Grammar* this, Token* token)
   if (rules[E_EXTERNAL_DECLARATION].isMatched)
   {
     Grammar_printDeclarator(this);
-    Grammar_reset(this);
+    Grammar_reset(this, E_GLOBAL_SCOPE);
+  }
+  if (this->requestReset)
+  {
+    Grammar_reset(this, E_LOCAL_SCOPE);
+    this->requestReset = 0;
   }
   for (i=0; i<nbRules; i++)
   {
     rules[i].isEvaluated = 0;
     rules[i].isMatched = 0;
   }
+  
 }
 
 /**************************************************
@@ -362,6 +387,8 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
 {
   rules[E_DECLARATION].isMatched = 0;
   
+  if (!this->isInStructDefinition)
+  {
   switch(rules[E_DECLARATION].count)
   {
     case 0:
@@ -405,6 +432,20 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
         rules[E_DECLARATION].count = 0 ;
       }
       break;
+  }
+  }
+  else
+  {
+    switch(rules[E_DECLARATION].count)
+    {
+    case 0:
+      break;
+    case 1:
+      Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
+      break;
+    case 2:
+      break;
+      }
   }
   // Check if inside a struct definition
   if (rules[E_STRUCT_OR_UNION_SPECIFIER].count != 0)
@@ -1015,14 +1056,22 @@ struct_or_union
 ****************************************************************************/
 void Grammar_matchStructOrUnionSpecifier(Grammar* this, Token* token)
 { 
+  static int preventRecursion;
+  
   rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 0;
   
-  if (this->isInStructDefinition)
+  if (preventRecursion)
   {
     Grammar_evaluateRule(this, token, E_STRUCT_OR_UNION_SPECIFIER2);
     if (rules[E_STRUCT_OR_UNION_SPECIFIER2].isMatched)
     {
       rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 1;
+    }
+    else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '}'))
+    {
+      rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 1;
+      rules[E_STRUCT_OR_UNION_SPECIFIER].count = 0;
+      this->isInStructDefinition = 0;
     }
   }
   else
@@ -1053,10 +1102,10 @@ void Grammar_matchStructOrUnionSpecifier(Grammar* this, Token* token)
       }
       break;
     case 2:
-      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{')) 
       {
         rules[E_STRUCT_OR_UNION_SPECIFIER].count = 3;
-        
+        this->isInStructDefinition = 1;
       }
       else
       {
@@ -1065,9 +1114,9 @@ void Grammar_matchStructOrUnionSpecifier(Grammar* this, Token* token)
       }
       break;
     case 3:
-      this->isInStructDefinition = 1;
+      preventRecursion = 1;
       Grammar_evaluateRule(this, token, E_STRUCT_DECLARATION_LIST);
-      this->isInStructDefinition = 0;
+      preventRecursion = 0;
       if (rules[E_STRUCT_DECLARATION_LIST].isMatched)
       {
       }
@@ -1075,6 +1124,7 @@ void Grammar_matchStructOrUnionSpecifier(Grammar* this, Token* token)
       {
         rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 1;
         rules[E_STRUCT_OR_UNION_SPECIFIER].count = 0;
+        this->isInStructDefinition = 0;
       }
       break;
   }
@@ -1156,6 +1206,7 @@ void Grammar_matchStructDeclaration(Grammar* this, Token* token)
       {
         rules[E_STRUCT_DECLARATION].isMatched = 1;
         rules[E_STRUCT_DECLARATION].count = 0;
+        this->requestReset = 1;
       }
       break;
   }
@@ -1241,6 +1292,7 @@ void Grammar_matchStructDeclarator(Grammar* this, Token* token)
       if (rules[E_CONSTANT_EXPRESSION].isMatched)
       {
         rules[E_STRUCT_DECLARATOR].isMatched = 1;
+        rules[E_STRUCT_DECLARATOR].count = 0;
       }
   }
 }
