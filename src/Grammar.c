@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+#define DEBUG 1
+  
 typedef enum
 {
   E_EXTERNAL_DECLARATION = 0,
@@ -221,6 +223,8 @@ Grammar* Grammar_new()
 {
   Grammar* this = NULL;
 
+
+  TRACE(("Grammar New\n"));
   this = (Grammar*)Memory_alloc(sizeof(Grammar));
   // New typelist hash
   // New function hash
@@ -250,7 +254,7 @@ void Grammar_reset(Grammar* this, Scope scope)
   unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
   RuleName i = E_EXTERNAL_DECLARATION;
   
-  printf("Grammar Reset\n");
+  TRACE(("Grammar Reset\n"));
   for (i=E_EXTERNAL_DECLARATION; i<nbRules; i++)
   {
       if ((scope == E_LOCAL_SCOPE) && ((i==E_FUNCTION_DECLARATION) || (i==E_STRUCT_OR_UNION_SPECIFIER) || (i==E_DECLARATION)))
@@ -260,7 +264,7 @@ void Grammar_reset(Grammar* this, Scope scope)
       {
         rules[i].isMatched = 0;
         rules[i].isEvaluated = 0;
-        if (rules[i].count!=0) printf("Set count to zero: %s\n", rules[i].description);
+        if (rules[i].count!=0) TRACE(("-- Set count to zero: %s\n", rules[i].description));
         rules[i].count = 0;
       }
   }
@@ -275,7 +279,7 @@ void Grammar_pushToken(Grammar* this, Token* token)
   unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
   unsigned int i = 0;
   
-  printf("-- Processing token #%d: %s\n", this->tokenNumber, token->text);
+  TRACE(("-- Processing token #%d: %s\n", this->tokenNumber, token->text));
   
   Grammar_matchExternalDeclaration(this, token);
   
@@ -413,7 +417,7 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
       {
         rules[E_DECLARATION].isMatched = 1;
         rules[E_DECLARATION].count = 0 ;
-        printf("matchDeclaration count %d\n", rules[E_DECLARATION].count);
+        TRACE(("matchDeclaration count %d\n", rules[E_DECLARATION].count));
       }
       break;
     case 2:
@@ -748,12 +752,12 @@ void Grammar_matchTypeSpecifier(Grammar* this, Token* token)
   else if (rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched)
   {
     rules[E_TYPE_SPECIFIER].isMatched = 1;
-    printf("THis is a struct here\n");
+    TRACE(("This is a struct here\n"));
   }
   else if (token->id == TOK_IDENTIFIER)
   {
     //rules[E_TYPE_SPECIFIER].isMatched = 1;
-    String_print((String*)token->value, "TYPE SPECIFIER =");
+    //String_print((String*)token->value, "TYPE SPECIFIER =");
   }
   else if (rules[E_ENUM_SPECIFIER].isMatched)
   {
@@ -841,7 +845,7 @@ void Grammar_matchCompountStatement(Grammar* this, Token* token)
       {
         rules[E_COMPOUND_STATEMENT].count = 1;
         this->scope = E_LOCAL_SCOPE;
-        printf("Start compound statement\n");
+        TRACE(("-- Start compound statement\n"));
 
       }
       break;
@@ -852,7 +856,7 @@ void Grammar_matchCompountStatement(Grammar* this, Token* token)
       {
         rules[E_COMPOUND_STATEMENT].isMatched  = 1;
         this->scope = E_GLOBAL_SCOPE;
-        printf("End compound statement\n");
+        TRACE(("-- End compound statement\n"));
       }
       else if (rules[E_STATEMENT_LIST].isMatched)
       {
@@ -895,7 +899,7 @@ void Grammar_matchDeclarationList(Grammar* this, Token* token)
   if (rules[E_DECLARATION].isMatched)
   {
     rules[E_DECLARATION_LIST].isMatched = 1;
-    printf("Declaration_list: Matched local declaration\n");
+    TRACE(("Declaration_list: Matched local declaration\n"));
   }
 }
 
@@ -1652,6 +1656,8 @@ void Grammar_printDeclarator(Grammar* this)
   }
 }
 
+/****************************************************************************
+****************************************************************************/
 void Grammar_printMatchingRules(Grammar* this, Token* token)
 {
   unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
@@ -1661,7 +1667,7 @@ void Grammar_printMatchingRules(Grammar* this, Token* token)
   {
     if (rules[i].isMatched)
     {
-      printf("-- %s is matched.\n", rules[i].description);
+      printf("--- %s is matched.\n", rules[i].description);
     }
   }
 
