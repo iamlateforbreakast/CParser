@@ -5,6 +5,7 @@
 #include "Common.h"
 #include "Token.h"
 #include "List.h"
+#include "SdbMgr.h"
 
 #include <stdint.h>
 
@@ -171,6 +172,7 @@ void Grammar_matchExpression(Grammar* this, Token* token);
 void Grammar_printDeclarator(Grammar* this);
 void Grammar_printMatchingRules(Grammar* this, Token* token);
 void Grammar_reset(Grammar* this, Scope scope);
+void Grammar_insertDeclaration(Grammar* this, Declarator* declarator);
 
 MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, &Grammar_matchExternalDeclaration, 0 },
                       { E_FUNCTION_DECLARATION , "FUNCTION_DECLARATION", 0 , 0, &Grammar_matchFunctionDeclaration, 0 },
@@ -1639,6 +1641,11 @@ void Grammar_printDeclarator(Grammar* this)
       if (this->scope == E_GLOBAL_SCOPE) 
       {
         String_print(this->declarator.name,"Global function declaration found: ");
+        Grammar_insertDeclaration(this, &this->declarator);
+      }
+      else
+      {
+        String_print(this->declarator.name,"Local function declaration found: ");
       }
       String_delete(this->declarator.name);
       break;
@@ -1672,3 +1679,26 @@ void Grammar_printMatchingRules(Grammar* this, Token* token)
   }
 
 }
+
+/****************************************************************************
+****************************************************************************/
+void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
+{
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+  char cmd[255];
+  char name[255];
+  
+  
+  memset(name, 0, 255);
+  memset(cmd, 0, 255);
+  memcpy(name, declarator->name->buffer, declarator->name->length);
+  
+  printf("Grammar_insertDeclaration 1\n");
+  sprintf(cmd, "INSERT INTO Declarations ( name ) \
+                  VALUES ('%s')", name);
+  
+  printf("Grammar_insertDeclaration 2\n");
+  SdbMgr_execute(sdbMgr, cmd);
+  printf("Grammar_insertDeclaration 3\n");
+  SdbMgr_delete(sdbMgr);                                  
+} 
