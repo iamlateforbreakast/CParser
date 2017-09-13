@@ -14,6 +14,7 @@ CParser* cparser;
 /**************************************************
 **************************************************/
 PRIVATE void CParser_processFile(CParser* this, String* fileName);
+PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr);
 
 /**************************************************
  @brief CParser_new
@@ -82,9 +83,10 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   // Open DB
   this->sdbName = &sdbName;
   SdbMgr_open(sdbMgr, this->sdbName);
-  SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( \
-                         directory text NOT NULL \
-                         )");                 
+  
+  // Create DB tables
+  CParser_createTables(this, sdbMgr);
+  
   sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory ) \
                                     VALUES ('%s')");
   SdbMgr_execute(sdbMgr, sdbCmd->buffer);
@@ -103,8 +105,11 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
     
   }
 
+  printf("CParser_parse 1\n");
   Memory_free(l, sizeof(List));
+  printf("CParser_parse 2\n");
   SdbMgr_delete(sdbMgr);
+  printf("CParser_parse 3\n");
   FileMgr_delete(fileMgr);
 }
 
@@ -137,4 +142,28 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
     
   Token_delete(newToken);
   TokenList_delete(this->tokenList);
+}
+
+/**************************************************
+ @brief CParser_createTables
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
+**************************************************/
+PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
+{
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( \
+                         directory text NOT NULL \
+                         )");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Declarations ( \
+                          id integer PRIMARY_KEY, \
+                          name text NOT NULL, \
+                          type text NOT NULL, \
+                          scope text NOT NULL, \
+                          rtype_rank integer, \
+                          rtype_id integer \
+                          )");
+                          
 }
