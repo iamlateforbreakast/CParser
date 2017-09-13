@@ -15,6 +15,7 @@ SOURCES=src/main.c \
 	src/util/FileMgr.c \
 	src/util/List.c \
 	src/util/Map.c \
+	src/util/Debug.c \
 	src/SdbMgr.c \
 	src/Token.c \
 	src/OptionMgr.c \
