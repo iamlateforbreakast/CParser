@@ -3,8 +3,16 @@
 #include "SdbMgr.h"
 
 #include "Common.h"
+#include <sqlite3.h>
 
 static SdbMgr* sdbMgr = NULL;
+
+struct SdbMgr
+{
+  String* name;
+  sqlite3* db;
+  unsigned int refCount;
+};
 
 void SdbMgr_close(SdbMgr* this);
 static int SdbMgr_execCallback(void* this, int argc, char **argv, char **azColName);
@@ -15,7 +23,8 @@ SdbMgr* SdbMgr_new()
 
     this = (SdbMgr*)Memory_alloc(sizeof(SdbMgr));
     this->refCount = 0;
-    
+    this->name = NULL;
+    this->db = NULL;
     return this;
 }
 
@@ -27,24 +36,20 @@ void SdbMgr_delete(SdbMgr* this)
     {
       SdbMgr_close(this);
       Memory_free(this, sizeof(SdbMgr));
+      this->name = NULL;
+      this->db = NULL;
     }
 }
 
 SdbMgr* SdbMgr_getSdbMgr()
-{
-  SdbMgr* this = NULL;
-  
+{ 
   if (sdbMgr==NULL)
   {
-    this = SdbMgr_new();
+    sdbMgr = SdbMgr_new();
   }
-  else
-  {
-    this = sdbMgr;
-  }
-  this->refCount++;
+  sdbMgr->refCount++;
   
-  return this;
+  return sdbMgr;
 }
 
 unsigned int SdbMgr_open(SdbMgr* this, String* sdbName)

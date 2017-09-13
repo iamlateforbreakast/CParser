@@ -5,14 +5,7 @@
 
 #include "Common.h"
 
-#include <sqlite3.h>
-
-typedef struct SdbMgr
-{
-  String* name;
-  sqlite3* db;
-  unsigned int refCount;
-} SdbMgr;
+typedef struct SdbMgr SdbMgr;
 
 SdbMgr* SdbMgr_new();
 void SdbMgr_delete(SdbMgr* this);
