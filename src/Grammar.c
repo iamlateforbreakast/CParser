@@ -1694,8 +1694,8 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
   memcpy(name, declarator->name->buffer, declarator->name->length);
   
   printf("Grammar_insertDeclaration 1\n");
-  sprintf(cmd, "INSERT INTO Declarations ( name ) \
-                  VALUES ('%s')", name);
+  sprintf(cmd, "INSERT INTO Declarations ( name, type, scope ) \
+                  VALUES ('%s','NA','NA');", name);
   
   printf("Grammar_insertDeclaration 2\n");
   SdbMgr_execute(sdbMgr, cmd);
