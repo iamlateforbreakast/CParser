@@ -13,6 +13,7 @@ typedef struct CParser
 	Grammar* grammar;
 	String* initialLocation;
 	String* sdbName;
+	unsigned int isDbReset; 
 } CParser;
 
 extern CParser* cparser;

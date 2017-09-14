@@ -33,7 +33,7 @@ PUBLIC CParser* CParser_new()
   this->sdbName = NULL;
   this->initialLocation = NULL;
   this->grammar = Grammar_new();
-  
+  this->isDbReset = 1;
   return this;
 }
 
@@ -154,9 +154,15 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
 **************************************************/
 PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
 {
+
+  if (this->isDbReset)
+  {
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Root_Location;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Declarations;");
+  }
   SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( \
                          directory text NOT NULL \
-                         )");
+                         );");
   SdbMgr_execute(sdbMgr, "CREATE TABLE Declarations ( \
                           id integer PRIMARY_KEY, \
                           name text NOT NULL, \
@@ -164,6 +170,6 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
                           scope text NOT NULL, \
                           rtype_rank integer, \
                           rtype_id integer \
-                          )");
+                          );");
                           
 }

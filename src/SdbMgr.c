@@ -5,8 +5,6 @@
 #include "Common.h"
 #include <sqlite3.h>
 
-static SdbMgr* sdbMgr = NULL;
-
 struct SdbMgr
 {
   String* name;
@@ -14,10 +12,12 @@ struct SdbMgr
   unsigned int refCount;
 };
 
-void SdbMgr_close(SdbMgr* this);
-static int SdbMgr_execCallback(void* this, int argc, char **argv, char **azColName);
+PRIVATE SdbMgr* sdbMgr = NULL;
 
-SdbMgr* SdbMgr_new()
+PRIVATE void  SdbMgr_close(SdbMgr* this);
+PRIVATE int SdbMgr_execCallback(void* this, int argc, char **argv, char **azColName);
+
+PRIVATE SdbMgr* SdbMgr_new()
 {
     SdbMgr* this = NULL;
 
@@ -28,20 +28,20 @@ SdbMgr* SdbMgr_new()
     return this;
 }
 
-void SdbMgr_delete(SdbMgr* this)
+PUBLIC void SdbMgr_delete(SdbMgr* this)
 {
     this->refCount = this->refCount - 1;
     
     if (this->refCount==0)
     {
       SdbMgr_close(this);
-      Memory_free(this, sizeof(SdbMgr));
       this->name = NULL;
       this->db = NULL;
+      Memory_free(this, sizeof(SdbMgr));
     }
 }
 
-SdbMgr* SdbMgr_getSdbMgr()
+PUBLIC SdbMgr* SdbMgr_getSdbMgr()
 { 
   if (sdbMgr==NULL)
   {
@@ -52,18 +52,20 @@ SdbMgr* SdbMgr_getSdbMgr()
   return sdbMgr;
 }
 
-unsigned int SdbMgr_open(SdbMgr* this, String* sdbName)
+PUBLIC unsigned int SdbMgr_open(SdbMgr* this, String* sdbName)
 {
   unsigned int result = 0;
   
   result = sqlite3_open(sdbName->buffer, &(this->db));
-  
+  this->name = String_dup(sdbName);
+
   return result;
 }
 
-void SdbMgr_close(SdbMgr* this)
+PRIVATE void SdbMgr_close(SdbMgr* this)
 {
   sqlite3_close(this->db);
+  String_delete(this->name);
 }
 
 unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
@@ -83,7 +85,7 @@ unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
   return result;
 }
 
-static int SdbMgr_execCallback(void* this, int argc, char **argv, char **azColName)
+PRIVATE int SdbMgr_execCallback(void* this, int argc, char **argv, char **azColName)
 {
   printf("SdbMgr_execCallback: called!\n");
   
