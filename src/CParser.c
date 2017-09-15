@@ -91,6 +91,8 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
                                     VALUES ('%s')");
   SdbMgr_execute(sdbMgr, sdbCmd->buffer);
   
+  
+  
   String_delete(sdbCmd);
   
   l = FileMgr_filterFiles(fileMgr, &filter);
@@ -105,11 +107,8 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
     
   }
 
-  printf("CParser_parse 1\n");
   Memory_free(l, sizeof(List));
-  printf("CParser_parse 2\n");
   SdbMgr_delete(sdbMgr);
-  printf("CParser_parse 3\n");
   FileMgr_delete(fileMgr);
 }
 
@@ -160,16 +159,16 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Root_Location;");
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Declarations;");
   }
-  SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( \
-                         directory text NOT NULL \
-                         );");
-  SdbMgr_execute(sdbMgr, "CREATE TABLE Declarations ( \
-                          id integer PRIMARY_KEY, \
-                          name text NOT NULL, \
-                          type text NOT NULL, \
-                          scope text NOT NULL, \
-                          rtype_rank integer, \
-                          rtype_id integer \
-                          );");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( "
+                         "directory text NOT NULL "
+                         ");");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Declarations ("
+                         "id integer PRIMARY_KEY, "
+                         "name text NOT NULL, "
+                         "type text NOT NULL, "
+                         "scope text NOT NULL, "
+                         "rtype_rank integer, "
+                         "rtype_id integer "
+                         ");");
                           
 }
