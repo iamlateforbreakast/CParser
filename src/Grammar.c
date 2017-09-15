@@ -8,6 +8,7 @@
 #include "SdbMgr.h"
 
 #include <stdint.h>
+#include <unistd.h>
 
 #define DEBUG 1
   
@@ -67,6 +68,7 @@ typedef enum{
 
 typedef enum
 {
+  E_UNKOWN_SCOPE = 0,
   E_LOCAL_SCOPE = 1,
   E_GLOBAL_SCOPE = 2
 } Scope;
@@ -173,6 +175,7 @@ void Grammar_printDeclarator(Grammar* this);
 void Grammar_printMatchingRules(Grammar* this, Token* token);
 void Grammar_reset(Grammar* this, Scope scope);
 void Grammar_insertDeclaration(Grammar* this, Declarator* declarator);
+unsigned int Grammar_isTypeDefined(Grammar* this, String* typeName);
 
 MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, &Grammar_matchExternalDeclaration, 0 },
                       { E_FUNCTION_DECLARATION , "FUNCTION_DECLARATION", 0 , 0, &Grammar_matchFunctionDeclaration, 0 },
@@ -760,6 +763,7 @@ void Grammar_matchTypeSpecifier(Grammar* this, Token* token)
   {
     //rules[E_TYPE_SPECIFIER].isMatched = 1;
     //String_print((String*)token->value, "TYPE SPECIFIER =");
+    rules[E_TYPE_SPECIFIER].isMatched = Grammar_isTypeDefined(this, (String*)token->value);
   }
   else if (rules[E_ENUM_SPECIFIER].isMatched)
   {
@@ -1634,6 +1638,7 @@ void Grammar_printDeclarator(Grammar* this)
       if (this->scope == E_GLOBAL_SCOPE) 
       {
         String_print(this->declarator.name,"Global type declaration found: ");
+        Grammar_insertDeclaration(this, &this->declarator);
       }
       String_delete(this->declarator.name);
       break;
@@ -1653,6 +1658,7 @@ void Grammar_printDeclarator(Grammar* this)
       if (this->scope == E_GLOBAL_SCOPE) 
       {
         String_print(this->declarator.name,"Global variable declaration found: ");
+        Grammar_insertDeclaration(this, &this->declarator);
       }
       String_delete(this->declarator.name);
       break;
@@ -1687,18 +1693,45 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
   SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
   char cmd[255];
   char name[255];
-  
+  char *classText[] = {"Unknown","Function","Variable","Type"};
+  char *scopeText[] = {"Unknown","Local","Global"};
   
   memset(name, 0, 255);
   memset(cmd, 0, 255);
   memcpy(name, declarator->name->buffer, declarator->name->length);
   
-  printf("Grammar_insertDeclaration 1\n");
-  sprintf(cmd, "INSERT INTO Declarations ( name, type, scope ) \
-                  VALUES ('%s','NA','NA');", name);
+  sprintf(cmd, "INSERT INTO Declarations ( name, type, scope ) "
+               "VALUES ('%s','%s','%s');", name, classText[declarator->class], scopeText[this->scope]);
   
-  printf("Grammar_insertDeclaration 2\n");
   SdbMgr_execute(sdbMgr, cmd);
-  printf("Grammar_insertDeclaration 3\n");
   SdbMgr_delete(sdbMgr);                                  
-} 
+}
+
+/****************************************************************************
+****************************************************************************/
+unsigned int Grammar_isTypeDefined(Grammar* this, String* typeName)
+{
+  unsigned int result = 0;
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+  char cmd[255];
+  char name[255];
+  char **query = NULL;
+  
+  memset(cmd, 0, 255);
+  memset(name, 0, 255);
+  
+  memcpy(name, typeName->buffer, typeName->length);
+  sprintf(cmd,"SELECT * FROM Declarations WHERE name LIKE '%s';", name);
+  
+  SdbMgr_execute(sdbMgr, cmd);
+  
+  if (SdbMgr_getQueryCount(sdbMgr))
+  {
+    printf("Found!\n");
+    query = SdbMgr_getQueryResult(sdbMgr);
+    Memory_free(query, sizeof(query));
+    result = 1;
+  } 
+
+  return result;
+}
