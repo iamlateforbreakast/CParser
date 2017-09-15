@@ -4,7 +4,9 @@
 
 #include <string.h>
 
-unsigned int Memory_isTracingEnabled = 0;
+#define DEBUG (0)
+
+unsigned int Memory_isTracingEnabled = 1;
 unsigned int Memory_nbBytesAllocated = 0;
 unsigned int Memory_maxNbBytesAllocated = 0;
 unsigned int Memory_allocRequestId = 0;
@@ -24,7 +26,7 @@ void* Memory_alloc(unsigned int nbBytes)
     
     if (Memory_isTracingEnabled) 
     {
-      printf("Memory: Malloc %d|%d %p\n", Memory_allocRequestId, nbBytes,p);
+      TRACE(("Memory: Malloc %d|%d %p\n", Memory_allocRequestId, nbBytes,p));
     }
     if (p+nbBytes> (void*)Memory_maxAddress) Memory_maxAddress = p + nbBytes;
     return p;
@@ -38,7 +40,7 @@ void Memory_free(void* p, unsigned int nbBytes)
         Memory_freeRequestId++;
         if (Memory_isTracingEnabled) 
         {
-          printf("Memory: Free %d|%d %p\n", Memory_freeRequestId, nbBytes,p);
+          TRACE(("Memory: Free %d|%d %p\n", Memory_freeRequestId, nbBytes,p));
         }
         free(p);
 
