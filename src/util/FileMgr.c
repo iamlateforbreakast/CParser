@@ -91,9 +91,11 @@ PUBLIC void FileMgr_delete(FileMgr* this)
       closedir(this->activeDir);
     }
     Memory_free(this->files, sizeof(List));
+    this->files = NULL;
     //String_delete(this->activePath);
     String_delete(this->rootPath);
     Memory_free(this, sizeof(FileMgr));
+    this = NULL;
   }
 
 }
@@ -110,6 +112,7 @@ PUBLIC String* FileMgr_load(FileMgr* this, String* fileName)
 {
   String* fileContent=NULL;
 
+    
   char buffer[255] = { 0 };
 
   // find filename in list of files
@@ -130,7 +133,7 @@ PUBLIC String* FileMgr_load(FileMgr* this, String* fileName)
   }
   else
   {
-	/* File cannot be found */
+
   }
 
   return fileContent;
@@ -331,7 +334,7 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
   List* result = NULL;
   ListNode* pNode = NULL;
 
-  result = List_new();
+  result = List_new(); // Memory leak
   // List all files and add to list of all files
   allFilesInDir = FileMgr_listFilesInDir(this);
   List_merge(result, allFilesInDir);
@@ -409,7 +412,7 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
     if (dir->d_type != DT_DIR)
     {
       fileDesc = Memory_alloc(sizeof(FileDesc));
-      fileDesc->name = String_new(dir->d_name);
+      fileDesc->name = String_new(dir->d_name); // main.exe memory leak?
       fileDesc->fullName = String_dup(this->activePath);
       FileMgr_mergePath(this, fileDesc->fullName, fileDesc->name);
       List_insert(result, (void*)fileDesc);
