@@ -55,7 +55,13 @@ typedef enum
   E_SELECTION_STATEMENT,
   E_ITERATION_STATEMENT,
   E_JUMP_STATEMENT,
-  E_EXPRESSION
+  E_EXPRESSION,
+  E_ASSIGNMENT_EXPRESSION,
+  E_PRIMARY_EXPRESSION,
+  E_POSTFIX_EXPRESSION,
+  E_UNARY_EXPRESSION,
+  E_CAST_EXPRESSION,
+  E_TYPE_NAME
 } RuleName;
 
 typedef enum{
@@ -158,6 +164,12 @@ void Grammar_matchLabeledStatement(Grammar* this, Token* token);
 void Grammar_matchStatement(Grammar* this, Token* token);
 void Grammar_matchStatementList(Grammar* this, Token* token);
 void Grammar_matchExpression(Grammar* this, Token* token);
+void Grammar_matchPrimaryExpression(Grammar* this, Token* token);
+void Grammar_matchAssignmentExpression(Grammar* this, Token* token);
+void Grammar_matchPostfixExpression(Grammar* this, Token* token);
+void Grammar_matchUnaryExpression(Grammar* this, Token* token);
+void Grammar_matchCastExpression(Grammar* this, Token* token);
+void Grammar_matchTypeName(Grammar* this, Token* token);
 void Grammar_printDeclarator(Grammar* this);
 void Grammar_printMatchingRules(Grammar* this, Token* token);
 void Grammar_reset(Grammar* this, Scope scope);
@@ -206,7 +218,13 @@ MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, 
                       { E_SELECTION_STATEMENT, "SELECTION_STATEMENT", 0, 0, &Grammar_matchSelectionStatement, 0 },
                       { E_ITERATION_STATEMENT, "ITERATION_STATEMENT", 0, 0, &Grammar_matchIterationStatement, 0 },
                       { E_JUMP_STATEMENT, "JUMP_STATEMENT", 0, 0, &Grammar_matchJumpStatement, 0 },
-                      { E_EXPRESSION, "EXPRESSION", 0, 0, &Grammar_matchExpression, 0 }
+                      { E_EXPRESSION, "EXPRESSION", 0, 0, &Grammar_matchExpression, 0 },
+                      { E_ASSIGNMENT_EXPRESSION, "ASSIGNMENT_EXPRESSION", 0, 0, &Grammar_matchAssignmentExpression, 0 },
+                      { E_PRIMARY_EXPRESSION, "PRIMARY_EXPRESSION", 0, 0, &Grammar_matchPrimaryExpression, 0 },
+                      { E_POSTFIX_EXPRESSION, "POSTFIX_EXPRESSION", 0, 0, &Grammar_matchPostfixExpression, 0 },
+                      { E_UNARY_EXPRESSION, "UNARY_EXPRESSION", 0, 0, &Grammar_matchUnaryExpression, 0 },
+                      { E_CAST_EXPRESSION, "CAST_EXPRESSION", 0, 0, &Grammar_matchCastExpression, 0 },
+                      { E_TYPE_NAME, "TYPE_NAME", 0, 0, Grammar_matchTypeName, 0 }
                     };
 
 /****************************************************************************
@@ -1410,6 +1428,11 @@ constant_expression
 void Grammar_matchConstantExpression(Grammar* this, Token* token)
 {
   rules[E_CONSTANT_EXPRESSION].isMatched = 0;
+  Grammar_evaluateRule(this, token, E_CONDITIONAL_EXPRESSION);
+  if (rules[E_CONDITIONAL_EXPRESSION].isMatched)
+  {
+    rules[E_CONSTANT_EXPRESSION].isMatched = 1;
+  }
 }
 
 /****************************************************************************
@@ -1422,6 +1445,31 @@ initializer
 void Grammar_matchInitializer(Grammar* this, Token* token)
 {
   rules[E_INITIALIZER].isMatched = 0;
+  
+  switch (rules[E_INITIALIZER].count)
+  {
+    case 0:
+      Grammar_evaluateRule(this, token, E_ASSIGNMENT_EXPRESSION);
+      if (rules[E_ASSIGNMENT_EXPRESSION].isMatched)
+      {
+        rules[E_INITIALIZER].isMatched = 1;
+      }
+  }
+}
+
+/****************************************************************************
+assignment_expression
+	: conditional_expression
+	| unary_expression assignment_operator assignment_expression
+****************************************************************************/
+void Grammar_matchAssignmentExpression(Grammar* this, Token* token)
+{
+  rules[E_ASSIGNMENT_EXPRESSION].isMatched = 0;
+  Grammar_evaluateRule(this, token, E_CONDITIONAL_EXPRESSION);
+  if (rules[E_CONDITIONAL_EXPRESSION].isMatched)
+  {
+    rules[E_ASSIGNMENT_EXPRESSION].isMatched = 1;
+  }
 }
 
 /****************************************************************************
@@ -1584,6 +1632,116 @@ conditional_expression
 void Grammar_matchConditionalExpression(Grammar* this, Token* token)
 {
     rules[E_CONDITIONAL_EXPRESSION].isMatched = 0;
+    Grammar_evaluateRule(this, token, E_CAST_EXPRESSION);
+    if (rules[E_CAST_EXPRESSION].isMatched)
+    {
+      rules[E_CONDITIONAL_EXPRESSION].isMatched = 1;
+    }
+}
+
+/****************************************************************************
+primary_expression
+	: IDENTIFIER
+	| CONSTANT
+	| STRING_LITERAL
+	| '(' expression ')'
+	;
+****************************************************************************/
+void Grammar_matchPrimaryExpression(Grammar* this, Token* token)
+{
+  rules[E_PRIMARY_EXPRESSION].isMatched = 0;
+
+  switch (rules[E_PRIMARY_EXPRESSION].count)
+  {
+    case 0:
+      if (token->id == TOK_IDENTIFIER)
+      {
+        rules[E_PRIMARY_EXPRESSION].isMatched = 1;
+      }
+      else if (token->id == TOK_CONSTANT)
+      {
+        rules[E_PRIMARY_EXPRESSION].isMatched = 1;
+      }
+      break;
+  }
+}
+
+/****************************************************************************
+postfix_expression
+	: primary_expression
+	| postfix_expression '[' expression ']'
+	| postfix_expression '(' ')'
+	| postfix_expression '(' argument_expression_list ')'
+	| postfix_expression '.' IDENTIFIER
+	| postfix_expression PTR_OP IDENTIFIER
+	| postfix_expression INC_OP
+	| postfix_expression DEC_OP
+****************************************************************************/
+void Grammar_matchPostfixExpression(Grammar* this, Token* token)
+{
+  rules[E_POSTFIX_EXPRESSION].isMatched = 0;
+
+  switch (rules[E_POSTFIX_EXPRESSION].count)
+  {
+    case 0:
+      Grammar_evaluateRule(this, token, E_PRIMARY_EXPRESSION);
+      if (rules[E_PRIMARY_EXPRESSION].isMatched)
+      {
+        rules[E_POSTFIX_EXPRESSION].isMatched = 1;
+        rules[E_POSTFIX_EXPRESSION].count = 1;
+      }
+      break;
+    case 1:
+      break;
+  }
+}
+
+/****************************************************************************
+unary_expression
+	: postfix_expression
+	| INC_OP unary_expression
+	| DEC_OP unary_expression
+	| unary_operator cast_expression
+	| SIZEOF unary_expression
+	| SIZEOF '(' type_name ')'
+	;
+****************************************************************************/
+void Grammar_matchUnaryExpression(Grammar* this, Token* token)
+{
+    rules[E_UNARY_EXPRESSION].isMatched = 0;
+    Grammar_evaluateRule(this, token, E_POSTFIX_EXPRESSION);
+    if (rules[E_POSTFIX_EXPRESSION].isMatched)
+    {
+      rules[E_UNARY_EXPRESSION].isMatched = 1;
+    }
+}
+
+/****************************************************************************
+cast_expression
+	: unary_expression
+	| '(' type_name ')' cast_expression
+****************************************************************************/
+void Grammar_matchCastExpression(Grammar* this, Token* token)
+{
+    rules[E_CAST_EXPRESSION].isMatched = 0;
+    
+    switch (rules[E_CAST_EXPRESSION].count)
+    {
+      case 0:
+        Grammar_evaluateRule(this, token, E_UNARY_EXPRESSION);
+        if ((token->id == TOK_UNKNOWN) && (token->value == '('))
+        {
+          rules[E_CAST_EXPRESSION].count = 1;
+        }
+        else if (rules[E_UNARY_EXPRESSION].isMatched)
+        {
+          rules[E_CAST_EXPRESSION].isMatched = 1;
+        }
+        break;
+      case 1:
+        Grammar_evaluateRule(this, token, E_TYPE_NAME);
+        break;
+    }
 }
 
 /****************************************************************************
@@ -1610,6 +1768,22 @@ void Grammar_matchExpression(Grammar* this, Token* token)
     {
       rules[E_EXPRESSION].isMatched = 1;
       printf("Matched expression\n");
+    }
+}
+
+/****************************************************************************
+type_name
+	: specifier_qualifier_list
+	| specifier_qualifier_list abstract_declarator
+	;
+****************************************************************************/
+void Grammar_matchTypeName(Grammar* this, Token* token)
+{
+    rules[E_TYPE_NAME].isMatched = 0;
+    Grammar_evaluateRule(this, token, E_SPECIFIER_QUALIFIER_LIST);
+    if (rules[E_SPECIFIER_QUALIFIER_LIST].isMatched)
+    {
+      rules[E_TYPE_NAME].isMatched = 1;
     }
 }
 

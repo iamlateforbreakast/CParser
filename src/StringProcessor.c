@@ -243,17 +243,31 @@ String* StringProcessor_readInteger(StringProcessor* this)
   unsigned char c;
   
   c = StringBuffer_peekChar(this->currentBuffer);
-
-  if (c>='0' && c<='9')
+  if (c=='0')
   {
     length++;
     c = StringBuffer_readChar(this->currentBuffer);
     c = StringBuffer_peekChar(this->currentBuffer);
-    while (c>='0' && c<='9')
+    if (c=='x')
     {
       length++;
       c = StringBuffer_readChar(this->currentBuffer);
       c = StringBuffer_peekChar(this->currentBuffer);
+      while ((c>='0' && c<='9')||(c>='A' && c<='F'))
+      {
+        length++;
+        c = StringBuffer_readChar(this->currentBuffer);
+        c = StringBuffer_peekChar(this->currentBuffer);
+      }
+    }
+    else
+    {
+      while (c>='0' && c<='9')
+      {
+        length++;
+        c = StringBuffer_readChar(this->currentBuffer);
+        c = StringBuffer_peekChar(this->currentBuffer);
+      }
     }
     result = StringBuffer_readback(this->currentBuffer, length);
   }
