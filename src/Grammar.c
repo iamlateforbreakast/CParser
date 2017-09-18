@@ -997,7 +997,57 @@ selection_statement
 ****************************************************************************/
 void Grammar_matchSelectionStatement(Grammar* this, Token* token)
 {
+  static int preventRecursion;
+  
   rules[E_SELECTION_STATEMENT].isMatched = 0;
+  
+  if (!preventRecursion)
+  {
+  switch(rules[E_SELECTION_STATEMENT].count)
+  {
+    case 0:
+      if (token->id == TOK_IF)
+      {
+        rules[E_SELECTION_STATEMENT].count = 1;
+      }
+      break;
+    case 1:
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
+      {
+        rules[E_SELECTION_STATEMENT].count = 2;
+      }
+      break;
+    case 2:
+      Grammar_evaluateRule(this, token, E_EXPRESSION);
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ')'))
+      {
+        rules[E_SELECTION_STATEMENT].count = 3;
+      }
+      break;
+    case 3:
+      preventRecursion = 1;
+      Grammar_evaluateRule(this, token, E_STATEMENT);
+      preventRecursion = 0;
+      if (token->id == TOK_ELSE)
+      {
+        rules[E_SELECTION_STATEMENT].count = 4;
+      }
+      else if (rules[E_STATEMENT].isMatched)
+      {
+        rules[E_SELECTION_STATEMENT].isMatched = 1;
+      }
+    case 4:
+      Grammar_evaluateRule(this, token, E_STATEMENT);
+      if (rules[E_STATEMENT].isMatched)
+      {
+        rules[E_SELECTION_STATEMENT].isMatched = 1;
+      }
+  }
+  }
+  else
+  {
+    //printf("Error no recursive if\n");
+  }
 }
 
 /****************************************************************************
