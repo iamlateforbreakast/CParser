@@ -18,7 +18,6 @@ struct SdbMgr
 PRIVATE SdbMgr* sdbMgr = NULL;
 
 PRIVATE void  SdbMgr_close(SdbMgr* this);
-PRIVATE int SdbMgr_execCallback(void* this, int argc, char **argv, char **azColName);
 
 PRIVATE SdbMgr* SdbMgr_new()
 {
@@ -116,22 +115,6 @@ unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
     sdbMgr->queryCount = 1;
   }
   sqlite3_finalize(res);
-  
-  return 0;
-}
-
-PRIVATE int SdbMgr_execCallback(void* this, int argc, char **argv, char **azColName)
-{
-  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
-  
-  printf("SdbMgr_execCallback: called!\n");
-  
-  sdbMgr->isQueryReady = 1;
-  sdbMgr->queryCount = argc;
-  sdbMgr->queryResult = Memory_alloc(sizeof(argv));
-  memcpy(sdbMgr->queryResult, argv, sizeof(argv));
-  
-  SdbMgr_delete(sdbMgr);
   
   return 0;
 }

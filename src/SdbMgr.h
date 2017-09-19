@@ -7,8 +7,11 @@
 
 typedef struct SdbMgr SdbMgr;
 
-void SdbMgr_delete(SdbMgr* this);
-SdbMgr* SdbMgr_getSdbMgr();
-unsigned int SdbMgr_open(SdbMgr* this, String* sdbName);
-unsigned int SdbMgr_execute(SdbMgr* this, const char* statement);
+PUBLIC void SdbMgr_delete(SdbMgr* this);
+PUBLIC SdbMgr* SdbMgr_getSdbMgr();
+PUBLIC unsigned int SdbMgr_open(SdbMgr* this, String* sdbName);
+PUBLIC unsigned int SdbMgr_execute(SdbMgr* this, const char* statement);
+PUBLIC unsigned int SdbMgr_getQueryCount(SdbMgr* this);
+PUBLIC unsigned int SdbMgr_getQueryReady(SdbMgr* this);
+PUBLIC PUBLIC char** SdbMgr_getQueryResult(SdbMgr* this);
 #endif
