@@ -212,7 +212,7 @@ int String_toInt(String* this)
   char tmp[20] = { 0 };
   
   memcpy(tmp, this->buffer, this->length);
-  result = atoi(tmp);
+  result = strtol(tmp, NULL, 0);
   
   return result;
 }
