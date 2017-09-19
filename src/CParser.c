@@ -87,8 +87,8 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   // Create DB tables
   CParser_createTables(this, sdbMgr);
   
-  sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory ) \
-                                    VALUES ('%s')");
+  sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory )"
+                                                "VALUES ('%s')");
   SdbMgr_execute(sdbMgr, sdbCmd->buffer);
   
   
