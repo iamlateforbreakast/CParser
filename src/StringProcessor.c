@@ -31,6 +31,16 @@ static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
                                            { .buffer="errno.h", .length=7 },
                                            { .buffer="unistd.h", .length=8 } };
 
+static const String includeToken = { .buffer="#include", .length=8 };
+static const String defineToken = { .buffer="#define", .length=7 };
+static const String ifdefToken = { .buffer="#ifdef", .length=6 };
+static const String ifndefToken = { .buffer="#ifndef", .length=7 };
+static const String endifToken = { .buffer="#endif", .length=6 };
+static const String elifToken = { .buffer="#elif", .length=5 };
+static const String quoteToken = { .buffer="\"", .length=1 };
+static const String bracketOpenToken = { .buffer="<", .length=1 };
+static const String bracketCloseToken = { .buffer=">", .length=1 };
+ 
 /**************************************************
 @brief StringProcessor_new - TBD
  * 
@@ -125,37 +135,17 @@ unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
 unsigned int  StringProcessor_processDirective(StringProcessor* this)
 {
   unsigned int result = 0;
-  
-  String* includeToken = NULL;
-  String* defineToken = NULL;
-  String* ifdefToken = NULL;
-  String* ifndefToken = NULL;
-  String* endifToken = NULL;
-  String* elifToken = NULL;
-  String* quoteToken = NULL;
-  String* bracketOpenToken = NULL;
-  String* bracketCloseToken = NULL;
-  String* includeFileName = NULL;
   unsigned char c = 0;
-  
-  includeToken = String_new("#include");
-  defineToken = String_new("#define");
-  ifdefToken = String_new("#ifdef");
-  ifndefToken = String_new("#ifndef");
-  endifToken = String_new("#endif");
-  elifToken = String_new("#elif");
-  quoteToken = String_new("\"");
-  bracketOpenToken = String_new("<");
-  bracketCloseToken = String_new(">");
+  String* includeFileName = NULL;
   
   // 1. If StringBuffer_compare(current, "#include") then
-  if (StringProcessor_match(this, includeToken))
+  if (StringProcessor_match(this, (String*)&includeToken))
   {
     // Read include file name
     result = result + StringProcessor_readSpaces(this);
-    result = result + StringProcessor_match(this, quoteToken) + StringProcessor_match(this, bracketOpenToken);
+    result = result + StringProcessor_match(this, (String*)&quoteToken) + StringProcessor_match(this, (String*)&bracketOpenToken);
     result = result + StringProcessor_readFileName(this, &includeFileName);
-    result = result + StringProcessor_match(this, quoteToken) + StringProcessor_match(this, bracketCloseToken);
+    result = result + StringProcessor_match(this, (String*)&quoteToken) + StringProcessor_match(this, (String*)&bracketCloseToken);
     if (result)
     {
       if (!StringProcessor_isIncFileIgnored(this, includeFileName))
@@ -166,15 +156,15 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
     }
   } 
   // 2. If StringBuffer_compare(current, "#define") then  
-  else if (StringProcessor_match(this, defineToken))
+  else if (StringProcessor_match(this, (String*)&defineToken))
   {
     StringProcessor_readDefine(this);
   } 
-  else if (StringProcessor_match(this, ifdefToken))
+  else if (StringProcessor_match(this, (String*)&ifdefToken))
   {  //       evaluate condition
   // 5. If StringBuffer_compare(current, "#endif") and isProcessingCondtion = TRUE
   }
-  else if (StringProcessor_match(this, ifndefToken))
+  else if (StringProcessor_match(this, (String*)&ifndefToken))
   {  //       evaluate condition
     if (!StringProcessor_evaluateCondition(this))
 	{
@@ -183,27 +173,17 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
 	else
 	{
 	  // Jump to elif or endif
-	  while (!StringProcessor_match(this, endifToken))
+	  while (!StringProcessor_match(this, (String*)&endifToken))
 	  {
 	    c = StringBuffer_readChar(this->currentBuffer);
 	  }
 	}
   // 5. If StringBuffer_compare(current, "#endif") and isProcessingCondtion = TRUE
   } 
-  else if (StringProcessor_match(this, endifToken))
+  else if (StringProcessor_match(this, (String*)&endifToken))
   {
     //       isProcessingCondition = FALSE
   }
-
-  String_delete(includeToken);
-  String_delete(defineToken);
-  String_delete(ifdefToken);
-  String_delete(ifndefToken);
-  String_delete(endifToken);
-  String_delete(elifToken);
-  String_delete(quoteToken);
-  String_delete(bracketOpenToken);
-  String_delete(bracketCloseToken);
   
   return result;
 }
@@ -268,6 +248,16 @@ String* StringProcessor_readInteger(StringProcessor* this)
         c = StringBuffer_readChar(this->currentBuffer);
         c = StringBuffer_peekChar(this->currentBuffer);
       }
+    }
+    result = StringBuffer_readback(this->currentBuffer, length);
+  }
+  else if (c>='0' && c<='9')
+  {
+    while (c>='0' && c<='9')
+    {
+      length++;
+      c = StringBuffer_readChar(this->currentBuffer);
+      c = StringBuffer_peekChar(this->currentBuffer);
     }
     result = StringBuffer_readback(this->currentBuffer, length);
   }
@@ -439,7 +429,7 @@ PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, Str
   
   for (i=0; (i<sizeof(incFilesToIgnore)/sizeof(String) && (!isFound)); i++)
   {
-    if (String_match(fileName, 0, &(incFilesToIgnore[i]))) isFound = 1;
+    if (String_match(fileName, 0, (String*)&(incFilesToIgnore[i]))) isFound = 1;
   }
   return isFound;
 }
