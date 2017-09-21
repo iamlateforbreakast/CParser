@@ -3,12 +3,12 @@
 #ifndef _TOKENLIST_H_
 #define _TOKENLIST_H_
 
-#include "TransUnit.h"
+#include "StringProcessor.h"
 #include "Token.h"
 
 typedef struct TokenList
 {
-    TransUnit* transUnit;
+    StringProcessor* stringProcessor;
 	String** keyword;
 	unsigned int nbKeywords;
 } TokenList;

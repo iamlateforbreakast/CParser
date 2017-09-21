@@ -7,6 +7,7 @@
 unsigned int TransUnit_readSingleLineComment(TransUnit* this);
 unsigned int TransUnit_readMultiLineComment(TransUnit* this);
 
+#if 0
 TransUnit* TransUnit_new(String* fileContent)
 {
   TransUnit* this;
@@ -24,12 +25,12 @@ void TransUnit_delete(TransUnit* this)
   Memory_free(this, sizeof(TransUnit));
 }
 
-#if 0
+
 void TransUnit_loadFromFile(TransUnit* this, const char* fileName)
 {
   String path;
 }
-#endif
+
 
 /*
  *
@@ -138,3 +139,4 @@ String* TransUnit_getFileName(TransUnit* this)
 {
    return (StringProcessor_getFileName(this->processor));
 }
+#endif

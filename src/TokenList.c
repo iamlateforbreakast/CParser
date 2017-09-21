@@ -20,7 +20,7 @@ TokenList* TokenList_new(String* fileContent)
   unsigned int i = 0;
 
   this = (TokenList*)Memory_alloc(sizeof(TokenList));
-  this->transUnit = TransUnit_new(fileContent);
+  this->stringProcessor = StringProcessor_new(fileContent);
   this->nbKeywords = 33;
   this->keyword = (String**)Memory_alloc(sizeof(String*) * this->nbKeywords);
 
@@ -37,7 +37,7 @@ void TokenList_delete(TokenList* this)
   unsigned int i = 0;
 
   //printf("TokenList.c: delete\n");
-  TransUnit_delete(this->transUnit);
+  StringProcessor_delete(this->stringProcessor);
 
   for (i=0; i<this->nbKeywords; i++)
   {
@@ -46,11 +46,6 @@ void TokenList_delete(TokenList* this)
   Memory_free(this->keyword, sizeof(String*) * this->nbKeywords);
   this->nbKeywords = 0;
   Memory_free(this, sizeof(TokenList));
-}
-
-void TokenList_initialise(TokenList* this, String* fileBuffer)
-{
-
 }
 
 Token* TokenList_getTokenFromTransUnit(TokenList* this)
@@ -68,7 +63,7 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
 
     if (nextToken==NULL)
     {
-      c = TransUnit_readCharFromProcessedStream(this->transUnit);
+      c = StringProcessor_readTransUnitChar(this->stringProcessor);
       if (c==0)
       {
         nextToken = Token_new(TOK_EOF, "EOF", 0, NULL);
@@ -98,7 +93,7 @@ Token* TokenList_checkKeyword(TokenList* this)
 
   for (i=0; (i<this->nbKeywords) && (isFound==0); i++)
   {
-    if (TransUnit_match(this->transUnit, this->keyword[i]))
+    if (StringProcessor_match(this->stringProcessor, this->keyword[i]))
     {
       isFound = 1;
       result = Token_new(i, (char*)keywords[i], 0, NULL);
@@ -114,7 +109,7 @@ Token* TokenList_checkIntegerConstant(TokenList* this)
   int tmpInt = 0;
   String* tmpStr = NULL;
 
-  tmpStr = TransUnit_readConstantInteger(this->transUnit);
+  tmpStr = StringProcessor_readInteger(this->stringProcessor);
   if (tmpStr)
   {
     tmpInt = String_toInt(tmpStr);
@@ -130,7 +125,7 @@ Token* TokenList_checkIdentifier(TokenList* this)
   Token* result=NULL;
   String* identifierName = NULL;
 
-  identifierName = TransUnit_readIdentifier(this->transUnit);
+  identifierName = StringProcessor_readIdentifier(this->stringProcessor);
 
   if (identifierName!=NULL)
   {
