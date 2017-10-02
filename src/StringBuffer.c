@@ -10,6 +10,8 @@ StringBuffer* StringBuffer_new(String* s)
 
   this=(StringBuffer*)Memory_alloc(sizeof(StringBuffer));
   this->pos = 0;
+  this->line = 0;
+  this->column = 0;
   this->s = s;
   
   return this;
@@ -43,8 +45,15 @@ unsigned char StringBuffer_readChar(StringBuffer* this)
   {
     result=this->s->buffer[this->pos];
     this->pos++;
+    this->column++;
   }
-  
+ 
+  if (result == '\n')
+  {
+    this->line++;
+    this->column = 0;
+  } 
+
   return result;
 }
 

@@ -8,6 +8,8 @@
 typedef struct StringBuffer
 {
     unsigned int pos;
+    unsigned int line;
+    unsigned int column;
     String* s;
     String* name;
     String* path;
