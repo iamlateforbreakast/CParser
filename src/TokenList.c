@@ -66,12 +66,12 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
       c = StringProcessor_readTransUnitChar(this->stringProcessor);
       if (c==0)
       {
-        nextToken = Token_new(TOK_EOF, "EOF", 0, NULL);
+        nextToken = Token_new(TOK_EOF, "EOF", 0, NULL, 0, 0);
         //printf("Read char EOF\n");
       }
       else if ((c!=10) && (c!=32))
       {
-        nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL);
+        nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, 0, 0);
         //printf("Accepted: Read char: %c %d\n",c,c);
       }
       else
@@ -96,7 +96,7 @@ Token* TokenList_checkKeyword(TokenList* this)
     if (StringProcessor_match(this->stringProcessor, this->keyword[i]))
     {
       isFound = 1;
-      result = Token_new(i, (char*)keywords[i], 0, NULL);
+      result = Token_new(i, (char*)keywords[i], 0, NULL, 0, 0);
     }
   }
 
@@ -114,7 +114,7 @@ Token* TokenList_checkIntegerConstant(TokenList* this)
   {
     tmpInt = String_toInt(tmpStr);
     String_delete(tmpStr);
-    result = Token_new(TOK_CONSTANT, "CONSTANT", (void*)((uintptr_t)tmpInt), NULL);
+    result = Token_new(TOK_CONSTANT, "CONSTANT", (void*)((uintptr_t)tmpInt), NULL, 0, 0);
   }
 
   return result;
@@ -129,7 +129,7 @@ Token* TokenList_checkIdentifier(TokenList* this)
 
   if (identifierName!=NULL)
   {
-    result = Token_new(TOK_IDENTIFIER, "IDENTIFIER", (void*)identifierName, NULL);
+    result = Token_new(TOK_IDENTIFIER, "IDENTIFIER", (void*)identifierName, NULL, 0, 0);
     //String_print(identifierName, "Token identifier: ");
   }
 

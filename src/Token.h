@@ -48,12 +48,14 @@ typedef enum
 
 typedef struct Token
 {
-    TokenId id;
-	char * text;
-    void* value;
-	String* fileName;
+  TokenId id;
+  char * text;
+  void* value;
+  String* fileName;
+  unsigned int line;  
+  unsigned int column;
 } Token;
 
-Token* Token_new(TokenId id, char* text, void* value, String* fileName);
+Token* Token_new(TokenId id, char* text, void* value, String* fileName, unsigned int l, unsigned int c);
 void Token_delete(Token* this);
 #endif
