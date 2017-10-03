@@ -123,7 +123,22 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
 PRIVATE void CParser_processFile(CParser* this, String* fileName)
 {
   Token* newToken = NULL;
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+  char cmd[255];
+  char name[255];
+  static unsigned int fileId = 0;
   
+  memset(name, 0, 255);
+  memset(cmd, 0, 255);
+  memcpy(&name[0], &fileName->buffer[0], fileName->length);
+
+  sprintf(cmd, "INSERT INTO Files ( id, name ) "
+               "VALUES ('%d','%s');", fileId, name);
+
+  fileId++;
+  SdbMgr_execute(sdbMgr, cmd);
+  SdbMgr_delete(sdbMgr);
+
   //Initialise from initial fileName  
   this->tokenList = TokenList_new(fileName);
     
@@ -158,9 +173,14 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
   {
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Root_Location;");
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Declarations;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Files;");
   }
   SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( "
                          "directory text NOT NULL "
+                         ");");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Files ( "
+                         "id integer PRIMARY KEY, "
+                         "name text NOT NULL "
                          ");");
   SdbMgr_execute(sdbMgr, "CREATE TABLE Declarations ("
                          "id integer PRIMARY_KEY, "
@@ -168,7 +188,10 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
                          "type text NOT NULL, "
                          "scope text NOT NULL, "
                          "rtype_rank integer, "
-                         "rtype_id integer "
+                         "rtype_id integer, "
+                         "fname text NOT NULL, "
+                         "line integer NOT NULL, "
+                         "column integer NOT NULL"
                          ");");
                           
 }

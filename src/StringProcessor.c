@@ -60,7 +60,6 @@ StringProcessor* StringProcessor_new(String* initialFileName)
   this->nbOpenBuffers = 0;  
   StringProcessor_openNewBufferFromFile(this, initialFileName);
   this->macros = Map_new();
-
   
   return this;
 }
@@ -87,7 +86,7 @@ void StringProcessor_delete(StringProcessor* this)
 
 /**************************************************
 **************************************************/
-unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
+unsigned char StringProcessor_readTransUnitChar(StringProcessor* this, String* f, unsigned int *l, unsigned int *c)
 { 
   unsigned char current_c = 0;
   unsigned int isExit = 0;
@@ -126,6 +125,10 @@ unsigned char StringProcessor_readTransUnitChar(StringProcessor* this)
       current_c = StringBuffer_readChar(this->currentBuffer);
     }
   }
+  
+  *l = this->currentBuffer->line;
+  *c = this->currentBuffer->column;
+  f = this->currentBuffer->name;
   
   return current_c;
 }
@@ -399,7 +402,7 @@ void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileNa
     fileContent = FileMgr_searchAndLoad(fileMgr, fileName);
     if (fileContent!=NULL)
     {
-      this->buffers[this->nbOpenBuffers] = StringBuffer_new(fileContent);
+      this->buffers[this->nbOpenBuffers] = StringBuffer_new(fileContent, fileName);
       this->currentBuffer = this->buffers[this->nbOpenBuffers];
 
       String_print(fileName, "Processing file ");

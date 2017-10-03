@@ -109,6 +109,9 @@ struct Declarator
   //DeclaratorQualifier qualifier;
   String* name;
   List* args;
+  String* fName;
+  unsigned int line;
+  unsigned int col;
 };
 
 struct Grammar{
@@ -279,6 +282,9 @@ void Grammar_reset(Grammar* this, Scope scope)
   }
   this->declarator.name = NULL;
   this->declarator.class = E_UNKNOWN_DECLARATOR;
+  this->declarator.fName = NULL;
+  this->declarator.line = 0;
+  this->declarator.col = 0;
 }
 
 /****************************************************************************
@@ -640,6 +646,9 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
         rules[E_DIRECT_DECLARATOR].count[0] = 1;
         this->declarator.name = String_dup((String*)token->value);
+        this->declarator.fName = token->fileName;
+        this->declarator.line = token->line;
+        this->declarator.col = token->column;
         if (this->declarator.class!=E_TYPE_DECLARATOR)
         {
           this->declarator.class = E_VARIABLE_DECLARATOR;
@@ -1920,15 +1929,24 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
   SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
   char cmd[255];
   char name[255];
+  char fName[255];
   char *classText[] = {"Unknown","Function","Variable","Type"};
   char *scopeText[] = {"Unknown","Local","Global"};
 
   memset(name, 0, 255);
+  memset(fName, 0, 255);
   memset(cmd, 0, 255);
   memcpy(name, declarator->name->buffer, declarator->name->length);
-
-  sprintf(cmd, "INSERT INTO Declarations ( name, type, scope ) "
-               "VALUES ('%s','%s','%s');", name, classText[declarator->class], scopeText[this->scope]);
+  memcpy(fName, declarator->fName->buffer, declarator->fName->length);
+  
+  sprintf(cmd, "INSERT INTO Declarations ( name, type, scope, fname, line, column ) "
+               "VALUES ('%s','%s','%s','%s',%d, %d);", 
+               name, 
+               classText[declarator->class], 
+               scopeText[this->scope],
+               fName,
+               declarator->line,
+               declarator->col);
 
   SdbMgr_execute(sdbMgr, cmd);
   SdbMgr_delete(sdbMgr);

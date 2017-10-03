@@ -15,7 +15,7 @@ typedef struct StringBuffer
     String* path;
 } StringBuffer;
 
-StringBuffer* StringBuffer_new(String* s);
+StringBuffer* StringBuffer_new(String* s, String* name);
 void StringBuffer_delete(StringBuffer* this);
 StringBuffer* StringBuffer_newFromFile(const char* fileName);
 unsigned char StringBuffer_readChar(StringBuffer* this);

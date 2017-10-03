@@ -4,7 +4,7 @@
 
 #include "Common.h"
 
-StringBuffer* StringBuffer_new(String* s)
+StringBuffer* StringBuffer_new(String* s, String* name)
 {
   StringBuffer* this;
 
@@ -13,29 +13,16 @@ StringBuffer* StringBuffer_new(String* s)
   this->line = 0;
   this->column = 0;
   this->s = s;
-  
+  this->name = String_dup(name);
   return this;
 }
 
 void StringBuffer_delete(StringBuffer* this)
 {
     String_delete(this->s);
-    //String_delete(this->name);
+    String_delete(this->name);
     Memory_free(this, sizeof(StringBuffer));
 }
-
-#if 0
-StringBuffer* StringBuffer_newFromFile(const char* fileName)
-{
-  StringBuffer* this;
-  this=StringBuffer_new();
-   
-  this->s = String_newFromFile(fileName);
-  this->name = String_new(fileName);
-
-  return this;
-}
-#endif
 
 unsigned char StringBuffer_readChar(StringBuffer* this)
 {

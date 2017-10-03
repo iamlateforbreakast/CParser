@@ -52,7 +52,10 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
 {
   unsigned char c = 0;
   Token* nextToken = NULL;
-
+  String* fName = NULL;
+  unsigned int line = 0;
+  unsigned int col = 0;
+  
   while (nextToken==NULL)
   {
     nextToken = TokenList_checkKeyword(this);
@@ -63,15 +66,15 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
 
     if (nextToken==NULL)
     {
-      c = StringProcessor_readTransUnitChar(this->stringProcessor);
+      c = StringProcessor_readTransUnitChar(this->stringProcessor, fName, &line, &col);
       if (c==0)
       {
-        nextToken = Token_new(TOK_EOF, "EOF", 0, NULL, 0, 0);
+        nextToken = Token_new(TOK_EOF, "EOF", 0, NULL, line, col);
         //printf("Read char EOF\n");
       }
       else if ((c!=10) && (c!=32))
       {
-        nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, 0, 0);
+        nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, line, col);
         //printf("Accepted: Read char: %c %d\n",c,c);
       }
       else
@@ -90,13 +93,16 @@ Token* TokenList_checkKeyword(TokenList* this)
   Token* result=NULL;
   unsigned int i = 0;
   unsigned int isFound = 0;
-
+  
   for (i=0; (i<this->nbKeywords) && (isFound==0); i++)
   {
     if (StringProcessor_match(this->stringProcessor, this->keyword[i]))
     {
       isFound = 1;
-      result = Token_new(i, (char*)keywords[i], 0, NULL, 0, 0);
+      result = Token_new(i, (char*)keywords[i], 0, 
+                         this->stringProcessor->currentBuffer->name, 
+                         this->stringProcessor->currentBuffer->line, 
+                         this->stringProcessor->currentBuffer->column);
     }
   }
 
@@ -114,7 +120,10 @@ Token* TokenList_checkIntegerConstant(TokenList* this)
   {
     tmpInt = String_toInt(tmpStr);
     String_delete(tmpStr);
-    result = Token_new(TOK_CONSTANT, "CONSTANT", (void*)((uintptr_t)tmpInt), NULL, 0, 0);
+    result = Token_new(TOK_CONSTANT, "CONSTANT", (void*)((uintptr_t)tmpInt), 
+                         this->stringProcessor->currentBuffer->name, 
+                         this->stringProcessor->currentBuffer->line, 
+                         this->stringProcessor->currentBuffer->column);
   }
 
   return result;
@@ -129,7 +138,10 @@ Token* TokenList_checkIdentifier(TokenList* this)
 
   if (identifierName!=NULL)
   {
-    result = Token_new(TOK_IDENTIFIER, "IDENTIFIER", (void*)identifierName, NULL, 0, 0);
+    result = Token_new(TOK_IDENTIFIER, "IDENTIFIER", (void*)identifierName, 
+                       this->stringProcessor->currentBuffer->name, 
+                       this->stringProcessor->currentBuffer->line, 
+                       this->stringProcessor->currentBuffer->column);
     //String_print(identifierName, "Token identifier: ");
   }
 

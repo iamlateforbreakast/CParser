@@ -14,12 +14,13 @@ typedef struct StringProcessor
     StringBuffer* currentBuffer;
 	unsigned int nbOpenBuffers;
 	Map* macros;
+	String* currentFilename;
 } StringProcessor;
 
 StringProcessor* StringProcessor_new();
 void StringProcessor_delete(StringProcessor* this);
 void StringProcessor_addFile(StringProcessor* this, String* file);
-unsigned char StringProcessor_readTransUnitChar(StringProcessor* this);
+unsigned char StringProcessor_readTransUnitChar(StringProcessor* this, String* f, unsigned int *l, unsigned int *c);
 unsigned int StringProcessor_checkForMacro(StringProcessor* this);
 unsigned int StringProcessor_match(StringProcessor* this, String* pattern);
 String* StringProcessor_readIdentifier(StringProcessor* this);

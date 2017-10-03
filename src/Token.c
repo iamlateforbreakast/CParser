@@ -36,7 +36,7 @@ void Token_delete(Token* this)
     //printf("Token_new: nbStr=%d\n", nbStr);
     String_delete((String*)(this->value));
   }
-  String_delete(this->fileName);
+  //String_delete(this->fileName);
   //nb=nb-1;
   //printf("Token_delete: nb=%d\n", nb);
   Memory_free(this, sizeof(Token));
