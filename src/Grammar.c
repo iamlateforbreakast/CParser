@@ -1418,13 +1418,15 @@ void Grammar_matchEnumSpecifier(Grammar* this, Token* token)
       }
       else if  ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
       {
-        rules[E_ENUM_SPECIFIER].count[0] = 2;
+        rules[E_ENUM_SPECIFIER].count[0] = 3;
+        this->isInStructDefinition = 1;
       }
       break;
     case 2:
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
       {
         rules[E_ENUM_SPECIFIER].count[0] = 3;
+        this->isInStructDefinition = 1;
       }
       break;
     case 3:
@@ -1439,6 +1441,8 @@ void Grammar_matchEnumSpecifier(Grammar* this, Token* token)
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '}'))
       {
         rules[E_ENUM_SPECIFIER].isMatched = 1;
+        rules[E_ENUM_SPECIFIER].count[0] = 0;
+        this->isInStructDefinition = 0;
       }
       else if (!rules[E_ENUMERATOR_LIST].isMatched)
       {
@@ -1773,7 +1777,7 @@ void Grammar_matchPostfixExpression(Grammar* this, Token* token)
       if (rules[E_PRIMARY_EXPRESSION].isMatched)
       {
         rules[E_POSTFIX_EXPRESSION].isMatched = 1;
-        rules[E_POSTFIX_EXPRESSION].count[0] = 1;
+        rules[E_POSTFIX_EXPRESSION].count[0] = 0;
       }
       break;
     case 1:
