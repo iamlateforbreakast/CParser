@@ -353,6 +353,8 @@ void Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
 {
   rules[E_FUNCTION_DECLARATION].isMatched = 0;
 
+  if (!this->isInStructDefinition)
+  {
   switch(rules[E_FUNCTION_DECLARATION].count[0])
   {
     case 0:
@@ -393,6 +395,20 @@ void Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
         // Keep looking for '}'
       }
       break;
+  }
+  }
+  else
+  {
+    switch(rules[E_DECLARATION].count[0])
+    {
+    case 0:
+      break;
+    case 1:
+      Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
+      break;
+    case 2:
+      break;
+    }
   }
 }
 
@@ -1950,18 +1966,20 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
   memset(name, 0, 255);
   memset(fName, 0, 255);
   memset(cmd, 0, 255);
-  memcpy(name, declarator->name->buffer, declarator->name->length);
-  memcpy(fName, declarator->fName->buffer, declarator->fName->length);
+  if (declarator->name)
+  {
+    memcpy(name, declarator->name->buffer, declarator->name->length);
+    memcpy(fName, declarator->fName->buffer, declarator->fName->length);
   
-  sprintf(cmd, "INSERT INTO Declarations ( name, type, scope, fname, line, column ) "
-               "VALUES ('%s','%s','%s','%s',%d, %d);", 
-               name, 
-               classText[declarator->class], 
-               scopeText[this->scope],
-               fName,
-               declarator->line,
-               declarator->col);
-
+    sprintf(cmd, "INSERT INTO Declarations ( name, type, scope, fname, line, column ) "
+                 "VALUES ('%s','%s','%s','%s',%d, %d);", 
+                 name, 
+                 classText[declarator->class], 
+                 scopeText[this->scope],
+                 fName,
+                 declarator->line,
+                 declarator->col);
+  }
   SdbMgr_execute(sdbMgr, cmd);
   SdbMgr_delete(sdbMgr);
 }
