@@ -258,9 +258,16 @@ PRIVATE String* FileMgr_getCurrentDir(FileMgr* this)
 PUBLIC void FileMgr_initialise(FileMgr* this, String* initialPath)
 {
 
-  this->rootPath = FileMgr_getCurrentDir(this);
-  // Merge current dir with initialPath
-  FileMgr_mergePath(this, this->rootPath, initialPath);
+  if (initialPath->buffer[0] == '/')
+  {
+    this->rootPath = String_dup(initialPath);
+  }
+  else
+  {
+    this->rootPath = FileMgr_getCurrentDir(this);
+    // Merge current dir with initialPath
+    FileMgr_mergePath(this, this->rootPath, initialPath);
+  }
   // Parse all files contained in the root path
   FileMgr_changeDirectory(this, this->rootPath);
   this->files = FileMgr_listAllFiles(this);
