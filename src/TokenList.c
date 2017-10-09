@@ -72,7 +72,7 @@ Token* TokenList_getTokenFromTransUnit(TokenList* this)
         nextToken = Token_new(TOK_EOF, "EOF", 0, NULL, line, col);
         //printf("Read char EOF\n");
       }
-      else if ((c!=10) && (c!=32))
+      else if ((c!=10) && (c!=32) && (c!=13))
       {
         nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, line, col);
         //printf("Accepted: Read char: %c %d\n",c,c);
