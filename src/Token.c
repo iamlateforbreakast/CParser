@@ -16,8 +16,8 @@ Token* Token_new(TokenId id, char* text, void* value, String* fileName, unsigned
   this->value = value;
   this->fileName = fileName;
   this->text = text;
-  this->line = 0;
-  this->column = 0;
+  this->line = l;
+  this->column = c;
   //if (this->id==TOK_IDENTIFIER)
   //{
   //  nbStr++;
