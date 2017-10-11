@@ -4,6 +4,20 @@
 
 #include "Common.h"
 
+struct ListNode
+{
+  void* item;
+  ListNode* next;
+  ListNode* prev;
+};
+
+struct List
+{
+  ListNode* head;
+  ListNode* current;
+  unsigned int nbNodes;
+};
+
 /**************************************************
 **************************************************/ 
 List* List_new()

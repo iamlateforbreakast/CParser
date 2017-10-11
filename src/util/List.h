@@ -5,19 +5,7 @@
 
 typedef struct ListNode ListNode;
 
-struct ListNode
-{
-  void* item;
-  ListNode* next;
-  ListNode* prev;
-};
-
-typedef struct List
-{
-  ListNode* head;
-  ListNode* current;
-  unsigned int nbNodes;
-} List;
+typedef struct List List;
 
 List* List_new();
 void List_delete(List* this, void (*f_delete)(void*));
