@@ -430,41 +430,25 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
       Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
       if (rules[E_DECLARATION_SPECIFIERS].isMatched)
       {
-        rules[E_DECLARATION].count[0] = 1;
+      }
+      else if (token->id == TOK_IDENTIFIER)
+      {
+        Grammar_evaluateRule(this, token, E_INIT_DECLARATOR_LIST);
+        this->declarator.name = String_dup((String*)token->value);
+        rules[E_DECLARATION].count[0] = 1 ;
       }
       break;
     case 1:
-      Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
-      Grammar_evaluateRule(this, token, E_INIT_DECLARATOR_LIST);
-      if (rules[E_DECLARATION_SPECIFIERS].isMatched)
-      {
-
-      }
-      else if (rules[E_INIT_DECLARATOR_LIST].isMatched)
-      {
-        rules[E_DECLARATION].count[0] = 2 ;
-      }
-      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ';'))
-      {
-        rules[E_DECLARATION].isMatched = 1;
-        rules[E_DECLARATION].count[0] = 0 ;
-        TRACE(("matchDeclaration count %d\n", rules[E_DECLARATION].count[0]));
-      }
-      break;
-    case 2:
       Grammar_evaluateRule(this, token, E_INIT_DECLARATOR_LIST);
       if (rules[E_INIT_DECLARATOR_LIST].isMatched)
       {
-        // COnsume
       }
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ';'))
       {
         rules[E_DECLARATION].isMatched = 1;
         rules[E_DECLARATION].count[0] = 0 ;
-      }
-      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
-      {
-        rules[E_DECLARATION].count[0] = 0 ;
+         
+        TRACE(("matchDeclaration count %d\n", rules[E_DECLARATION].count[0]));
       }
       break;
   }
@@ -474,9 +458,9 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
     switch(rules[E_DECLARATION].count[0])
     {
     case 0:
+      Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
       break;
     case 1:
-      Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
       break;
     case 2:
       break;
@@ -1206,6 +1190,11 @@ void Grammar_matchStructOrUnionSpecifier(Grammar* this, Token* token)
         rules[E_STRUCT_OR_UNION_SPECIFIER].isMatched = 1;
         rules[E_STRUCT_OR_UNION_SPECIFIER].count[0] = 2;
       }
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
+      {
+        rules[E_STRUCT_OR_UNION_SPECIFIER].count[0] = 3;
+        this->isInStructDefinition = 1;
+      }
       else
       {
         rules[E_STRUCT_OR_UNION_SPECIFIER].count[0] = 0;
@@ -1316,7 +1305,7 @@ void Grammar_matchStructDeclaration(Grammar* this, Token* token)
       {
         rules[E_STRUCT_DECLARATION].isMatched = 1;
         rules[E_STRUCT_DECLARATION].count[0] = 0;
-        this->requestReset = 1;
+        //this->requestReset = 1;
       }
       break;
   }
@@ -1998,7 +1987,7 @@ unsigned int Grammar_isTypeDefined(Grammar* this, String* typeName)
   memset(name, 0, 255);
 
   memcpy(name, typeName->buffer, typeName->length);
-  sprintf(cmd,"SELECT * FROM Declarations WHERE name LIKE '%s';", name);
+  sprintf(cmd,"SELECT * FROM Declarations WHERE name='%s';", name);
 
   SdbMgr_execute(sdbMgr, cmd);
 
