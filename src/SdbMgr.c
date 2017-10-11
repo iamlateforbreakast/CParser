@@ -125,6 +125,8 @@ PUBLIC unsigned int SdbMgr_getQueryCount(SdbMgr* this)
   
   result = this->queryCount;
   
+  this->queryCount = 0;
+  
   return result;
 }
 
