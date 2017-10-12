@@ -181,19 +181,20 @@ PUBLIC List* FileMgr_filterFiles(FileMgr* this, String* filter)
 {
   List* result = NULL;
   ListNode* pNode = NULL;
+  FileDesc* fd = NULL;
   
   if (this->files != NULL)
   {
-    pNode = this->files->head;
+    fd = (FileDesc*)List_getNext(this->files);
     result = List_new();
   
-    while(pNode!=NULL)
+    while(fd!=NULL)
     {
-      if (FileMgr_matchWildcard(this, ((FileDesc*)pNode->item)->name, filter))
+      if (FileMgr_matchWildcard(this, fd->name, filter))
       {
-        List_insert(result, ((FileDesc*)pNode->item)->fullName);
+        List_insert(result, fd->fullName);
       }
-      pNode = pNode->next;
+      fd = List_getNext(this->files);
     }
   }
   
