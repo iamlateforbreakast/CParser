@@ -7,6 +7,20 @@ typedef struct ListNode ListNode;
 
 typedef struct List List;
 
+struct ListNode
+{
+  void* item;
+  ListNode* next;
+  ListNode* prev;
+};
+
+struct List
+{
+  ListNode* head;
+  ListNode* current;
+  unsigned int nbNodes;
+};
+
 List* List_new();
 void List_delete(List* this, void (*f_delete)(void*));
 void List_insert(List* this, void* item);

@@ -4,19 +4,7 @@
 
 #include "Common.h"
 
-struct ListNode
-{
-  void* item;
-  ListNode* next;
-  ListNode* prev;
-};
 
-struct List
-{
-  ListNode* head;
-  ListNode* current;
-  unsigned int nbNodes;
-};
 
 /**************************************************
 **************************************************/ 
@@ -45,12 +33,16 @@ void List_delete(List* this, void (*f_delete)(void*))
     while (p!=NULL)
     {
       this->head = p->next;
-	    (*f_delete)(p->item);
+	    if (f_delete!=NULL) 
+      {
+        (*f_delete)(p->item);
+      }
       Memory_free(p, sizeof(ListNode));
       p = this->head;
     }
     this->nbNodes = 0;
     this->current = NULL;
+    this->head = NULL;
     Memory_free(this, sizeof(List));
   }    
 }
@@ -66,6 +58,10 @@ void List_insert(List* this, void* item)
   newNode->next = this->head;
   newNode->prev = NULL;
   this->head = newNode;
+  if (this->current == NULL)
+  {
+    this->current = this->head;
+  }
   this->nbNodes ++;
 }
 
@@ -115,10 +111,29 @@ void List_merge(List* this, List* l1)
     iterator->next = this->head;
     this->head = l1->head;
     this->nbNodes += l1->nbNodes;
+    this->current = this->head;
 
   }
   l1->nbNodes = 0;
   l1->current = NULL;
   l1->head = NULL;
   Memory_free(l1, sizeof(List));
+}
+
+/**************************************************
+**************************************************/
+void* List_getNext(List* this)
+{
+  void* result = NULL;
+  
+  if (this->current!=NULL)
+  {
+    result = this->current->item;
+    this->current = this->current->next;
+  }
+  else
+  {
+    this->current = this->head;
+  }
+  return result;
 }
