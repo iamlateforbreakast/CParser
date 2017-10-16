@@ -11,6 +11,8 @@
 
 #define DEBUG (1)
 
+#define CONTEXT_DEPTH (5)
+
 typedef enum
 {
   E_EXTERNAL_DECLARATION = 0,
@@ -87,8 +89,7 @@ typedef struct MatchRule
   unsigned int isMatched;
   unsigned int isEvaluated;
   EvalFunction evaluate;
-  unsigned int count[5];
-  unsigned int context;
+  unsigned int count[CONTEXT_DEPTH];
 } MatchRule;
 
 typedef struct TypeInfo TypeInfo;
@@ -121,6 +122,8 @@ struct Grammar{
   Scope scope;
   unsigned int tokenNumber;
   Declarator declarator;
+  unsigned int context;
+  RuleName entryRule[CONTEXT_DEPTH];
 };
 
 void Grammar_matchExternalDeclaration(Grammar* this, Token* token);
@@ -179,56 +182,58 @@ void Grammar_printMatchingRules(Grammar* this, Token* token);
 void Grammar_reset(Grammar* this, Scope scope);
 void Grammar_insertDeclaration(Grammar* this, Declarator* declarator);
 unsigned int Grammar_isTypeDefined(Grammar* this, String* typeName);
+void Grammar_saveContext(Grammar* this, RuleName entryRule);
+void Grammar_restoreContext(Grammar* this, RuleName entryRule);
 
-MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, &Grammar_matchExternalDeclaration, {0, 0, 0, 0, 0 } ,0 },
-                      { E_FUNCTION_DECLARATION , "FUNCTION_DECLARATION", 0 , 0, &Grammar_matchFunctionDeclaration, {0, 0, 0, 0, 0 } ,0 },
-                      { E_DECLARATION , "E_DECLARATION", 0 , 0, &Grammar_matchDeclaration, {0, 0, 0, 0, 0 } ,0 },
-                      { E_COMPOUND_STATEMENT , "COMPOUND_STATEMENT", 0 , 0, &Grammar_matchCompountStatement, {0, 0, 0, 0, 0 } ,0 },
-                      { E_DECLARATION_SPECIFIERS , "DECLARATION_SPECIFIERS", 0 , 0, &Grammar_matchDeclarationSpecifiers, {0, 0, 0, 0, 0 } ,0 },
-                      { E_DECLARATOR , "DECLARATOR", 0 , 0, &Grammar_matchDeclarator, {0, 0, 0, 0, 0 } ,0 },
-                      { E_DIRECT_DECLARATOR , "DIRECT_DECLARATOR", 0 , 0, &Grammar_matchDirectDeclarator, {0, 0, 0, 0, 0 } ,0 },
-                      { E_DECLARATOR_LIST , "DECLARATOR_LIST", 0 , 0, &Grammar_matchDeclaratorList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_INIT_DECLARATOR_LIST , "INIT_DECLARATOR_LIST", 0 , 0, &Grammar_matchInitDeclaratorList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_INIT_DECLARATOR , "INIT_DECLARATOR", 0 , 0, &Grammar_matchInitDeclarator, {0, 0, 0, 0, 0 } ,0 },
-                      { E_STORAGE_CLASS , "STORAGE_CLASS", 0 , 0, &Grammar_matchStorageClass, {0, 0, 0, 0, 0 } ,0 },
-                      { E_TYPE_SPECIFIER , "TYPE_SPECIFIER", 0 , 0, &Grammar_matchTypeSpecifier, {0, 0, 0, 0, 0 } ,0 },
-                      { E_TYPE_QUALIFIER , "TYPE_QUALIFIER", 0 , 0, &Grammar_matchTypeQualifier, {0, 0, 0, 0, 0 } ,0 },
-                      { E_TYPE_QUALIFIER_LIST , "TYPE_QUALIFIER_LIST", 0 , 0, &Grammar_matchTypeQualifierList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_STRUCT_OR_UNION_SPECIFIER , "STRUCT_OR_UNION_SPECIFIER", 0 , 0, &Grammar_matchStructOrUnionSpecifier, {0, 0, 0, 0, 0 } ,0 },
-                      { E_STRUCT_OR_UNION_SPECIFIER2 , "STRUCT_OR_UNION_SPECIFIER2", 0 , 0, &Grammar_matchStructOrUnionSpecifier2, {0, 0, 0, 0, 0 } ,0 },
-                      { E_STRUCT_DECLARATION_LIST , "STRUCT_DECLARATION_LIST ", 0 , 0, &Grammar_matchStructDeclarationList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_STRUCT_DECLARATION , "STRUCT_DECLARATION", 0 , 0, &Grammar_matchStructDeclaration, {0, 0, 0, 0, 0 } ,0 },
-                      { E_SPECIFIER_QUALIFIER_LIST, "SPECIFIER_QUALIFIER_LIST", 0, 0, &Grammar_matchSpecifierQualifierList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_STRUCT_DECLARATOR_LIST, "STRUCT_DECLARATOR_LIST", 0, 0, &Grammar_matchStructDeclaratorList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_STRUCT_DECLARATOR, "STRUCT_DECLARATOR", 0, 0, &Grammar_matchStructDeclarator, {0, 0, 0, 0, 0 } ,0 },
-                      { E_ENUMERATOR , "ENUMERATOR", 0 , 0, &Grammar_matchEnumerator, {0, 0, 0, 0, 0 } ,0 },
-                      { E_ENUMERATOR_LIST , "ENUMERATOR_LIST", 0 , 0, &Grammar_matchEnumeratorList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_ENUM_SPECIFIER , "ENUM_SPECIFIER", 0 , 0, &Grammar_matchEnumSpecifier, {0, 0, 0, 0, 0 } ,0 },
-                      { E_POINTER , "POINTER", 0 , 0, &Grammar_matchPointer, {0, 0, 0, 0, 0 } ,0 },
-                      { E_CONSTANT_EXPRESSION , "CONSTANT_EXPRESSION", 0 , 0, &Grammar_matchConstantExpression, {0, 0, 0, 0, 0 } ,0 },
-                      { E_INITIALIZER, "INITIALIZER", 0, 0, &Grammar_matchInitializer, {0, 0, 0, 0, 0 } ,0 },
-                      { E_PARAMETER_TYPE_LIST, "PARAMETER_TYPE_LIST", 0, 0, &Grammar_matchParameterTypeList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_IDENTIFIER_LIST, "IDENTIFIER_LIST", 0, 0, &Grammar_matchIdentifierList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_PARAMETER_LIST, "PARAMETER_LIST", 0, 0, &Grammar_matchParameterList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_ABSTRACT_DECLARATOR, "ABSTRACT_DECLARATOR", 0, 0, &Grammar_matchAbstractDeclarator, {0, 0, 0, 0, 0 } ,0 },
-                      { E_DIRECT_ABSTRACT_DECLARATOR, "DIRECT_ABSTRACT_DECLARATOR", 0, 0, &Grammar_matchDirectAbstractDeclarator, {0, 0, 0, 0, 0 } ,0 },
-                      { E_DECLARATION_LIST, "DECLARATION_LIST", 0, 0, &Grammar_matchDeclarationList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_PARAMETER_DECLARATION, "PARAMETER_DECLARATION", 0, 0, &Grammar_matchParameterDeclaration, {0, 0, 0, 0, 0 } ,0 },
-		                  { E_CONDITIONAL_EXPRESSION, "CONDITIONAL_EXPRESSION", 0, 0, &Grammar_matchConditionalExpression, {0, 0, 0, 0, 0 } ,0 },
-                      { E_STATEMENT_LIST, "STATEMENT_LIST", 0, 0, &Grammar_matchStatementList, {0, 0, 0, 0, 0 } ,0 },
-                      { E_STATEMENT, "STATEMENT", 0, 0, &Grammar_matchStatement, {0, 0, 0, 0, 0 } ,0 },
-                      { E_LABELED_STATEMENT, "LABELED_STATEMENT", 0, 0, &Grammar_matchLabeledStatement, {0, 0, 0, 0, 0 } ,0 },
-                      { E_EXPRESSION_STATEMENT, "EXPRESSION_STATEMENT", 0, 0, &Grammar_matchExpresionStatement, {0, 0, 0, 0, 0 } ,0 },
-                      { E_SELECTION_STATEMENT, "SELECTION_STATEMENT", 0, 0, &Grammar_matchSelectionStatement, {0, 0, 0, 0, 0 } ,0 },
-                      { E_ITERATION_STATEMENT, "ITERATION_STATEMENT", 0, 0, &Grammar_matchIterationStatement, {0, 0, 0, 0, 0 } ,0 },
-                      { E_JUMP_STATEMENT, "JUMP_STATEMENT", 0, 0, &Grammar_matchJumpStatement, {0, 0, 0, 0, 0 } ,0 },
-                      { E_EXPRESSION, "EXPRESSION", 0, 0, &Grammar_matchExpression, {0, 0, 0, 0, 0 } ,0 },
-                      { E_ASSIGNMENT_EXPRESSION, "ASSIGNMENT_EXPRESSION", 0, 0, &Grammar_matchAssignmentExpression, {0, 0, 0, 0, 0 } ,0 },
-                      { E_PRIMARY_EXPRESSION, "PRIMARY_EXPRESSION", 0, 0, &Grammar_matchPrimaryExpression, {0, 0, 0, 0, 0 } ,0 },
-                      { E_POSTFIX_EXPRESSION, "POSTFIX_EXPRESSION", 0, 0, &Grammar_matchPostfixExpression, {0, 0, 0, 0, 0 } ,0 },
-                      { E_UNARY_EXPRESSION, "UNARY_EXPRESSION", 0, 0, &Grammar_matchUnaryExpression, {0, 0, 0, 0, 0 } ,0 },
-                      { E_CAST_EXPRESSION, "CAST_EXPRESSION", 0, 0, &Grammar_matchCastExpression, {0, 0, 0, 0, 0 } ,0 },
-                      { E_TYPE_NAME, "TYPE_NAME", 0, 0, Grammar_matchTypeName, {0, 0, 0, 0, 0 } ,0 }
+MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, &Grammar_matchExternalDeclaration, {0, 0, 0, 0, 0 } },
+                      { E_FUNCTION_DECLARATION , "FUNCTION_DECLARATION", 0 , 0, &Grammar_matchFunctionDeclaration, {0, 0, 0, 0, 0 } },
+                      { E_DECLARATION , "E_DECLARATION", 0 , 0, &Grammar_matchDeclaration, {0, 0, 0, 0, 0 } },
+                      { E_COMPOUND_STATEMENT , "COMPOUND_STATEMENT", 0 , 0, &Grammar_matchCompountStatement, {0, 0, 0, 0, 0 } },
+                      { E_DECLARATION_SPECIFIERS , "DECLARATION_SPECIFIERS", 0 , 0, &Grammar_matchDeclarationSpecifiers, {0, 0, 0, 0, 0 } },
+                      { E_DECLARATOR , "DECLARATOR", 0 , 0, &Grammar_matchDeclarator, {0, 0, 0, 0, 0 } },
+                      { E_DIRECT_DECLARATOR , "DIRECT_DECLARATOR", 0 , 0, &Grammar_matchDirectDeclarator, {0, 0, 0, 0, 0 } },
+                      { E_DECLARATOR_LIST , "DECLARATOR_LIST", 0 , 0, &Grammar_matchDeclaratorList, {0, 0, 0, 0, 0 } },
+                      { E_INIT_DECLARATOR_LIST , "INIT_DECLARATOR_LIST", 0 , 0, &Grammar_matchInitDeclaratorList, {0, 0, 0, 0, 0 } },
+                      { E_INIT_DECLARATOR , "INIT_DECLARATOR", 0 , 0, &Grammar_matchInitDeclarator, {0, 0, 0, 0, 0 } },
+                      { E_STORAGE_CLASS , "STORAGE_CLASS", 0 , 0, &Grammar_matchStorageClass, {0, 0, 0, 0, 0 } },
+                      { E_TYPE_SPECIFIER , "TYPE_SPECIFIER", 0 , 0, &Grammar_matchTypeSpecifier, {0, 0, 0, 0, 0 } },
+                      { E_TYPE_QUALIFIER , "TYPE_QUALIFIER", 0 , 0, &Grammar_matchTypeQualifier, {0, 0, 0, 0, 0 } },
+                      { E_TYPE_QUALIFIER_LIST , "TYPE_QUALIFIER_LIST", 0 , 0, &Grammar_matchTypeQualifierList, {0, 0, 0, 0, 0 } },
+                      { E_STRUCT_OR_UNION_SPECIFIER , "STRUCT_OR_UNION_SPECIFIER", 0 , 0, &Grammar_matchStructOrUnionSpecifier, {0, 0, 0, 0, 0 } },
+                      { E_STRUCT_OR_UNION_SPECIFIER2 , "STRUCT_OR_UNION_SPECIFIER2", 0 , 0, &Grammar_matchStructOrUnionSpecifier2, {0, 0, 0, 0, 0 } },
+                      { E_STRUCT_DECLARATION_LIST , "STRUCT_DECLARATION_LIST ", 0 , 0, &Grammar_matchStructDeclarationList, {0, 0, 0, 0, 0 } },
+                      { E_STRUCT_DECLARATION , "STRUCT_DECLARATION", 0 , 0, &Grammar_matchStructDeclaration, {0, 0, 0, 0, 0 } },
+                      { E_SPECIFIER_QUALIFIER_LIST, "SPECIFIER_QUALIFIER_LIST", 0, 0, &Grammar_matchSpecifierQualifierList, {0, 0, 0, 0, 0 } },
+                      { E_STRUCT_DECLARATOR_LIST, "STRUCT_DECLARATOR_LIST", 0, 0, &Grammar_matchStructDeclaratorList, {0, 0, 0, 0, 0 } },
+                      { E_STRUCT_DECLARATOR, "STRUCT_DECLARATOR", 0, 0, &Grammar_matchStructDeclarator, {0, 0, 0, 0, 0 } },
+                      { E_ENUMERATOR , "ENUMERATOR", 0 , 0, &Grammar_matchEnumerator, {0, 0, 0, 0, 0 } },
+                      { E_ENUMERATOR_LIST , "ENUMERATOR_LIST", 0 , 0, &Grammar_matchEnumeratorList, {0, 0, 0, 0, 0 } },
+                      { E_ENUM_SPECIFIER , "ENUM_SPECIFIER", 0 , 0, &Grammar_matchEnumSpecifier, {0, 0, 0, 0, 0 } },
+                      { E_POINTER , "POINTER", 0 , 0, &Grammar_matchPointer, {0, 0, 0, 0, 0 } },
+                      { E_CONSTANT_EXPRESSION , "CONSTANT_EXPRESSION", 0 , 0, &Grammar_matchConstantExpression, {0, 0, 0, 0, 0 } },
+                      { E_INITIALIZER, "INITIALIZER", 0, 0, &Grammar_matchInitializer, {0, 0, 0, 0, 0 } },
+                      { E_PARAMETER_TYPE_LIST, "PARAMETER_TYPE_LIST", 0, 0, &Grammar_matchParameterTypeList, {0, 0, 0, 0, 0 } },
+                      { E_IDENTIFIER_LIST, "IDENTIFIER_LIST", 0, 0, &Grammar_matchIdentifierList, {0, 0, 0, 0, 0 } },
+                      { E_PARAMETER_LIST, "PARAMETER_LIST", 0, 0, &Grammar_matchParameterList, {0, 0, 0, 0, 0 } },
+                      { E_ABSTRACT_DECLARATOR, "ABSTRACT_DECLARATOR", 0, 0, &Grammar_matchAbstractDeclarator, {0, 0, 0, 0, 0 } },
+                      { E_DIRECT_ABSTRACT_DECLARATOR, "DIRECT_ABSTRACT_DECLARATOR", 0, 0, &Grammar_matchDirectAbstractDeclarator, {0, 0, 0, 0, 0 } },
+                      { E_DECLARATION_LIST, "DECLARATION_LIST", 0, 0, &Grammar_matchDeclarationList, {0, 0, 0, 0, 0 } },
+                      { E_PARAMETER_DECLARATION, "PARAMETER_DECLARATION", 0, 0, &Grammar_matchParameterDeclaration, {0, 0, 0, 0, 0 } },
+		                  { E_CONDITIONAL_EXPRESSION, "CONDITIONAL_EXPRESSION", 0, 0, &Grammar_matchConditionalExpression, {0, 0, 0, 0, 0 } },
+                      { E_STATEMENT_LIST, "STATEMENT_LIST", 0, 0, &Grammar_matchStatementList, {0, 0, 0, 0, 0 } },
+                      { E_STATEMENT, "STATEMENT", 0, 0, &Grammar_matchStatement, {0, 0, 0, 0, 0 } },
+                      { E_LABELED_STATEMENT, "LABELED_STATEMENT", 0, 0, &Grammar_matchLabeledStatement, {0, 0, 0, 0, 0 } },
+                      { E_EXPRESSION_STATEMENT, "EXPRESSION_STATEMENT", 0, 0, &Grammar_matchExpresionStatement, {0, 0, 0, 0, 0 } },
+                      { E_SELECTION_STATEMENT, "SELECTION_STATEMENT", 0, 0, &Grammar_matchSelectionStatement, {0, 0, 0, 0, 0 } },
+                      { E_ITERATION_STATEMENT, "ITERATION_STATEMENT", 0, 0, &Grammar_matchIterationStatement, {0, 0, 0, 0, 0 } },
+                      { E_JUMP_STATEMENT, "JUMP_STATEMENT", 0, 0, &Grammar_matchJumpStatement, {0, 0, 0, 0, 0 } },
+                      { E_EXPRESSION, "EXPRESSION", 0, 0, &Grammar_matchExpression, {0, 0, 0, 0, 0 } },
+                      { E_ASSIGNMENT_EXPRESSION, "ASSIGNMENT_EXPRESSION", 0, 0, &Grammar_matchAssignmentExpression, {0, 0, 0, 0, 0 } },
+                      { E_PRIMARY_EXPRESSION, "PRIMARY_EXPRESSION", 0, 0, &Grammar_matchPrimaryExpression, {0, 0, 0, 0, 0 } },
+                      { E_POSTFIX_EXPRESSION, "POSTFIX_EXPRESSION", 0, 0, &Grammar_matchPostfixExpression, {0, 0, 0, 0, 0 } },
+                      { E_UNARY_EXPRESSION, "UNARY_EXPRESSION", 0, 0, &Grammar_matchUnaryExpression, {0, 0, 0, 0, 0 } },
+                      { E_CAST_EXPRESSION, "CAST_EXPRESSION", 0, 0, &Grammar_matchCastExpression, {0, 0, 0, 0, 0 } },
+                      { E_TYPE_NAME, "TYPE_NAME", 0, 0, Grammar_matchTypeName, {0, 0, 0, 0, 0 } }
                     };
 
 /****************************************************************************
@@ -246,7 +251,11 @@ Grammar* Grammar_new()
   this->tokenNumber = 1;
   this->requestReset = 0;
   this->isInStructDefinition = 0;
-
+  this->context = 0;
+  
+  memset(this->entryRule, 0, CONTEXT_DEPTH);
+  this->entryRule[0] = E_EXTERNAL_DECLARATION;
+  
   return this;
 }
 
@@ -285,6 +294,28 @@ void Grammar_reset(Grammar* this, Scope scope)
   this->declarator.fName = NULL;
   this->declarator.line = 0;
   this->declarator.col = 0;
+}
+
+/****************************************************************************
+****************************************************************************/
+void Grammar_resetContext(Grammar* this)
+{
+  unsigned int nbRules = sizeof(rules)/sizeof(MatchRule);
+  RuleName i = E_EXTERNAL_DECLARATION;
+
+  TRACE(("Grammar Reset Context\n"));
+  for (i=E_EXTERNAL_DECLARATION; i<nbRules; i++)
+  {
+    rules[i].isMatched = 0;
+    rules[i].isEvaluated = 0;
+    if (rules[i].count[this->context]!=0) TRACE(("-- Set count to zero: %s\n", rules[i].description));
+    memset(rules[i].count, 0, sizeof(rules[i].count));
+  }
+  // this->declarator.name = NULL;
+  // this->declarator.class = E_UNKNOWN_DECLARATOR;
+  // this->declarator.fName = NULL;
+  // this->declarator.line = 0;
+  // this->declarator.col = 0;
 }
 
 /****************************************************************************
@@ -351,6 +382,8 @@ function_definition
 **************************************************/
 void Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
 {
+  static String* functionName;
+  
   rules[E_FUNCTION_DECLARATION].isMatched = 0;
 
   if (!this->isInStructDefinition)
@@ -373,6 +406,7 @@ void Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
       else if ((rules[E_DECLARATOR].isMatched))
       {
         rules[E_FUNCTION_DECLARATION].count[0] = 2;
+        functionName = this->declarator.name; // save the name
       }
       else
       {
@@ -389,6 +423,8 @@ void Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
       else if ((rules[E_COMPOUND_STATEMENT].isMatched) && (this->scope == E_GLOBAL_SCOPE))
       {
         rules[E_FUNCTION_DECLARATION].isMatched = 1;
+        this->declarator.name = functionName;
+        functionName = NULL;
       }
       else
       {
@@ -435,6 +471,7 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
       {
         Grammar_evaluateRule(this, token, E_INIT_DECLARATOR_LIST);
         this->declarator.name = String_dup((String*)token->value);
+        String_print(this->declarator.name,"MatchDeclarartion: declarator is now ");
         rules[E_DECLARATION].count[0] = 1 ;
       }
       break;
@@ -586,14 +623,14 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
 {
   rules[E_DECLARATOR].isMatched = 0;
 
-  switch (rules[E_DECLARATOR].count[0])
+  switch (rules[E_DECLARATOR].count[this->context])
   {
     case 0:
       Grammar_evaluateRule(this, token, E_POINTER);
       Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
       if (rules[E_POINTER].isMatched)
       {
-        rules[E_DECLARATOR].count[0] = 1;
+        rules[E_DECLARATOR].count[this->context] = 1;
       }
       else if (rules[E_DIRECT_DECLARATOR].isMatched)
       {
@@ -643,14 +680,14 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
 {
   rules[E_DIRECT_DECLARATOR].isMatched = 0;
 
-  switch (rules[E_DIRECT_DECLARATOR].count[0])
+  switch (rules[E_DIRECT_DECLARATOR].count[this->context])
   {
     case 0:
       if (token->id == TOK_IDENTIFIER)
       {
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
-        rules[E_DIRECT_DECLARATOR].count[0] = 1;
-        this->declarator.name = String_dup((String*)token->value);
+        rules[E_DIRECT_DECLARATOR].count[this->context] = 1;
+        //this->declarator.name = String_dup((String*)token->value);
         this->declarator.fName = token->fileName;
         this->declarator.line = token->line;
         this->declarator.col = token->column;
@@ -671,12 +708,13 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
     case 1:
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '['))
       {
-        rules[E_DIRECT_DECLARATOR].count[0] = 2;
+        rules[E_DIRECT_DECLARATOR].count[this->context] = 2;
       }
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
       {
-        rules[E_DIRECT_DECLARATOR].count[0] = 3;
         this->declarator.class = E_FUNCTION_DECLARATOR;
+        Grammar_saveContext(this, E_FUNCTION_DECLARATION);
+        rules[E_DIRECT_DECLARATOR].count[this->context] = 3;
       }
       break;
     case 2:
@@ -686,7 +724,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       }
       else if (rules[E_CONSTANT_EXPRESSION].isMatched)
       {
-        rules[E_DIRECT_DECLARATOR].count[0] = 4;
+        rules[E_DIRECT_DECLARATOR].count[this->context] = 4;
       }
       break;
     case 3:
@@ -695,10 +733,12 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ')'))
       {
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
+        Grammar_restoreContext(this, E_EXTERNAL_DECLARATION);
+        rules[E_DIRECT_DECLARATOR].count[this->context] = 0;
       }
       else if (rules[E_PARAMETER_TYPE_LIST].isMatched)
       {
-        rules[E_DIRECT_DECLARATOR].count[0] = 5;
+        rules[E_DIRECT_DECLARATOR].count[this->context] = 5;
       }
       else if (rules[E_IDENTIFIER_LIST].isMatched)
       {
@@ -841,7 +881,7 @@ void Grammar_matchPointer(Grammar* this, Token* token)
       }
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '*'))
       {
-
+        rules[E_POINTER].isMatched = 1;
       }
       //Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIER);
       //Grammar_evaluateRule(this, token, E_DECLARATOR_LIST);
@@ -861,7 +901,7 @@ compound_statement
 ****************************************************************************/
 void Grammar_matchCompountStatement(Grammar* this, Token* token)
 { 
-  unsigned int context = rules[E_COMPOUND_STATEMENT].context;
+  unsigned int context = this->context;
   static unsigned int nb_compound_statement;
   
   rules[E_COMPOUND_STATEMENT].isMatched = 0;
@@ -1670,7 +1710,7 @@ void Grammar_matchParameterDeclaration(Grammar* this, Token* token)
       Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
       if (rules[E_DECLARATION_SPECIFIERS].isMatched)
       {
-        rules[E_PARAMETER_LIST].count[0] = 1;
+        rules[E_PARAMETER_DECLARATION].count[0] = 1;
         rules[E_PARAMETER_DECLARATION].isMatched = 1;
       }
       break;
@@ -1880,6 +1920,29 @@ void Grammar_evaluateRule(Grammar* this, Token* token, RuleName r)
   {
     rules[r].evaluate(this, token);
     rules[r].isEvaluated = 1;
+  }
+}
+
+/****************************************************************************
+****************************************************************************/
+void Grammar_saveContext(Grammar* this, RuleName entryRule)
+{
+  if (this->context < CONTEXT_DEPTH)
+  {
+    this->context++;
+    Grammar_resetContext(this);
+    this->entryRule[this->context] = entryRule;
+  }
+}
+
+/****************************************************************************
+****************************************************************************/
+void Grammar_restoreContext(Grammar* this, RuleName entryRule)
+{
+  if (this->context > 0)
+  {
+    this->context--;
+    this->entryRule[this->context] = entryRule;
   }
 }
 
