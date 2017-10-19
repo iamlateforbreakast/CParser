@@ -379,7 +379,11 @@ void Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
       break;
     case 2:
       Grammar_evaluateRule(this, token, E_DECLARATOR);
-      
+      Grammar_evaluateRule(this, token, E_COMPOUND_STATEMENT);
+      if (rules[E_COMPOUND_STATEMENT].isMatched)
+      {
+        rules[E_FUNCTION_DECLARATION].isMatched = 1;
+      }
       break;
   }
 }
@@ -495,6 +499,10 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
 {
   rules[E_DECLARATOR].isMatched = 0;
   Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
+  if (rules[E_DIRECT_DECLARATOR].isMatched)
+  {
+    rules[E_DECLARATOR].isMatched = 1; 
+  }
 }
 
 /****************************************************************************
@@ -532,19 +540,21 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       }
       break;
     case 1:
-      if ((token->id == TOK_IDENTIFIER) && (token->value == '('))
+      if ((token->id == TOK_UNKNOWN) && (token->value == '('))
       {
         rules[E_DIRECT_DECLARATOR].count[this->context] = 2;
       }
       break;
     case 2:
-      if ((token->id == TOK_IDENTIFIER) && (token->value == ')'))
+      if ((token->id == TOK_UNKNOWN) && (token->value == ')'))
       {
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
         rules[E_DIRECT_DECLARATOR].count[this->context] = 0;
+        Grammar_evaluateRule(this, token, E_FUNCTION_DECLARATION);
       }
       else
       {
+        Grammar_saveContext(this, E_PARAMETER_TYPE_LIST);
         Grammar_evaluateRule(this, token, E_PARAMETER_TYPE_LIST);
       }
   }
@@ -696,6 +706,26 @@ void Grammar_matchCompountStatement(Grammar* this, Token* token)
 { 
   rules[E_COMPOUND_STATEMENT].isMatched = 0;
 
+  switch (rules[E_COMPOUND_STATEMENT].count[this->context])
+  {
+    case 0:
+      if ((token->id == TOK_UNKNOWN) && (token->value == '{'))
+      {
+        rules[E_COMPOUND_STATEMENT].count[this->context] = 1;
+      }
+      break;
+    case 1:
+      if ((token->id == TOK_UNKNOWN) && (token->value == '}'))
+      {
+        rules[E_COMPOUND_STATEMENT].count[this->context] = 1;
+        rules[E_COMPOUND_STATEMENT].isMatched = 1;
+      }
+      else
+      {
+        Grammar_matchStatementList(this, token, E_STATEMENT_LIST);
+      }
+      break;
+  }
 }
 
 /****************************************************************************
@@ -754,59 +784,8 @@ selection_statement
 ****************************************************************************/
 void Grammar_matchSelectionStatement(Grammar* this, Token* token)
 {
-  static int preventRecursion;
-  
   rules[E_SELECTION_STATEMENT].isMatched = 0;
   
-  if (!preventRecursion)
-  {
-  switch(rules[E_SELECTION_STATEMENT].count[0])
-  {
-    case 0:
-      if (token->id == TOK_IF)
-      {
-        rules[E_SELECTION_STATEMENT].count[0] = 1;
-      }
-      break;
-    case 1:
-      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
-      {
-        rules[E_SELECTION_STATEMENT].count[0] = 2;
-      }
-      break;
-    case 2:
-      Grammar_evaluateRule(this, token, E_EXPRESSION);
-      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ')'))
-      {
-        rules[E_SELECTION_STATEMENT].count[0] = 3;
-      }
-      break;
-    case 3:
-      preventRecursion = 1;
-      Grammar_evaluateRule(this, token, E_STATEMENT);
-      preventRecursion = 0;
-      if (token->id == TOK_ELSE)
-      {
-        rules[E_SELECTION_STATEMENT].count[0] = 4;
-      }
-      else if (rules[E_STATEMENT].isMatched)
-      {
-        rules[E_SELECTION_STATEMENT].isMatched = 1;
-      }
-    case 4:
-      preventRecursion = 1;
-      Grammar_evaluateRule(this, token, E_STATEMENT);
-      preventRecursion = 0;
-      if (rules[E_STATEMENT].isMatched)
-      {
-        rules[E_SELECTION_STATEMENT].isMatched = 1;
-      }
-  }
-  }
-  else
-  {
-    //printf("Error no recursive if\n");
-  }
 }
 
 /****************************************************************************
@@ -835,33 +814,6 @@ void Grammar_matchJumpStatement(Grammar* this, Token* token)
 {
   rules[E_JUMP_STATEMENT].isMatched = 0;
 
-  switch (rules[E_JUMP_STATEMENT].count[0])
-  {
-    case 0:
-      if (token->id == TOK_GOTO)
-      {
-      }
-      else if (token->id == TOK_CONTINUE)
-      {
-      }
-      else if (token->id == TOK_BREAK)
-      {
-      }
-      else if (token->id == TOK_RETURN)
-      {
-        rules[E_JUMP_STATEMENT].count[0] = 1;
-      }
-      break;
-    case 1:
-      if (rules[E_EXPRESSION].isMatched)
-      {
-      }
-      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ';'))
-      {
-        rules[E_JUMP_STATEMENT].isMatched = 1;
-      }
-      break;
-  }
 }
 
 /****************************************************************************
@@ -932,29 +884,11 @@ void Grammar_matchParameterTypeList(Grammar* this, Token* token)
 {
   rules[E_PARAMETER_TYPE_LIST].isMatched = 0;
 
-  switch (rules[E_PARAMETER_TYPE_LIST].count[0])
+  Grammar_evaluateRule(this, token, E_PARAMETER_LIST);
+  if (rules[E_PARAMETER_LIST].isMatched)
   {
-    case 0:
-      Grammar_evaluateRule(this, token, E_PARAMETER_LIST);
-      if (rules[E_PARAMETER_LIST].isMatched)
-      {
-        //rules[E_PARAMETER_TYPE_LIST].count[0] = 1;
-        rules[E_PARAMETER_TYPE_LIST].isMatched = 1;
-      }
-      break;
-    case 1:
-      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ','))
-      {
-        rules[E_PARAMETER_TYPE_LIST].count[0] = 2;
-      }
-      else
-      {
-        rules[E_PARAMETER_TYPE_LIST].count[0] = 0;
-      }
-      break;
-    case 2:
-      printf("Unsupported\n");
-      break;
+    rules[E_PARAMETER_LIST].isMatched = 1;
+    Grammar_restoreContext(this,E_FUNCTION_DECLARATION);
   }
 }
 
@@ -965,7 +899,31 @@ void Grammar_matchParameterTypeList(Grammar* this, Token* token)
 void Grammar_matchParameterList(Grammar* this, Token* token)
 {
   rules[E_PARAMETER_LIST].isMatched = 0;
-
+  
+  switch(rules[E_PARAMETER_LIST].count[this->context])
+  {
+    case 0:
+      Grammar_evaluateRule(this, token, E_PARAMETER_DECLARATION);
+      if (rules[E_PARAMETER_DECLARATION].isMatched)
+      {
+        rules[E_PARAMETER_LIST].isMatched = 1;
+        rules[E_PARAMETER_LIST].count[this->context] = 1;
+      }
+      break;
+    case 1:
+      if  ((token->id == TOK_UNKNOWN) && (token->value == ','))
+      {
+      }
+      else
+      {
+        Grammar_evaluateRule(this, token, E_PARAMETER_DECLARATION);
+        if (rules[E_PARAMETER_DECLARATION].isMatched)
+        {
+          rules[E_PARAMETER_LIST].isMatched = 1;
+        }
+      }
+      break;
+  }
 }
 
 /****************************************************************************
@@ -978,6 +936,39 @@ void Grammar_matchParameterDeclaration(Grammar* this, Token* token)
 {
   rules[E_PARAMETER_DECLARATION].isMatched = 0;
 
+  switch(rules[E_PARAMETER_DECLARATION].count[this->context])
+  {
+    case 0:
+      Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
+      if (rules[E_DECLARATION_SPECIFIERS].isMatched)
+      {
+        rules[E_PARAMETER_DECLARATION].count[this->context] = 1;
+      }
+      break;
+    case 1:
+      Grammar_evaluateRule(this, token, E_DECLARATION_SPECIFIERS);
+      if (rules[E_DECLARATION_SPECIFIERS].isMatched)
+      {
+        rules[E_PARAMETER_DECLARATION].isMatched = 1;
+      }
+      else
+      {
+        Grammar_evaluateRule(this, token, E_DECLARATOR);
+        if (rules[E_DECLARATOR].isMatched)
+        {
+          rules[E_PARAMETER_DECLARATION].isMatched = 1;
+          rules[E_DECLARATOR].count[this->context] = 2;
+        }
+      }
+      break;
+    case 2:
+      Grammar_evaluateRule(this, token, E_DECLARATOR);
+      if (rules[E_DECLARATOR].isMatched)
+        {
+          rules[E_PARAMETER_DECLARATION].isMatched = 1;
+        }
+      break;
+  }
 }
 
 /****************************************************************************
@@ -1026,7 +1017,6 @@ void Grammar_saveContext(Grammar* this, RuleName entryRule)
   if (this->context < CONTEXT_DEPTH)
   {
     this->context++;
-    Grammar_resetContext(this);
     this->entryRule[this->context] = entryRule;
   }
 }
