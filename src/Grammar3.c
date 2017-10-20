@@ -498,10 +498,25 @@ declarator
 void Grammar_matchDeclarator(Grammar* this, Token* token)
 {
   rules[E_DECLARATOR].isMatched = 0;
-  Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
-  if (rules[E_DIRECT_DECLARATOR].isMatched)
+  switch(rules[E_DECLARATOR].count[this->context])
   {
-    rules[E_DECLARATOR].isMatched = 1; 
+    case 0:
+      Grammar_evaluateRule(this, token, E_POINTER);
+      if (rules[E_POINTER].isMatched)
+      {
+      }
+      else if (rules[E_DIRECT_DECLARATOR].isMatched)
+      {
+        Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
+        rules[E_DECLARATOR].isMatched = 1;
+      }
+    case 1:
+      Grammar_evaluateRule(this, token, E_POINTER);
+      Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
+      if (rules[E_DIRECT_DECLARATOR].isMatched)
+      {
+        rules[E_DECLARATOR].isMatched = 1;
+      }
   }
 }
 
@@ -550,7 +565,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       {
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
         rules[E_DIRECT_DECLARATOR].count[this->context] = 0;
-        Grammar_evaluateRule(this, token, E_FUNCTION_DECLARATION);
+        Grammar_evaluateRule(this, token, E_EXTERNAL_DECLARATION);
       }
       else
       {
@@ -887,7 +902,7 @@ void Grammar_matchParameterTypeList(Grammar* this, Token* token)
   Grammar_evaluateRule(this, token, E_PARAMETER_LIST);
   if (rules[E_PARAMETER_LIST].isMatched)
   {
-    rules[E_PARAMETER_LIST].isMatched = 1;
+    rules[E_PARAMETER_TYPE_LIST].isMatched = 1;
     Grammar_restoreContext(this,E_FUNCTION_DECLARATION);
   }
 }
@@ -913,6 +928,9 @@ void Grammar_matchParameterList(Grammar* this, Token* token)
     case 1:
       if  ((token->id == TOK_UNKNOWN) && (token->value == ','))
       {
+        rules[E_DECLARATION_SPECIFIERS].count[this->context] = 0;
+        rules[E_DECLARATOR].count[this->context] = 0;
+        rules[E_DIRECT_DECLARATOR].count[this->context] = 0;
       }
       else
       {
@@ -943,6 +961,7 @@ void Grammar_matchParameterDeclaration(Grammar* this, Token* token)
       if (rules[E_DECLARATION_SPECIFIERS].isMatched)
       {
         rules[E_PARAMETER_DECLARATION].count[this->context] = 1;
+        rules[E_PARAMETER_DECLARATION].isMatched = 1;
       }
       break;
     case 1:
