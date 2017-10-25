@@ -437,6 +437,7 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
       {
         rules[E_DECLARATION].isMatched = 1;
         rules[E_DECLARATION].count[this->context] = 0;
+        this->declarator.class = E_VARIABLE_DECLARATOR;
       }
       break;
   }
@@ -482,6 +483,30 @@ void Grammar_matchInitDeclaratorList(Grammar* this, Token* token)
 {
   rules[E_INIT_DECLARATOR_LIST].isMatched = 0;
 
+  switch(rules[E_INIT_DECLARATOR_LIST].count[this->context])
+  {
+    case 0:
+      Grammar_evaluateRule(this, token, E_INIT_DECLARATOR);
+      if (rules[E_INIT_DECLARATOR].isMatched)
+      {
+        rules[E_INIT_DECLARATOR_LIST].isMatched = 1;
+        rules[E_INIT_DECLARATOR_LIST].count[this->context] = 1;
+      }
+      break;
+    case 1:
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ','))
+      {
+      }
+      else
+      {
+        Grammar_evaluateRule(this, token, E_INIT_DECLARATOR);
+        if (rules[E_INIT_DECLARATOR].isMatched)
+        {
+          rules[E_INIT_DECLARATOR_LIST].isMatched = 1;
+        }
+      }
+      break;
+  }
 }
 
 /****************************************************************************
@@ -491,8 +516,36 @@ init_declarator
 ****************************************************************************/
 void Grammar_matchInitDeclarator(Grammar* this, Token* token)
 {
-    rules[E_INIT_DECLARATOR].isMatched = 0;
+  rules[E_INIT_DECLARATOR].isMatched = 0;
 
+   switch (rules[E_INIT_DECLARATOR].count[this->context])
+  {
+    case 0:
+      Grammar_evaluateRule(this, token, E_DECLARATOR);
+      if (rules[E_DECLARATOR].isMatched)
+      {
+        rules[E_INIT_DECLARATOR].isMatched = 1;
+        rules[E_INIT_DECLARATOR].count[this->context] = 1;
+      }
+      break;
+    case 1:
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '='))
+      {
+        rules[E_INIT_DECLARATOR].count[this->context] = 2;
+      }
+      else
+      {
+        // Error
+      }
+      break;
+    case 2:
+      Grammar_evaluateRule(this, token, E_INITIALIZER);
+      if (rules[E_INITIALIZER].isMatched)
+      {
+        rules[E_INIT_DECLARATOR].isMatched = 1;
+      }
+      break;
+  }
 }
 
 /****************************************************************************
@@ -511,10 +564,13 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
       if (rules[E_POINTER].isMatched)
       {
       }
-      else if (rules[E_DIRECT_DECLARATOR].isMatched)
+      else
       {
         Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
-        rules[E_DECLARATOR].isMatched = 1;
+        if (rules[E_DIRECT_DECLARATOR].isMatched)
+        {
+          rules[E_DECLARATOR].isMatched = 1;
+        }
       }
     case 1:
       Grammar_evaluateRule(this, token, E_POINTER);
