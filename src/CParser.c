@@ -167,8 +167,13 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
   if (this->isDbReset)
   {
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Root_Location;");
-    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Declarations;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Function_Declarations;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Variable_Declarations;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Type_Declarations;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Translation_Units;");
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Files;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Nodes;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Includes;");
   }
   SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( "
                          "directory text NOT NULL "
@@ -177,7 +182,7 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
                          "id integer PRIMARY KEY, "
                          "name text NOT NULL "
                          ");");
-  SdbMgr_execute(sdbMgr, "CREATE TABLE Declarations ("
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Function_Declarations ("
                          "id integer PRIMARY_KEY, "
                          "name text NOT NULL, "
                          "type text NOT NULL, "
@@ -187,6 +192,52 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
                          "fname text NOT NULL, "
                          "line integer NOT NULL, "
                          "column integer NOT NULL"
+                         ");");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Type_Declarations ("
+                         "id integer PRIMARY_KEY, "
+                         "name text NOT NULL, "
+                         "type text NOT NULL, "
+                         "scope text NOT NULL, "
+                         "rtype_rank integer, "
+                         "rtype_id integer, "
+                         "fname text NOT NULL, "
+                         "line integer NOT NULL, "
+                         "column integer NOT NULL"
+                         ");");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Variable_Declarations ("
+                         "id integer PRIMARY_KEY, "
+                         "name text NOT NULL, "
+                         "type text NOT NULL, "
+                         "scope text NOT NULL, "
+                         "rtype_rank integer, "
+                         "rtype_id integer, "
+                         "fname text NOT NULL, "
+                         "line integer NOT NULL, "
+                         "column integer NOT NULL"
+                         ");");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Type_Declarations ("
+                         "id integer PRIMARY_KEY, "
+                         "name text NOT NULL, "
+                         "scope text NOT NULL, "
+                         "rtype_rank integer, "
+                         "rtype_id integer, "
+                         "fname text NOT NULL, "
+                         "line integer NOT NULL, "
+                         "column integer NOT NULL"
+                         ");");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Translation_Units ("
+                         "id integer PRIMARY_KEY, "
+                         "file_id integer"
+                         ");");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Includes ("
+                         "id integer PRIMARY_KEY, "
+                         "file_id integer"
+                         ");");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Nodes ("
+                         "id integer PRIMARY_KEY, "
+                         "type_id integer,"
+                         "item_id integer,"
+                         "next_id integer"
                          ");");
                           
 }

@@ -792,7 +792,7 @@ void Grammar_matchCompountStatement(Grammar* this, Token* token)
   switch (rules[E_COMPOUND_STATEMENT].count[this->context])
   {
     case 0:
-      if ((token->id == TOK_UNKNOWN) && (token->value == '{'))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '{'))
       {
         rules[E_COMPOUND_STATEMENT].count[this->context] = 1;
         Grammar_saveContext(this, E_COMPOUND_STATEMENT);
@@ -800,7 +800,7 @@ void Grammar_matchCompountStatement(Grammar* this, Token* token)
       }
       break;
     case 1:
-      if ((token->id == TOK_UNKNOWN) && (token->value == '}'))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '}'))
       {
         rules[E_COMPOUND_STATEMENT].isMatched = 1;
         rules[E_COMPOUND_STATEMENT].isEvaluated = 1;
@@ -1225,14 +1225,28 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
     memcpy(name, declarator->name->buffer, declarator->name->length);
     memcpy(fName, declarator->fName->buffer, declarator->fName->length);
   
-    sprintf(cmd, "INSERT INTO Declarations ( name, type, scope, fname, line, column ) "
-                 "VALUES ('%s','%s','%s','%s',%d, %d);", 
-                 name, 
-                 classText[declarator->class], 
-                 scopeText[this->scope],
-                 fName,
-                 declarator->line,
-                 declarator->col);
+    if (declarator->class == E_FUNCTION_DECLARATOR)
+    {
+      sprintf(cmd, "INSERT INTO Function_Declarations ( name, type, scope, fname, line, column ) "
+                        "VALUES ('%s','%s','%s','%s',%d, %d);", 
+                        name, 
+                        classText[declarator->class], 
+                        scopeText[this->scope],
+                        fName,
+                        declarator->line,
+                        declarator->col);
+    }
+    else if (declarator->class == E_VARIABLE_DECLARATOR)
+    {
+      sprintf(cmd, "INSERT INTO Variable_Declarations ( name, type, scope, fname, line, column ) "
+                        "VALUES ('%s','%s','%s','%s',%d, %d);", 
+                        name, 
+                        classText[declarator->class], 
+                        scopeText[this->scope],
+                        fName,
+                        declarator->line,
+                        declarator->col);      
+    }
   }
   SdbMgr_execute(sdbMgr, cmd);
   SdbMgr_delete(sdbMgr);
