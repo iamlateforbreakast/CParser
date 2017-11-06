@@ -4,6 +4,7 @@
 #include "FileMgr.h"
 
 #include "Common.h"
+#include "Token.h"
 
 #include <string.h>
 
@@ -49,7 +50,7 @@ static const String bracketCloseToken = { .buffer=">", .length=1 };
  *
  * @return TBD
 **************************************************/
-StringProcessor* StringProcessor_new(String* initialFileName)
+StringProcessor* StringProcessor_new(String* fileContent)
 {
   StringProcessor* this = NULL;
   
@@ -58,7 +59,7 @@ StringProcessor* StringProcessor_new(String* initialFileName)
 
   this->currentBuffer = NULL;
   this->nbOpenBuffers = 0;  
-  StringProcessor_openNewBufferFromFile(this, initialFileName);
+  StringProcessor_openNewBufferFromFile(this, fileContent);
   this->macros = Map_new();
   
   return this;
@@ -84,9 +85,12 @@ void StringProcessor_delete(StringProcessor* this)
   Memory_free(this, sizeof(StringProcessor));
 }
 
-Token* StringProcessor_getTokenFromTransUnit(TokenList* this)
+/**************************************************
+**************************************************/
+Token* StringProcessor_getTokenFromTransUnit(StringProcessor* this)
 {
   unsigned char c = 0;
+  unsigned char d = 0;
   Token* nextToken = NULL;
   String* fName = NULL;
   unsigned int line = 0;
@@ -94,9 +98,17 @@ Token* StringProcessor_getTokenFromTransUnit(TokenList* this)
   
   while (nextToken==NULL)
   {
-    c = StringProcessor_readTransUnitChar();
+    c = StringProcessor_readTransUnitChar(this,fName, &line, &col);
     
-    if (c=='/)
+    if (c==0)
+    {
+      nextToken = Token_new(TOK_EOF, "EOF", 0, NULL, line, col);
+    }
+    else if ((c==10) || (c==13))
+    {
+      // Ignore
+    }
+    else if (c=='/')
     {
         d = StringBuffer_peekChar(this->currentBuffer);
         if (d=='/')
@@ -111,33 +123,15 @@ Token* StringProcessor_getTokenFromTransUnit(TokenList* this)
     else if (c=='#')
     {
     }
-    else 
+    else if (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_'))
     {
     }
-    nextToken = TokenList_checkKeyword(this);
-
-    if (nextToken==NULL) nextToken = TokenList_checkIntegerConstant(this);
-
-    if (nextToken==NULL) nextToken = TokenList_checkIdentifier(this);
-
-    if (nextToken==NULL)
+    else if ((c=='+') || (c=='-') || ((c>='0') && (c<='9')))
     {
-      c = StringProcessor_readTransUnitChar(this->stringProcessor, fName, &line, &col);
-      if (c==0)
-      {
-        nextToken = Token_new(TOK_EOF, "EOF", 0, NULL, line, col);
-        //printf("Read char EOF\n");
-      }
-      else if ((c!=10) && (c!=32) && (c!=13))
-      {
-        nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, line, col);
-        //printf("Accepted: Read char: %c %d\n",c,c);
-      }
-      else
-      {
-        //nextToken = NULL;
-        //printf("Ignore: Read char: %c %d\n",c,c);
-      }
+    }
+    else
+    {
+      nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, line, col);
     }
   }
 

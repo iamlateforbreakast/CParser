@@ -3,13 +3,12 @@
 #ifndef _CPARSER_H_
 #define _CPARSER_H_
 
-//#include "ElementTable.h"
-#include "TokenList.h"
+#include "StringProcessor.h"
 #include "Grammar.h"
 
 typedef struct CParser
 {
-    TokenList* tokenList;
+    StringProcessor* stringProcessor;
 	Grammar* grammar;
 	String* initialLocation;
 	String* sdbName;

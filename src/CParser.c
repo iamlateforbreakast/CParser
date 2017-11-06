@@ -3,7 +3,7 @@
 #include "Common.h"
 #include "CParser.h"
 #include "FileList.h"
-#include "TokenList.h"
+#include "StringProcessor.h"
 #include "Token.h"
 #include "SdbMgr.h"
 #include "FileMgr.h"
@@ -135,22 +135,22 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
   SdbMgr_delete(sdbMgr);
 
   //Initialise from initial fileName  
-  this->tokenList = TokenList_new(fileName);
+  this->stringProcessor = StringProcessor_new(fileName);
     
-  newToken = TokenList_getTokenFromTransUnit(this->tokenList);
+  newToken = StringProcessor_getTokenFromTransUnit(this->stringProcessor);
   //printf("Token Id: %d\n", newToken->id);
   Grammar_pushToken(this->grammar, newToken);
     
   while (newToken->id!=TOK_EOF)
   {
     Token_delete(newToken);
-    newToken = TokenList_getTokenFromTransUnit(this->tokenList);
+    newToken = StringProcessor_getTokenFromTransUnit(this->stringProcessor);
     //printf("Token Id: %d\n", newToken->id);
     Grammar_pushToken(this->grammar, newToken);
   }
     
   Token_delete(newToken);
-  TokenList_delete(this->tokenList);
+  StringProcessor_delete(this->stringProcessor);
 }
 
 /**************************************************
@@ -174,6 +174,7 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Files;");
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Nodes;");
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Includes;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Comments;");
   }
   SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( "
                          "directory text NOT NULL "
@@ -239,5 +240,9 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
                          "item_id integer,"
                          "next_id integer"
                          ");");
-                          
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Comments ("
+                         "id integer PRIMARY_KEY,"
+                         "type_id integer,"
+                         "content text NOT NULL"
+                         ");");
 }
