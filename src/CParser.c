@@ -137,14 +137,14 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
   //Initialise from initial fileName  
   this->stringProcessor = StringProcessor_new(fileName);
     
-  newToken = StringProcessor_getTokenFromTransUnit(this->stringProcessor);
+  newToken = StringProcessor_getToken(this->stringProcessor);
   //printf("Token Id: %d\n", newToken->id);
   Grammar_pushToken(this->grammar, newToken);
     
   while (newToken->id!=TOK_EOF)
   {
     Token_delete(newToken);
-    newToken = StringProcessor_getTokenFromTransUnit(this->stringProcessor);
+    newToken = StringProcessor_getToken(this->stringProcessor);
     //printf("Token Id: %d\n", newToken->id);
     Grammar_pushToken(this->grammar, newToken);
   }

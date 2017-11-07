@@ -87,7 +87,7 @@ void StringProcessor_delete(StringProcessor* this)
 
 /**************************************************
 **************************************************/
-Token* StringProcessor_getTokenFromTransUnit(StringProcessor* this)
+Token* StringProcessor_getToken(StringProcessor* this)
 {
   unsigned char c = 0;
   unsigned char d = 0;
@@ -95,10 +95,11 @@ Token* StringProcessor_getTokenFromTransUnit(StringProcessor* this)
   String* fName = NULL;
   unsigned int line = 0;
   unsigned int col = 0;
+  String* identifier = NULL;
   
   while (nextToken==NULL)
   {
-    c = StringProcessor_readTransUnitChar(this,fName, &line, &col);
+    c = StringProcessor_readChar(this,fName, &line, &col);
     
     if (c==0)
     {
@@ -122,12 +123,15 @@ Token* StringProcessor_getTokenFromTransUnit(StringProcessor* this)
     }
     else if (c=='#')
     {
+      //StringProcessor_readDirective(this, c);
     }
     else if (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_'))
     {
+      identifier = StringProcessor_readIdentifier(this);
     }
     else if ((c=='+') || (c=='-') || ((c>='0') && (c<='9')))
     {
+      //StringProcessor_readNumber(this);
     }
     else
     {
@@ -140,7 +144,7 @@ Token* StringProcessor_getTokenFromTransUnit(StringProcessor* this)
 
 /**************************************************
 **************************************************/
-unsigned char StringProcessor_readTransUnitChar(StringProcessor* this, String* f, unsigned int *l, unsigned int *c)
+unsigned char StringProcessor_readChar(StringProcessor* this, String* f, unsigned int *l, unsigned int *c)
 { 
   unsigned char current_c = 0;
   unsigned int isExit = 0;
@@ -167,17 +171,8 @@ unsigned char StringProcessor_readTransUnitChar(StringProcessor* this, String* f
         isExit = 1;
       }
     }
-    else if (StringProcessor_processComment(this))
-    {
-
-    }
-    else if (StringProcessor_processDirective(this))
-    {
-    }
-    else
-    {
-      current_c = StringBuffer_readChar(this->currentBuffer);
-    }
+   
+   current_c = StringBuffer_readChar(this->currentBuffer);
   }
   
   *l = this->currentBuffer->line;
@@ -250,23 +245,17 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
 String* StringProcessor_readIdentifier(StringProcessor* this)
 {
   String* result = NULL;
-  unsigned int length = 0;
+  unsigned int length = 1;
   unsigned char c;
   
   c = StringBuffer_peekChar(this->currentBuffer);
-  if ((c>='a' && c<='z') || (c>='A' && c <='Z') || (c=='_'))
-  {
+  while ((c>='a' && c<='z') || (c>='A' && c <='Z') || (c>='0' && c<='9') ||(c=='_'))
+   {
     length++;
     c = StringBuffer_readChar(this->currentBuffer);
     c = StringBuffer_peekChar(this->currentBuffer);
-    while ((c>='a' && c<='z') || (c>='A' && c <='Z') || (c>='0' && c<='9') ||(c=='_'))
-    {
-      length++;
-      c = StringBuffer_readChar(this->currentBuffer);
-      c = StringBuffer_peekChar(this->currentBuffer);
-    }
-    result = StringBuffer_readback(this->currentBuffer, length);
   }
+  result = StringBuffer_readback(this->currentBuffer, length);
   
   return result;
 }
@@ -527,40 +516,6 @@ PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this)
 PRIVATE unsigned int StringProcessor_processComment(StringProcessor* this)
 {
   unsigned int result = 0;
-  String* singleLineComment = NULL;
-  String* multiLineStartToken = NULL;
-  String* multiLineEndToken = NULL;
-  unsigned int isFound = 0;
-  unsigned char c = 0;
-  
-  singleLineComment = String_new("//");
-  multiLineStartToken = String_new("/*");
-  multiLineEndToken = String_new("*/");
-  
-  if (StringProcessor_match(this, singleLineComment))
-  {
-    c = StringBuffer_readChar(this->currentBuffer);
-      
-    while (c!=10)
-    {
-      c = StringBuffer_readChar(this->currentBuffer);
-    }
-    result = 1;
-  }
-  else if (StringProcessor_match(this, multiLineStartToken))
-  {
-    isFound = StringProcessor_match(this, multiLineEndToken);
-    while (!isFound)
-    {
-      c = StringBuffer_readChar(this->currentBuffer);
-      isFound = StringProcessor_match(this, multiLineEndToken);
-    }
-    result = 1;
-  }
-  
-  String_delete(singleLineComment);
-  String_delete(multiLineStartToken);
-  String_delete(multiLineEndToken);
 
   return result;
 }
