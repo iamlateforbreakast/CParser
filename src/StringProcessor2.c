@@ -16,6 +16,11 @@ typedef enum{
   E_ELSE
 } PreprocessorDirective;
 
+typedef struct{
+  String name;
+  Token token;
+} Keyword;
+
 /**************************************************
 **************************************************/
 PRIVATE unsigned int  StringProcessor_processDirective(StringProcessor* this);
@@ -48,6 +53,40 @@ static const String quoteToken = { .buffer="\"", .length=1 };
 static const String bracketOpenToken = { .buffer="<", .length=1 };
 static const String bracketCloseToken = { .buffer=">", .length=1 };
  
+static const Keyword keywords[] = {{ .name = {.buffer="int", .length=3}, .token=TOK_INT }};
+
+                                                     {"float", 5}, TOK_FLOAT },
+                                                     {"auto", 4}, TOK_AUTO },
+                                                     {"break", 5}, TOK_BREAK },
+                                                     {"case", 4}, TOK_CASE },
+                                                     {"char", 4 }, TOK_CHAR },
+                                                     {"const", 5}, TOK_CONST },
+                                                     {"continue", 8}, TOK_CONTINUE },
+                                                     {"default", 7}, TOK_DEFAULT },
+                                                     {"do", 2}, TOK_DO },
+                                                     {"double", 6}, TOK_DOUBLE},
+                                                     {"else", 4}, TOK_ELSE},
+                                                     {"enum", 4}, TOK_ENUM},
+                                                     {"extern", 6}, TOK_EXTERN},
+                                                     {"for", 3}, TOK_FOR},
+                                                     {"goto", 4}, TOK_GOTO},
+                                                     {"if", 2}, TOK_IF},
+                                                     {"inline", 6}, TOK_INLINE},
+                                                     {"long", 4}, TOK_LONG},
+                                                     {"register", 8}, TOK_REGISTER},
+                                                     {"restrict", 8}, TOK_RESTRICT},
+                                                     {"return", 6}, TOK_RETURN},
+                                                     {"short", 5}, TOK_SHORT},
+                                                     {"signed", 6}, TOK_SIGNED},
+                                                     {"sizeof", 6}, TOK_SIZEOF},
+                                                     {"static", 3}, TOK_STATIC},
+                                                     {"typedef", 7}, TOK_TYPEDEF},
+                                                     {"struct", 6}, TOK_STRUCT},
+                                                     {"union", 5}, TOK_UNION},
+                                                     {"unsigned", 8}, TOK_UNSIGNED},
+                                                     {"void", 4}, TOK_VOID },
+                                                     {"volatile", 8}, TOK_VOLATILE },
+                                                     {"while", 5}, TOK_WHILE }}; 
 /**************************************************
 @brief StringProcessor_new - TBD
  * 
