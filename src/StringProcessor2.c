@@ -2,12 +2,12 @@
 
 #include "StringProcessor.h"
 #include "FileMgr.h"
-
+#include "SdbMgr.h"
 #include "Common.h"
 #include "Token.h"
 
-#include <string.h>
-
+/**************************************************
+**************************************************/
 typedef enum{
   E_INCLUDE=0,
   E_DEFINE,
@@ -16,14 +16,20 @@ typedef enum{
   E_ELSE
 } PreprocessorDirective;
 
-unsigned int  StringProcessor_processDirective(StringProcessor* this);
-unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName);
-unsigned int StringProcessor_readSpaces(StringProcessor* this);
-void StringProcessor_readDefine(StringProcessor* this);
-void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName);
+/**************************************************
+**************************************************/
+PRIVATE unsigned int  StringProcessor_processDirective(StringProcessor* this);
+PRIVATE unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName);
+PRIVATE void StringProcessor_readDefine(StringProcessor* this);
+PRIVATE void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_processComment(StringProcessor* this);
+PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this);
+PRIVATE unsigned int StringProcessor_readDirective(StringProcessor* this);
+PRIVATE void StringProcessor_readSingleLineComment(StringProcessor* this);
+PRIVATE void StringProcessor_readMultiLineComment(StringProcessor* this);
+PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String* identifier);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -66,6 +72,12 @@ StringProcessor* StringProcessor_new(String* fileContent)
 }
 
 /**************************************************
+ @brief StringProcessor_processDirective
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 void StringProcessor_delete(StringProcessor* this)
 {
@@ -86,6 +98,12 @@ void StringProcessor_delete(StringProcessor* this)
 }
 
 /**************************************************
+ @brief StringProcessor_processDirective
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 Token* StringProcessor_getToken(StringProcessor* this)
 {
@@ -99,7 +117,7 @@ Token* StringProcessor_getToken(StringProcessor* this)
   
   while (nextToken==NULL)
   {
-    c = StringProcessor_readChar(this,fName, &line, &col);
+    c = StringProcessor_readChar(this);
     
     if (c==0)
     {
@@ -114,22 +132,33 @@ Token* StringProcessor_getToken(StringProcessor* this)
         d = StringBuffer_peekChar(this->currentBuffer);
         if (d=='/')
         {
-          //readSingleLineComment
+          StringProcessor_readSingleLineComment(this);
         }
         else if (d=='*')
         {
-          //readMultiLineComment
+          StringProcessor_readMultiLineComment(this);
         }
     }
     else if (c=='#')
     {
-      //StringProcessor_readDirective(this, c);
+      if (StringProcessor_readDirective(this))
+      {
+      }
+      else
+      {
+        //Create token
+      } 
     }
     else if (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_'))
     {
       identifier = StringProcessor_readIdentifier(this);
+      // Check if it is a Macro call
+      // else check it is a keyword
+      
+      // else create a token identifier
+      nextToken = Token_new(TOK_IDENTIFIER, "IDENTIFIER", identifier, NULL, line, col);
     }
-    else if ((c=='+') || (c=='-') || ((c>='0') && (c<='9')))
+    else if ((c=='+') || (c=='-') || ((c>='0') && (c<='9')) || (c=='\''))
     {
       //StringProcessor_readNumber(this);
     }
@@ -143,8 +172,14 @@ Token* StringProcessor_getToken(StringProcessor* this)
 }
 
 /**************************************************
+ @brief StringProcessor_readChar
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
-unsigned char StringProcessor_readChar(StringProcessor* this, String* f, unsigned int *l, unsigned int *c)
+PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this)
 { 
   unsigned char current_c = 0;
   unsigned int isExit = 0;
@@ -175,14 +210,16 @@ unsigned char StringProcessor_readChar(StringProcessor* this, String* f, unsigne
    current_c = StringBuffer_readChar(this->currentBuffer);
   }
   
-  *l = this->currentBuffer->line;
-  *c = this->currentBuffer->column;
-  f = this->currentBuffer->name;
-  
   return current_c;
 }
 
 /**************************************************
+ @brief StringProcessor_processDirective
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 unsigned int  StringProcessor_processDirective(StringProcessor* this)
 {
@@ -194,7 +231,7 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
   if (StringProcessor_match(this, (String*)&includeToken))
   {
     // Read include file name
-    result = result + StringProcessor_readSpaces(this);
+    //result = result + StringProcessor_readSpaces(this);
     result = result + StringProcessor_match(this, (String*)&quoteToken) + StringProcessor_match(this, (String*)&bracketOpenToken);
     result = result + StringProcessor_readFileName(this, &includeFileName);
     result = result + StringProcessor_match(this, (String*)&quoteToken) + StringProcessor_match(this, (String*)&bracketCloseToken);
@@ -241,6 +278,12 @@ unsigned int  StringProcessor_processDirective(StringProcessor* this)
 }
 
 /**************************************************
+ @brief StringProcessor_readIdentifier
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 String* StringProcessor_readIdentifier(StringProcessor* this)
 {
@@ -261,6 +304,12 @@ String* StringProcessor_readIdentifier(StringProcessor* this)
 }
 
 /**************************************************
+ @brief StringProcessor_readInteger
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 String* StringProcessor_readInteger(StringProcessor* this)
 {
@@ -313,7 +362,16 @@ String* StringProcessor_readInteger(StringProcessor* this)
 
 /**************************************************
 **************************************************/
-unsigned int StringProcessor_checkForMacro(StringProcessor* this)
+PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String* identifier)
+{
+  unsigned int result=0;
+  
+  return result;
+}
+
+/**************************************************
+**************************************************/
+unsigned int StringProcessor_checkKeyword(StringProcessor* this, String* identifier)
 {
   unsigned int result=0;
   
@@ -325,24 +383,6 @@ unsigned int StringProcessor_checkForMacro(StringProcessor* this)
 unsigned int StringProcessor_match(StringProcessor* this, String* pattern)
 {  
   return (StringBuffer_match(this->currentBuffer, pattern));
-}
-
-/**************************************************
-**************************************************/
-unsigned int StringProcessor_readSpaces(StringProcessor* this)
-{
-  unsigned int result = 0;
-  unsigned char c = 0;
-  
-  c = StringBuffer_peekChar(this->currentBuffer);
-  while ((c==32)||(c==10))
-  {
-    c = StringBuffer_readChar(this->currentBuffer);
-    result++;
-    c = StringBuffer_peekChar(this->currentBuffer);
-  }
-  
-  return result;
 }
 
 /**************************************************
@@ -389,7 +429,7 @@ void StringProcessor_readDefine(StringProcessor* this)
   unsigned char c = 0;
   
   //printf("Read define: result=%d\n", result);
-  (void)StringProcessor_readSpaces(this);
+  //(void)StringProcessor_readSpaces(this);
   
   c = StringBuffer_peekChar(this->currentBuffer);
     
@@ -408,7 +448,7 @@ void StringProcessor_readDefine(StringProcessor* this)
 
   if (c!=10)
   {
-    (void)StringProcessor_readSpaces(this);
+    //(void)StringProcessor_readSpaces(this);
     result =0;
   
     c = StringBuffer_peekChar(this->currentBuffer);
@@ -513,7 +553,39 @@ PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this)
 
 /**************************************************
 **************************************************/
-PRIVATE unsigned int StringProcessor_processComment(StringProcessor* this)
+PRIVATE void StringProcessor_readSingleLineComment(StringProcessor* this)
+{
+
+}
+
+/**************************************************
+**************************************************/
+PRIVATE void StringProcessor_readMultiLineComment(StringProcessor* this)
+{
+
+}
+
+/**************************************************
+**************************************************/
+PRIVATE unsigned int StringProcessor_isLetter(StringProcessor* this, unsigned char c)
+{
+  unsigned int result = 0;
+
+  return result;
+}
+
+/**************************************************
+**************************************************/
+PRIVATE unsigned int StringProcessor_isDigit(StringProcessor* this, unsigned char c)
+{
+  unsigned int result = 0;
+
+  return result;
+}
+
+/**************************************************
+**************************************************/
+PRIVATE unsigned int StringProcessor_readDirective(StringProcessor* this)
 {
   unsigned int result = 0;
 
