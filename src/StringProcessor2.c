@@ -7,6 +7,8 @@
 #include "Token.h"
 #include "List.h"
 
+#include <stdint.h>
+
 /**************************************************
 **************************************************/
 typedef enum{
@@ -159,9 +161,6 @@ Token* StringProcessor_getToken(StringProcessor* this)
   unsigned char c = 0;
   unsigned char d = 0;
   Token* nextToken = NULL;
-  String* fName = NULL;
-  unsigned int line = 0;
-  unsigned int col = 0;
   String* identifier = NULL;
   String* number = NULL;
   unsigned int tmpInt = 0;
@@ -172,7 +171,7 @@ Token* StringProcessor_getToken(StringProcessor* this)
     
     if (c==0)
     {
-      nextToken = Token_new(TOK_EOF, "EOF", 0, NULL, line, col);
+      nextToken = Token_new(TOK_EOF, "EOF", 0, NULL, 0, 0);
     }
     else if ((c==10) || (c==13))
     {
@@ -220,19 +219,19 @@ Token* StringProcessor_getToken(StringProcessor* this)
       // else create a token identifier
       if (nextToken == NULL)
       {
-        nextToken = Token_new(TOK_IDENTIFIER, "IDENTIFIER", identifier, NULL, line, col);
+        nextToken = Token_new(TOK_IDENTIFIER, "IDENTIFIER", identifier, NULL, 0, 0);
       }
     }
     else if ((c=='+') || (c=='-') || ((c>='0') && (c<='9')) || (c=='\''))
     {
       number = StringProcessor_readNumber(this);
       tmpInt = String_toInt(number);
-      nextToken = Token_new(TOK_CONSTANT, "CONSTANT", (void*)((uintptr_t)tmpInt), NULL, line, col);
+      nextToken = Token_new(TOK_CONSTANT, "CONSTANT", (void*)((uintptr_t)tmpInt), NULL, 0, 0);
     }
     else
     {
       c = StringProcessor_readChar(this,1);
-      nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, line, col);
+      nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, 0, 0);
     }
   }
 
@@ -288,7 +287,7 @@ PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this, unsigned i
 }
 
 /**************************************************
- @brief StringProcessor_processDirective
+ @brief StringProcessor_readDirective
  
  TBD
  
@@ -441,10 +440,37 @@ PRIVATE String* StringProcessor_readNumber(StringProcessor* this)
 PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String* identifier)
 {
   unsigned int result=0;
+  String* parameter = NULL;
+  unsigned int paramLength = 0;
+  unsigned char c = 0;
   
   // if identifier is a defined macro
   if  (Map_find(this->macros, identifier, NULL))
   {
+    c = StringBuffer_peekChar(this->currentBuffer);
+    if (c=='(')
+    {
+      c = StringBuffer_readChar(this->currentBuffer);
+      c = StringBuffer_peekChar(this->currentBuffer);
+      while (c!=')')
+      {
+        while ((c!=',') && (c!=')'))
+        {
+          paramLength++;
+          c = StringBuffer_readChar(this->currentBuffer);
+          c = StringBuffer_peekChar(this->currentBuffer);
+        }
+        if (c==',')
+        {
+          c = StringBuffer_readChar(this->currentBuffer);
+          c = StringBuffer_peekChar(this->currentBuffer);
+        }
+        parameter = StringBuffer_readback(this->currentBuffer, paramLength);
+        paramLength = 0;
+      }
+      c = StringBuffer_readChar(this->currentBuffer);
+    }
+ 
   //if macro has arguments read arguments
   // read all arguments
   // CReate buffer
@@ -556,18 +582,27 @@ void StringProcessor_readDefine(StringProcessor* this)
         c = StringBuffer_readChar(this->currentBuffer);
         c = StringBuffer_peekChar(this->currentBuffer);
       }
+      if (c==',')
+      {
+        c = StringBuffer_readChar(this->currentBuffer);
+        c = StringBuffer_peekChar(this->currentBuffer);
+      }
       parameter = StringBuffer_readback(this->currentBuffer, paramLength);
       paramLength = 0;
     }
+    c = StringBuffer_readChar(this->currentBuffer);
   }
   
   if (c!=10)
   {
-    //(void)StringProcessor_readSpaces(this);
+    c = StringBuffer_peekChar(this->currentBuffer);
+    while (c==32)
+    {
+      c = StringBuffer_readChar(this->currentBuffer);
+      c = StringBuffer_peekChar(this->currentBuffer);
+    }
     result =0;
   
-    c = StringBuffer_peekChar(this->currentBuffer);
-    
     while (c!=10)
     {
       result++;
@@ -619,6 +654,25 @@ void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileNa
   }
   
   FileMgr_delete(fileMgr);
+}
+
+/**************************************************
+**************************************************/
+void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content)
+{
+  String* fileContent = NULL;
+  
+  if (this->nbOpenBuffers < NB_MAX_BUFFERS)
+  {
+    this->buffers[this->nbOpenBuffers] = StringBuffer_new(content, NULL);
+    this->currentBuffer = this->buffers[this->nbOpenBuffers];
+
+    this->nbOpenBuffers++;
+  }
+  else
+  {
+    //String_print(fileName, "StringProcessor.c: No available buffer to load ");
+  }
 }
 
 /**************************************************
