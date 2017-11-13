@@ -1223,8 +1223,14 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
   if (declarator->name)
   {
     memcpy(name, declarator->name->buffer, declarator->name->length);
-    memcpy(fName, declarator->fName->buffer, declarator->fName->length);
-  
+    if (declarator->fName)
+    {
+      memcpy(fName, declarator->fName->buffer, declarator->fName->length);
+    }
+    else
+    {
+      memcpy(fName, "Unknown", 7);
+    }
     if (declarator->class == E_FUNCTION_DECLARATOR)
     {
       sprintf(cmd, "INSERT INTO Function_Declarations ( name, type, scope, fname, line, column ) "

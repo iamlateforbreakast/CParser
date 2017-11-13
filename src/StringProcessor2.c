@@ -5,6 +5,7 @@
 #include "SdbMgr.h"
 #include "Common.h"
 #include "Token.h"
+#include "List.h"
 
 /**************************************************
 **************************************************/
@@ -18,8 +19,14 @@ typedef enum{
 
 typedef struct{
   String name;
-  Token token;
+  TokenId token;
 } Keyword;
+
+typedef struct{
+  String* name;
+  String* body;
+  List* args;
+} Macro;
 
 /**************************************************
 **************************************************/
@@ -30,11 +37,14 @@ PRIVATE void StringProcessor_openNewBufferFromFile(StringProcessor* this, String
 PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_processComment(StringProcessor* this);
-PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this);
+PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this, unsigned int consume);
 PRIVATE unsigned int StringProcessor_readDirective(StringProcessor* this);
 PRIVATE void StringProcessor_readSingleLineComment(StringProcessor* this);
 PRIVATE void StringProcessor_readMultiLineComment(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String* identifier);
+PRIVATE Token* StringProcessor_checkKeyword(StringProcessor* this, String* identifier);
+PRIVATE String* StringProcessor_readNumber(StringProcessor* this);
+PRIVATE unsigned int StringProcessor_isLetter(StringProcessor* this, unsigned char c);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -53,40 +63,40 @@ static const String quoteToken = { .buffer="\"", .length=1 };
 static const String bracketOpenToken = { .buffer="<", .length=1 };
 static const String bracketCloseToken = { .buffer=">", .length=1 };
  
-static const Keyword keywords[] = {{ .name = {.buffer="int", .length=3}, .token=TOK_INT }};
-
-                                                     {"float", 5}, TOK_FLOAT },
-                                                     {"auto", 4}, TOK_AUTO },
-                                                     {"break", 5}, TOK_BREAK },
-                                                     {"case", 4}, TOK_CASE },
-                                                     {"char", 4 }, TOK_CHAR },
-                                                     {"const", 5}, TOK_CONST },
-                                                     {"continue", 8}, TOK_CONTINUE },
-                                                     {"default", 7}, TOK_DEFAULT },
-                                                     {"do", 2}, TOK_DO },
-                                                     {"double", 6}, TOK_DOUBLE},
-                                                     {"else", 4}, TOK_ELSE},
-                                                     {"enum", 4}, TOK_ENUM},
-                                                     {"extern", 6}, TOK_EXTERN},
-                                                     {"for", 3}, TOK_FOR},
-                                                     {"goto", 4}, TOK_GOTO},
-                                                     {"if", 2}, TOK_IF},
-                                                     {"inline", 6}, TOK_INLINE},
-                                                     {"long", 4}, TOK_LONG},
-                                                     {"register", 8}, TOK_REGISTER},
-                                                     {"restrict", 8}, TOK_RESTRICT},
-                                                     {"return", 6}, TOK_RETURN},
-                                                     {"short", 5}, TOK_SHORT},
-                                                     {"signed", 6}, TOK_SIGNED},
-                                                     {"sizeof", 6}, TOK_SIZEOF},
-                                                     {"static", 3}, TOK_STATIC},
-                                                     {"typedef", 7}, TOK_TYPEDEF},
-                                                     {"struct", 6}, TOK_STRUCT},
-                                                     {"union", 5}, TOK_UNION},
-                                                     {"unsigned", 8}, TOK_UNSIGNED},
-                                                     {"void", 4}, TOK_VOID },
-                                                     {"volatile", 8}, TOK_VOLATILE },
-                                                     {"while", 5}, TOK_WHILE }}; 
+static const Keyword keywords[] = {{ .name = {.buffer="int", .length=3}, .token=TOK_INT },
+                                                    { .name = {.buffer="float", .length=5}, .token=TOK_FLOAT },
+                                                    {.name =  {.buffer="auto", .length=4}, .token=TOK_AUTO },
+                                                    {.name = {.buffer="break", 5}, .token=TOK_BREAK },
+                                                    {.name = {.buffer="case", 4}, .token=TOK_CASE },
+                                                    {.name = {.buffer="char", 4 }, .token=TOK_CHAR },
+                                                    {.name = {.buffer="const", 5}, .token=TOK_CONST },
+                                                    {.name = {.buffer="continue", 8}, .token=TOK_CONTINUE },
+                                                    {.name = {.buffer="default", 7}, .token=TOK_DEFAULT },
+                                                    {.name = {.buffer="do", 2}, .token=TOK_DO },
+                                                    {.name = {.buffer="double", 6}, .token=TOK_DOUBLE},
+                                                    {.name = {.buffer="else", 4}, .token=TOK_ELSE},
+                                                    {.name = {.buffer="enum", 4}, .token=TOK_ENUM},
+                                                    {.name = {.buffer="extern", 6}, .token=TOK_EXTERN},
+                                                    {.name = {.buffer="for", 3}, .token=TOK_FOR},
+                                                    {.name = {.buffer="goto", 4}, .token=TOK_GOTO},
+                                                    {.name = {.buffer="if", 2}, .token=TOK_IF},
+                                                    {.name = {.buffer="inline", 6}, .token=TOK_INLINE},
+                                                    {.name = {.buffer="long", 4}, .token=TOK_LONG},
+                                                    {.name = {.buffer="register", 8}, .token=TOK_REGISTER},
+                                                    {.name = {.buffer="restrict", 8}, .token=TOK_RESTRICT},
+                                                    {.name = {.buffer="return", 6}, .token=TOK_RETURN},
+                                                    {.name = {.buffer="short", 5}, .token=TOK_SHORT},
+                                                    {.name = {.buffer="signed", 6}, .token=TOK_SIGNED},
+                                                    {.name = {.buffer="sizeof", 6}, .token=TOK_SIZEOF},
+                                                    {.name = {.buffer="static", 3}, .token=TOK_STATIC},
+                                                    {.name = {.buffer="typedef", 7}, .token=TOK_TYPEDEF},
+                                                    {.name = {.buffer="struct", 6}, .token=TOK_STRUCT},
+                                                    {.name = {.buffer="union", 5}, .token=TOK_UNION},
+                                                    {.name = {.buffer="unsigned", 8}, .token=TOK_UNSIGNED},
+                                                    {.name = {.buffer="void", 4}, .token=TOK_VOID },
+                                                    {.name = {.buffer="volatile", 8}, .token=TOK_VOLATILE },
+                                                    {.name = {.buffer="while", 5}, .token=TOK_WHILE }};
+                                                    
 /**************************************************
 @brief StringProcessor_new - TBD
  * 
@@ -111,7 +121,7 @@ StringProcessor* StringProcessor_new(String* fileContent)
 }
 
 /**************************************************
- @brief StringProcessor_processDirective
+ @brief StringProcessor_delete
  
  TBD
  
@@ -137,7 +147,7 @@ void StringProcessor_delete(StringProcessor* this)
 }
 
 /**************************************************
- @brief StringProcessor_processDirective
+ @brief StringProcessor_getToken
  
  TBD
  
@@ -153,10 +163,12 @@ Token* StringProcessor_getToken(StringProcessor* this)
   unsigned int line = 0;
   unsigned int col = 0;
   String* identifier = NULL;
+  String* number = NULL;
+  unsigned int tmpInt = 0;
   
   while (nextToken==NULL)
   {
-    c = StringProcessor_readChar(this);
+    c = StringProcessor_readChar(this,0);
     
     if (c==0)
     {
@@ -164,7 +176,11 @@ Token* StringProcessor_getToken(StringProcessor* this)
     }
     else if ((c==10) || (c==13))
     {
-      // Ignore
+      c = StringProcessor_readChar(this,1);
+    }
+    else if (c==32)
+    {
+       c = StringProcessor_readChar(this,1);
     }
     else if (c=='/')
     {
@@ -193,16 +209,29 @@ Token* StringProcessor_getToken(StringProcessor* this)
       identifier = StringProcessor_readIdentifier(this);
       // Check if it is a Macro call
       // else check it is a keyword
-      
+      nextToken = StringProcessor_checkKeyword(this, identifier);
+      if (nextToken == NULL)
+      {
+      }
+      else
+      {
+        String_delete(identifier);
+      }
       // else create a token identifier
-      nextToken = Token_new(TOK_IDENTIFIER, "IDENTIFIER", identifier, NULL, line, col);
+      if (nextToken == NULL)
+      {
+        nextToken = Token_new(TOK_IDENTIFIER, "IDENTIFIER", identifier, NULL, line, col);
+      }
     }
     else if ((c=='+') || (c=='-') || ((c>='0') && (c<='9')) || (c=='\''))
     {
-      //StringProcessor_readNumber(this);
+      number = StringProcessor_readNumber(this);
+      tmpInt = String_toInt(number);
+      nextToken = Token_new(TOK_CONSTANT, "CONSTANT", (void*)((uintptr_t)tmpInt), NULL, line, col);
     }
     else
     {
+      c = StringProcessor_readChar(this,1);
       nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, line, col);
     }
   }
@@ -218,7 +247,7 @@ Token* StringProcessor_getToken(StringProcessor* this)
  @param: TBD
  @return: TBD.
 **************************************************/
-PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this)
+PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this, unsigned int consume)
 { 
   unsigned char current_c = 0;
   unsigned int isExit = 0;
@@ -245,8 +274,14 @@ PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this)
         isExit = 1;
       }
     }
-   
-   current_c = StringBuffer_readChar(this->currentBuffer);
+   if (consume)
+   {
+     current_c = StringBuffer_readChar(this->currentBuffer);
+   }
+   else
+   {
+     current_c = StringBuffer_peekChar(this->currentBuffer);
+   }
   }
   
   return current_c;
@@ -260,7 +295,7 @@ PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this)
  @param: TBD
  @return: TBD.
 **************************************************/
-unsigned int  StringProcessor_processDirective(StringProcessor* this)
+unsigned int  StringProcessor_readDirective(StringProcessor* this)
 {
   unsigned int result = 0;
   unsigned char c = 0;
@@ -328,14 +363,16 @@ String* StringProcessor_readIdentifier(StringProcessor* this)
 {
   String* result = NULL;
   unsigned int length = 1;
-  unsigned char c;
+  unsigned char c = 0;
   
-  c = StringBuffer_peekChar(this->currentBuffer);
+  c = StringProcessor_readChar(this,1);
+  c = StringProcessor_readChar(this,0);
+  
   while ((c>='a' && c<='z') || (c>='A' && c <='Z') || (c>='0' && c<='9') ||(c=='_'))
    {
     length++;
-    c = StringBuffer_readChar(this->currentBuffer);
-    c = StringBuffer_peekChar(this->currentBuffer);
+    c = StringProcessor_readChar(this,1);
+    c = StringProcessor_readChar(this,0);
   }
   result = StringBuffer_readback(this->currentBuffer, length);
   
@@ -343,14 +380,14 @@ String* StringProcessor_readIdentifier(StringProcessor* this)
 }
 
 /**************************************************
- @brief StringProcessor_readInteger
+ @brief StringProcessor_readNumber
  
  TBD
  
  @param: TBD
  @return: TBD.
 **************************************************/
-String* StringProcessor_readInteger(StringProcessor* this)
+PRIVATE String* StringProcessor_readNumber(StringProcessor* this)
 {
   String* result = 0;
   unsigned int length = 0;
@@ -362,7 +399,7 @@ String* StringProcessor_readInteger(StringProcessor* this)
     length++;
     c = StringBuffer_readChar(this->currentBuffer);
     c = StringBuffer_peekChar(this->currentBuffer);
-    if (c=='x')
+    if ((c=='x') || (c=='X'))
     {
       length++;
       c = StringBuffer_readChar(this->currentBuffer);
@@ -405,14 +442,35 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
 {
   unsigned int result=0;
   
+  // if identifier is a defined macro
+  if  (Map_find(this->macros, identifier, NULL))
+  {
+  //if macro has arguments read arguments
+  // read all arguments
+  // CReate buffer
+  //fill buffer
+  }
   return result;
 }
 
 /**************************************************
 **************************************************/
-unsigned int StringProcessor_checkKeyword(StringProcessor* this, String* identifier)
+Token* StringProcessor_checkKeyword(StringProcessor* this, String* identifier)
 {
-  unsigned int result=0;
+  Token* result=NULL;
+  unsigned int i = 0;
+  
+  for (i=0; i<sizeof(keywords)/sizeof(Keyword); i++)
+  {
+    if (String_match(identifier, 0, &keywords[i].name))
+    {
+      result = Token_new(keywords[i].token, &keywords[i].name.buffer, 0, NULL, 0, 0);
+      if (result)
+      {
+        i = sizeof(keywords)/sizeof(Keyword);
+      }
+    }
+  }
   
   return result;
 }
@@ -465,26 +523,44 @@ void StringProcessor_readDefine(StringProcessor* this)
   unsigned int result = 0;
   String* defineMacro = NULL;
   String* macroBody = NULL;
+  String* parameter = NULL;
   unsigned char c = 0;
-  
-  //printf("Read define: result=%d\n", result);
-  //(void)StringProcessor_readSpaces(this);
+  unsigned int paramLength = 0;
   
   c = StringBuffer_peekChar(this->currentBuffer);
+      
+  while (c==32)
+  {
+    c = StringBuffer_readChar(this->currentBuffer);
+    c = StringBuffer_peekChar(this->currentBuffer);
+  }
     
-  while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) ||
-         ((c>='0') && (c<='9')) || (c=='_'))
+  while (StringProcessor_isLetter(this, c))
   {
     result++;
     c = StringBuffer_readChar(this->currentBuffer);
     c = StringBuffer_peekChar(this->currentBuffer);
   }
-  
-
-  
   defineMacro = StringBuffer_readback(this->currentBuffer, result);
   String_print(defineMacro, "#define: ");
 
+  if (c=='(')
+  {
+    c = StringBuffer_readChar(this->currentBuffer);
+    c = StringBuffer_peekChar(this->currentBuffer);
+    while (c!=')')
+    {
+      while ((c!=',') && (c!=')'))
+      {
+        paramLength++;
+        c = StringBuffer_readChar(this->currentBuffer);
+        c = StringBuffer_peekChar(this->currentBuffer);
+      }
+      parameter = StringBuffer_readback(this->currentBuffer, paramLength);
+      paramLength = 0;
+    }
+  }
+  
   if (c!=10)
   {
     //(void)StringProcessor_readSpaces(this);
@@ -594,14 +670,53 @@ PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this)
 **************************************************/
 PRIVATE void StringProcessor_readSingleLineComment(StringProcessor* this)
 {
-
+  unsigned char c = 0;
+  unsigned length = 2;
+  
+  c = StringProcessor_readChar(this,1);
+  c = StringProcessor_readChar(this,0);
+  
+  while (c!=10)
+  {
+    length++;
+    c = StringProcessor_readChar(this,1);
+    c = StringProcessor_readChar(this,0);
+  }
 }
 
 /**************************************************
 **************************************************/
 PRIVATE void StringProcessor_readMultiLineComment(StringProcessor* this)
 {
-
+  unsigned char c = 0;
+  unsigned length = 2;
+  unsigned int isFound = 0;
+  
+  c = StringProcessor_readChar(this,1);
+  c = StringProcessor_readChar(this,0);
+  
+  while (!isFound)
+  {
+    if (c=='*')
+    {
+      length++;
+      c = StringProcessor_readChar(this,1);
+      c = StringProcessor_readChar(this,0);
+      if (c=='/')
+      {
+        length++;
+        c = StringProcessor_readChar(this,1);
+        isFound = 1;
+      }
+    }
+    else
+    {
+      length++;
+      c = StringProcessor_readChar(this,1);
+      c = StringProcessor_readChar(this,0);
+    }
+   
+  }
 }
 
 /**************************************************
@@ -610,6 +725,10 @@ PRIVATE unsigned int StringProcessor_isLetter(StringProcessor* this, unsigned ch
 {
   unsigned int result = 0;
 
+  if (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_'))
+  {
+    result = 1;
+  }
   return result;
 }
 
@@ -619,14 +738,19 @@ PRIVATE unsigned int StringProcessor_isDigit(StringProcessor* this, unsigned cha
 {
   unsigned int result = 0;
 
+  if  ((c>='0') && (c<='9'))
+  {
+    result = 1;
+  }
+  
   return result;
 }
 
 /**************************************************
 **************************************************/
-PRIVATE unsigned int StringProcessor_readDirective(StringProcessor* this)
+PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned char c)
 {
   unsigned int result = 0;
-
+  
   return result;
 }
