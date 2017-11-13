@@ -5,7 +5,6 @@
 #include "Common.h"
 
 
-
 /**************************************************
 **************************************************/ 
 List* List_new()
@@ -47,6 +46,7 @@ void List_delete(List* this, void (*f_delete)(void*))
   }    
 }
 
+
 /**************************************************
 **************************************************/
 void List_insert(List* this, void* item)
@@ -62,7 +62,7 @@ void List_insert(List* this, void* item)
   {
     this->current = this->head;
   }
-  this->nbNodes ++;
+  this->nbNodes++;
 }
 
 /**************************************************
