@@ -5,6 +5,7 @@
 
 #include "StringBuffer.h"
 #include "Map.h"
+#include "Token.h"
 
 #define NB_MAX_BUFFERS (20)
 
@@ -25,4 +26,5 @@ unsigned int StringProcessor_match(StringProcessor* this, String* pattern);
 String* StringProcessor_readIdentifier(StringProcessor* this);
 String* StringProcessor_readInteger(StringProcessor* this);
 String* StringProcessor_getFileName(StringProcessor* this);
+Token* StringProcessor_getToken(StringProcessor* this);
 #endif
