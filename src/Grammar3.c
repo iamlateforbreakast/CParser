@@ -1023,7 +1023,7 @@ void Grammar_matchParameterList(Grammar* this, Token* token)
       }
       break;
     case 1:
-      if  ((token->id == TOK_UNKNOWN) && (token->value == ','))
+      if  ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ','))
       {
         rules[E_DECLARATION_SPECIFIERS].count[this->context] = 0;
         rules[E_DECLARATOR].count[this->context] = 0;
