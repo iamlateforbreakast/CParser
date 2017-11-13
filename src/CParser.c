@@ -18,9 +18,9 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr);
 
 /**************************************************
  @brief CParser_new
- 
+
  TBD
- 
+
  @param: TBD
  @return: TBD.
 **************************************************/
@@ -39,14 +39,14 @@ PUBLIC CParser* CParser_new()
 
 /**************************************************
  @brief CParser_delete
- 
+
  TBD
- 
+
  @param: TBD
  @return: TBD.
 **************************************************/
 PUBLIC void CParser_delete(CParser* this)
-{ 
+{
   this->sdbName = NULL;
   String_delete(this->initialLocation);
   Grammar_delete(this->grammar);
@@ -55,9 +55,9 @@ PUBLIC void CParser_delete(CParser* this)
 
 /**************************************************
  @brief CParser_parse
- 
+
  TBD
- 
+
  @param: TBD
  @return: TBD.
 **************************************************/
@@ -72,32 +72,30 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   String sdbName = { .buffer = "TESTDB", .length = strlen("TESTDB") };
   String filter = { .buffer = "*.c", .length = 3 };
   List* l = NULL;
-  
+
   // Initialise root location
   FileMgr_initialise(fileMgr, &stringDirName);
   this->initialLocation = FileMgr_getRootPath(fileMgr);
   FileMgr_printAllFiles(fileMgr);
 
-  
+
   // Open DB
   this->sdbName = &sdbName;
   SdbMgr_open(sdbMgr, this->sdbName);
-  
+
   // Create DB tables
   CParser_createTables(this, sdbMgr);
   
   sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory )"
                                                 "VALUES ('%s')");
   SdbMgr_execute(sdbMgr, sdbCmd->buffer);
-  
-  
-  
+
   String_delete(sdbCmd);
-  
+
   l = FileMgr_filterFiles(fileMgr, &filter);
   cFileName = ((String*)List_getNext(l));
   while (cFileName!=NULL)
-  {
+  {    
     CParser_processFile(this, cFileName);
     cFileName = ((String*)List_getNext(l));
   }
@@ -109,9 +107,9 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
 
 /**************************************************
  @brief CParser_processFile
- 
+
  TBD
- 
+
  @param: TBD
  @return: TBD.
 **************************************************/
@@ -140,7 +138,7 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
   newToken = StringProcessor_getToken(this->stringProcessor);
   //printf("Token Id: %d\n", newToken->id);
   Grammar_pushToken(this->grammar, newToken);
-    
+
   while (newToken->id!=TOK_EOF)
   {
     Token_delete(newToken);
@@ -148,16 +146,16 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
     //printf("Token Id: %d\n", newToken->id);
     Grammar_pushToken(this->grammar, newToken);
   }
-    
+
   Token_delete(newToken);
   StringProcessor_delete(this->stringProcessor);
 }
 
 /**************************************************
  @brief CParser_createTables
- 
+
  TBD
- 
+
  @param: TBD
  @return: TBD.
 **************************************************/
