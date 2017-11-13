@@ -11,7 +11,7 @@ Map* Map_new()
   this = Memory_alloc(sizeof(Map));
   //memset((void*)this->htable, (int)0, (size_t)sizeof(this->htable));
   Memory_set(this->htable, 0, sizeof(this->htable));
-  
+
   return this;
 }
 
@@ -35,7 +35,7 @@ unsigned int Map_insert(Map* this,String* s, void* p)
   String* subString = NULL;
   unsigned int key = 0;
   unsigned int i = 0;
-  
+
   for (i=1; (i<=s->length) && (result==0); i++)
   {
     subString = String_subString(s,0,i);
@@ -47,7 +47,7 @@ unsigned int Map_insert(Map* this,String* s, void* p)
       this->htable[key].p = p;
       result = 1;
     }
-    else if (i==s->length) 
+    else if (i==s->length)
     {
       printf("Map.c: Error: needs to go in list\n");
     }
@@ -64,9 +64,9 @@ unsigned int Map_find(Map* this, String* s, String** p)
   String* subString = NULL;
   unsigned int key = 0;
   unsigned int i = 0;
-  
+
   for (i=1; i<=s->length; i++)
-  { 
+  {
     subString = String_subString(s,0,i);
     key = Map_hash(this, subString, i);
     String_delete(subString);
@@ -78,7 +78,7 @@ unsigned int Map_find(Map* this, String* s, String** p)
     {
       if (String_match(this->htable[key].s, 0, s))
       {
-        if (p) 
+        if (p)
 		{
 		  *p = this->htable[key].p;
 		}
@@ -91,7 +91,7 @@ unsigned int Map_find(Map* this, String* s, String** p)
       }
     }
   }
-  
+
   return result;
 }
 
@@ -99,7 +99,7 @@ unsigned int Map_hash(Map* this, String* s, unsigned int len)
 {
   unsigned int result = 0;
   unsigned int i = 0;
-  
+
   for (i=0; i<len; i++)
   {
     result = result + s->buffer[i];
