@@ -217,6 +217,15 @@ int String_toInt(String* this)
   return result;
 }
 
+/**************************************************
+**************************************************/
+String* String_searchAndReplace(String* this, String* searchString, String* replaceString)
+{
+  String* result = NULL;
+  
+  return result;
+}
+
 #if 0
     /* match: search for regexp anywhere in text */
     int match(char *regexp, char *text)

@@ -27,5 +27,6 @@ unsigned int String_filter(String* this, String* filter);
 void String_print(String* this, const char*displayString);
 String* String_sprint(String* this, const char* displayString);
 String* String_subString(String* this, unsigned int pos, unsigned int length);
+String* String_searchAndReplace(String* this, String* searchString, String* replaceString);
 int String_toInt(String* this);
 #endif
