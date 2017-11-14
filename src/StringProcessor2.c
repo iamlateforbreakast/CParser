@@ -27,8 +27,8 @@ typedef struct{
 typedef struct{
   String* name;
   String* body;
-  List* args;
-} Macro;
+  List* parameters;
+} MacroDefinition;
 
 /**************************************************
 **************************************************/
@@ -143,7 +143,8 @@ void StringProcessor_delete(StringProcessor* this)
   }
   //StringBuffer_delete(this->currentBuffer);
   this->currentBuffer = NULL;
-  Map_delete(this->macros, (void(*)(void*))&String_delete);
+  
+  //Map_delete(this->macros, (void(*)(void*))&String_delete);
   //close all H files f.close
   Memory_free(this, sizeof(StringProcessor));
 }
@@ -211,6 +212,7 @@ Token* StringProcessor_getToken(StringProcessor* this)
       nextToken = StringProcessor_checkKeyword(this, identifier);
       if (nextToken == NULL)
       {
+        (void)StringProcessor_checkForMacro(this, identifier);
       }
       else
       {
@@ -443,9 +445,11 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
   String* parameter = NULL;
   unsigned int paramLength = 0;
   unsigned char c = 0;
+  MacroDefinition* macroDefinition = NULL;
+  String* macroExpansion = NULL;
   
   // if identifier is a defined macro
-  if  (Map_find(this->macros, identifier, NULL))
+  if  (Map_find(this->macros, identifier, macroDefinition))
   {
     c = StringBuffer_peekChar(this->currentBuffer);
     if (c=='(')
@@ -466,6 +470,7 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
           c = StringBuffer_peekChar(this->currentBuffer);
         }
         parameter = StringBuffer_readback(this->currentBuffer, paramLength);
+        //String_searchAndReplace(macroExpansion, macroDefintion.parameter[i], parameter);
         paramLength = 0;
       }
       c = StringBuffer_readChar(this->currentBuffer);
@@ -547,8 +552,7 @@ String* StringProcessor_getFileName(StringProcessor* this)
 void StringProcessor_readDefine(StringProcessor* this)
 {
   unsigned int result = 0;
-  String* defineMacro = NULL;
-  String* macroBody = NULL;
+  MacroDefinition* macroDefinition = NULL;
   String* parameter = NULL;
   unsigned char c = 0;
   unsigned int paramLength = 0;
@@ -567,8 +571,11 @@ void StringProcessor_readDefine(StringProcessor* this)
     c = StringBuffer_readChar(this->currentBuffer);
     c = StringBuffer_peekChar(this->currentBuffer);
   }
-  defineMacro = StringBuffer_readback(this->currentBuffer, result);
-  String_print(defineMacro, "#define: ");
+  macroDefinition = Memory_alloc(sizeof(MacroDefinition));
+  macroDefinition->name = StringBuffer_readback(this->currentBuffer, result);
+  macroDefinition->parameters = NULL;
+  macroDefinition->body = NULL;
+  String_print(macroDefinition->name, "#define: ");
 
   if (c=='(')
   {
@@ -587,9 +594,16 @@ void StringProcessor_readDefine(StringProcessor* this)
         c = StringBuffer_readChar(this->currentBuffer);
         c = StringBuffer_peekChar(this->currentBuffer);
       }
+      if (macroDefinition->parameters == NULL)
+      {
+        macroDefinition->parameters = List_new();
+      }
       parameter = StringBuffer_readback(this->currentBuffer, paramLength);
       paramLength = 0;
+      
+      List_insert(macroDefinition->parameters, parameter);
     }
+    
     c = StringBuffer_readChar(this->currentBuffer);
   }
   
@@ -610,16 +624,16 @@ void StringProcessor_readDefine(StringProcessor* this)
       c = StringBuffer_peekChar(this->currentBuffer);
     }
     //printf("Read define: result=%d\n", result);
-    macroBody = StringBuffer_readback(this->currentBuffer, result);
-    String_print(macroBody, "#define: ");
+    macroDefinition->body = StringBuffer_readback(this->currentBuffer, result);
+    String_print(macroDefinition->body, "#define: ");
   }
-  if (!Map_insert(this->macros, defineMacro, (void*)macroBody))
+  if (!Map_insert(this->macros, macroDefinition->name, (void*)macroDefinition))
   {
-    String_print(defineMacro, "StringProcessor.c: Could not store macro ");
+    String_print(macroDefinition->name, "StringProcessor.c: Could not store macro ");
   }
-  if (Map_find(this->macros, defineMacro, NULL))
+  if (Map_find(this->macros, macroDefinition->name, NULL))
   {
-    String_print(defineMacro, "StringProcessor.c: Found the macro again->");
+    String_print(macroDefinition->name, "StringProcessor.c: Found the macro again->");
   }
 }
 
