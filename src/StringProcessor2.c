@@ -442,14 +442,15 @@ PRIVATE String* StringProcessor_readNumber(StringProcessor* this)
 PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String* identifier)
 {
   unsigned int result=0;
-  String* parameter = NULL;
+  String* parameterValue = NULL;
+  String* parameterName = NULL;
   unsigned int paramLength = 0;
   unsigned char c = 0;
   MacroDefinition* macroDefinition = NULL;
   String* macroExpansion = NULL;
   
   // if identifier is a defined macro
-  if  (Map_find(this->macros, identifier, macroDefinition))
+  if  (Map_find(this->macros, identifier, (void**)&macroDefinition))
   {
     c = StringBuffer_peekChar(this->currentBuffer);
     if (c=='(')
@@ -464,22 +465,19 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
           c = StringBuffer_readChar(this->currentBuffer);
           c = StringBuffer_peekChar(this->currentBuffer);
         }
+        parameterValue = StringBuffer_readback(this->currentBuffer, paramLength);
+        parameterName = (String*)List_getNext(macroDefinition->parameters);
+        //String_searchAndReplace(macroExpansion, macroDefinition.parameter[i], parameter);
+        paramLength = 0;
         if (c==',')
         {
           c = StringBuffer_readChar(this->currentBuffer);
           c = StringBuffer_peekChar(this->currentBuffer);
         }
-        parameter = StringBuffer_readback(this->currentBuffer, paramLength);
-        //String_searchAndReplace(macroExpansion, macroDefintion.parameter[i], parameter);
-        paramLength = 0;
       }
       c = StringBuffer_readChar(this->currentBuffer);
     }
- 
-  //if macro has arguments read arguments
-  // read all arguments
-  // CReate buffer
-  //fill buffer
+    //StringProcessor_openNewBufferFromString(this, macroExpansion);
   }
   return result;
 }
@@ -589,11 +587,6 @@ void StringProcessor_readDefine(StringProcessor* this)
         c = StringBuffer_readChar(this->currentBuffer);
         c = StringBuffer_peekChar(this->currentBuffer);
       }
-      if (c==',')
-      {
-        c = StringBuffer_readChar(this->currentBuffer);
-        c = StringBuffer_peekChar(this->currentBuffer);
-      }
       if (macroDefinition->parameters == NULL)
       {
         macroDefinition->parameters = List_new();
@@ -602,6 +595,11 @@ void StringProcessor_readDefine(StringProcessor* this)
       paramLength = 0;
       
       List_insert(macroDefinition->parameters, parameter);
+    }
+    if (c==',')
+    {
+      c = StringBuffer_readChar(this->currentBuffer);
+      c = StringBuffer_peekChar(this->currentBuffer);
     }
     
     c = StringBuffer_readChar(this->currentBuffer);
