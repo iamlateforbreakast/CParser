@@ -24,5 +24,5 @@ Map* Map_new();
 void Map_delete(Map* this, void (*f_delete)(void*));
 unsigned int Map_insert(Map* this,String* s, void* p);
 unsigned int Map_hash(Map* this, String* s, unsigned int i);
-unsigned int Map_find(Map* this, String* s, String** p);
+unsigned int Map_find(Map* this, String* s, void** p);
 #endif
