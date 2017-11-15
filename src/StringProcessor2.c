@@ -302,19 +302,7 @@ unsigned int  StringProcessor_readDirective(StringProcessor* this)
   // 1. If StringBuffer_compare(current, "#include") then
   if (StringProcessor_match(this, (String*)&includeToken))
   {
-    // Read include file name
-    //result = result + StringProcessor_readSpaces(this);
-    result = result + StringProcessor_match(this, (String*)&quoteToken) + StringProcessor_match(this, (String*)&bracketOpenToken);
-    result = result + StringProcessor_readFileName(this, &includeFileName);
-    result = result + StringProcessor_match(this, (String*)&quoteToken) + StringProcessor_match(this, (String*)&bracketCloseToken);
-    if (result)
-    {
-      if (!StringProcessor_isIncFileIgnored(this, includeFileName))
-      {
-        StringProcessor_openNewBufferFromFile(this, includeFileName);
-      }
-      String_delete(includeFileName);
-    }
+    StringProcessor_readInclude(this);
   } 
   // 2. If StringBuffer_compare(current, "#define") then  
   else if (StringProcessor_match(this, (String*)&defineToken))
@@ -347,6 +335,62 @@ unsigned int  StringProcessor_readDirective(StringProcessor* this)
   }
   
   return result;
+}
+
+/**************************************************
+ @brief StringProcessor_readInclude
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
+**************************************************/
+void StringProcessor_readInclude(StringProcessor* this)
+{
+  unsigned char c = 0;
+  unsigned int length = 0;
+  String* fileName = NULL;
+  
+  c = StringProcessor_readChar(this,0);
+  
+  while (c==32)
+  {
+    c = StringProcessor_readChar(this,1);
+    c = StringProcessor_readChar(this,0);
+  }
+  
+  if ((c=='"') || (c=='<'))
+  { 
+    c = StringProcessor_readChar(this,1);
+    c = StringProcessor_readChar(this,0);
+    
+    while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) ||
+          ((c>='0') && (c<='9')) || (c=='_') || (c=='.') || 
+           (c=='/'))
+    {
+      length++;
+      c = StringProcessor_readChar(this,1);
+      c = StringProcessor_readChar(this,0);
+    }
+    fileName = StringBuffer_readback(this->currentBuffer, length);
+    String_print(fileName, "#include: ");
+    
+    if ((c=='"') || (c=='>'))
+    {
+      c = StringProcessor_readChar(this,1);
+      c = StringProcessor_readChar(this,0);
+      
+      if (!StringProcessor_isIncFileIgnored(this, fileName))
+      {
+        StringProcessor_openNewBufferFromFile(this, fileName);
+      }
+      String_delete(fileName);
+    }
+  }
+  
+  
+  
+
 }
 
 /**************************************************
