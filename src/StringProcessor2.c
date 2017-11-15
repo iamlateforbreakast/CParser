@@ -32,13 +32,11 @@ typedef struct{
 
 /**************************************************
 **************************************************/
-PRIVATE unsigned int  StringProcessor_processDirective(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName);
 PRIVATE void StringProcessor_readDefine(StringProcessor* this);
 PRIVATE void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this);
-PRIVATE unsigned int StringProcessor_processComment(StringProcessor* this);
 PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this, unsigned int consume);
 PRIVATE unsigned int StringProcessor_readDirective(StringProcessor* this);
 PRIVATE void StringProcessor_readSingleLineComment(StringProcessor* this);
@@ -47,6 +45,7 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
 PRIVATE Token* StringProcessor_checkKeyword(StringProcessor* this, String* identifier);
 PRIVATE String* StringProcessor_readNumber(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_isLetter(StringProcessor* this, unsigned char c);
+PRIVATE void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content, String* bufferName);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -207,24 +206,22 @@ Token* StringProcessor_getToken(StringProcessor* this)
     else if (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) || (c=='_'))
     {
       identifier = StringProcessor_readIdentifier(this);
-      // Check if it is a Macro call
       // else check it is a keyword
       nextToken = StringProcessor_checkKeyword(this, identifier);
       if (nextToken == NULL)
       {
-        (void)StringProcessor_checkForMacro(this, identifier);
-      }
-      else
-      {
-        String_delete(identifier);
-      }
-      // else create a token identifier
-      if (nextToken == NULL)
-      {
-        nextToken = Token_new(TOK_IDENTIFIER, "IDENTIFIER", identifier, NULL, 0, 0);
+        // Check if it is a Macro call
+        if (StringProcessor_checkForMacro(this, identifier))
+        {
+          String_delete(identifier);
+        }
+        else
+        {
+          nextToken = Token_new(TOK_IDENTIFIER, "IDENTIFIER", identifier, NULL, 0, 0);
+        }
       }
     }
-    else if ((c=='+') || (c=='-') || ((c>='0') && (c<='9')) || (c=='\''))
+    else if ((c>='0') && (c<='9'))
     {
       number = StringProcessor_readNumber(this);
       tmpInt = String_toInt(number);
@@ -448,15 +445,18 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
   unsigned char c = 0;
   MacroDefinition* macroDefinition = NULL;
   String* macroExpansion = NULL;
+  ListNode* p = NULL;
   
   // if identifier is a defined macro
   if  (Map_find(this->macros, identifier, (void**)&macroDefinition))
   {
+    result = 1;
     c = StringBuffer_peekChar(this->currentBuffer);
     if (c=='(')
     {
       c = StringBuffer_readChar(this->currentBuffer);
       c = StringBuffer_peekChar(this->currentBuffer);
+      p = macroDefinition->parameters->head;
       while (c!=')')
       {
         while ((c!=',') && (c!=')'))
@@ -467,7 +467,8 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
         }
         parameterValue = StringBuffer_readback(this->currentBuffer, paramLength);
         parameterName = (String*)List_getNext(macroDefinition->parameters);
-        //String_searchAndReplace(macroExpansion, macroDefinition.parameter[i], parameter);
+        macroExpansion = String_searchAndReplace(macroDefinition->body, (String*)p->item, parameterValue);
+        //macroExpansion = String_new("int macro_expansion;");
         paramLength = 0;
         if (c==',')
         {
@@ -477,7 +478,7 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
       }
       c = StringBuffer_readChar(this->currentBuffer);
     }
-    //StringProcessor_openNewBufferFromString(this, macroExpansion);
+    StringProcessor_openNewBufferFromString(this, macroExpansion, this->currentBuffer->name);
   }
   return result;
 }
@@ -642,48 +643,36 @@ void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileNa
   String* fileContent = NULL;
   FileMgr* fileMgr = FileMgr_getFileMgr();
   
-  if (this->nbOpenBuffers < NB_MAX_BUFFERS)
+  fileContent = FileMgr_searchAndLoad(fileMgr, fileName);
+  if (fileContent!=NULL)
   {
-    fileContent = FileMgr_searchAndLoad(fileMgr, fileName);
-    if (fileContent!=NULL)
-    {
-      this->buffers[this->nbOpenBuffers] = StringBuffer_new(fileContent, fileName);
-      this->currentBuffer = this->buffers[this->nbOpenBuffers];
-
-      String_print(fileName, "Processing file ");
-      printf("-----------------------------------------------\n");
-      this->nbOpenBuffers++;
-    }
-    else
-    {
-      String_print(fileName,"StringProcessor.c: Cannot load ");
-      String_print(fileName,"StringProcessor.c: Ignoring ");
-    }      
+    StringProcessor_openNewBufferFromString(this, fileContent, fileName);
+    String_print(fileName, "Processing file ");
+    printf("-----------------------------------------------\n");
   }
   else
   {
-    String_print(fileName, "StringProcessor.c: No available buffer to load ");
-  }
+    String_print(fileName,"StringProcessor.c: Cannot load ");
+    String_print(fileName,"StringProcessor.c: Ignoring ");
+  }      
   
   FileMgr_delete(fileMgr);
 }
 
 /**************************************************
 **************************************************/
-void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content)
-{
-  String* fileContent = NULL;
-  
+void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content, String* bufferName)
+{ 
   if (this->nbOpenBuffers < NB_MAX_BUFFERS)
   {
-    this->buffers[this->nbOpenBuffers] = StringBuffer_new(content, NULL);
+    this->buffers[this->nbOpenBuffers] = StringBuffer_new(content, bufferName);
     this->currentBuffer = this->buffers[this->nbOpenBuffers];
 
     this->nbOpenBuffers++;
   }
   else
   {
-    //String_print(fileName, "StringProcessor.c: No available buffer to load ");
+    String_print(bufferName, "Not enough buffer to open ");
   }
 }
 
