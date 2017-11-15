@@ -35,6 +35,7 @@ void String_delete(String* this)
     {
       //printf("String.c: String_delete: NULL pointer\n");
     }
+    this = NULL;
 }
 
 /**************************************************
@@ -60,22 +61,31 @@ void String_cat(String* this, const char* str2)
 
 /**************************************************
 **************************************************/
-void String_append(String* this, String* str2)
+String* String_append(String* this, String* str2)
 {
+  String* result = NULL;
   char* buffer = NULL;
   unsigned int length;
   
-  length = this->length + str2->length;
-  buffer = Memory_alloc(length);
+  if (this==NULL)
+  {
+    result = str2;
+  }
+  else
+  {
+    length = this->length + str2->length;
+    buffer = Memory_alloc(length);
   
-  memcpy(buffer, this->buffer, this->length);
-  memcpy(buffer + this->length, str2->buffer, str2->length);
-  Memory_free(this->buffer, this->length);
+    memcpy(buffer, this->buffer, this->length);
+    memcpy(buffer + this->length, str2->buffer, str2->length);
+    Memory_free(this->buffer, this->length);
   
-  this->buffer = buffer;
-  this->length = length;
-  
+    this->buffer = buffer;
+    this->length = length;
+    result = this;
+  }
   //String_print(this,"String_append.c: Return = ");
+  return result;
 }
 
 /**************************************************
@@ -234,7 +244,7 @@ String* String_searchAndReplace(String* this, String* search, String* replace)
   }
   else
   {
-    while ( (j+search->length)<this->length)
+    while ( (j+search->length)<=this->length)
     {
       if (String_match(this,j,search))
       {
@@ -245,8 +255,8 @@ String* String_searchAndReplace(String* this, String* search, String* replace)
         else
         {
           tmpStr = String_subString(this, i, j-i);
-          String_append(tmpStr, replace);
-          String_append(result, tmpStr);
+          tmpStr = String_append(tmpStr, replace);
+          result = String_append(result, tmpStr);
         } 
 
         j = j + search->length;
@@ -258,46 +268,8 @@ String* String_searchAndReplace(String* this, String* search, String* replace)
       }
     }
     tmpStr = String_subString(this, i, j-i);
-    String_append(result, tmpStr);
+    result = String_append(result, tmpStr);
   }
 
   return result;
 }
-
-#if 0
-    /* match: search for regexp anywhere in text */
-    int match(char *regexp, char *text)
-    {
-        if (regexp[0] == '^')
-            return matchhere(regexp+1, text);
-        do {    /* must look even if string is empty */
-            if (matchhere(regexp, text))
-                return 1;
-        } while (*text++ != '\0');
-        return 0;
-    }
-
-    /* matchhere: search for regexp at beginning of text */
-    int matchhere(char *regexp, char *text)
-    {
-        if (regexp[0] == '\0')
-            return 1;
-        if (regexp[1] == '*')
-            return matchstar(regexp[0], regexp+2, text);
-        if (regexp[0] == '$' && regexp[1] == '\0')
-            return *text == '\0';
-        if (*text!='\0' && (regexp[0]=='.' || regexp[0]==*text))
-            return matchhere(regexp+1, text+1);
-        return 0;
-    }
-
-    /* matchstar: search for c*regexp at beginning of text */
-    int matchstar(int c, char *regexp, char *text)
-    {
-        do {    /* a * matches zero or more instances */
-            if (matchhere(regexp, text))
-                return 1;
-        } while (*text != '\0' && (*text++ == c || c == '.'));
-        return 0;
-    }
-    #endif

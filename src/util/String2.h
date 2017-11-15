@@ -22,7 +22,7 @@ void String_cat(String* this, const char* str2);
 int String_cmp(String* this, const char* str2);
 String* String_dup(String* this);
 int String_match(String* this, unsigned int pos,String* str2);
-void String_append(String* this, String* str2);
+String* String_append(String* this, String* str2);
 unsigned int String_filter(String* this, String* filter);
 void String_print(String* this, const char*displayString);
 String* String_sprint(String* this, const char* displayString);
