@@ -1,5 +1,8 @@
+/* Debug.c */
+
+#include "Debug.h"
+
 #include <stdio.h>
-#include <stdarg.h>
 
 void dbg_printf(const char *fmt, ...)
 {
