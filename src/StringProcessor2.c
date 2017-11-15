@@ -20,7 +20,7 @@ typedef enum{
 } PreprocessorDirective;
 
 typedef struct{
-  String name;
+  char* name;
   TokenId token;
 } Keyword;
 
@@ -64,39 +64,39 @@ static const String quoteToken = { .buffer="\"", .length=1 };
 static const String bracketOpenToken = { .buffer="<", .length=1 };
 static const String bracketCloseToken = { .buffer=">", .length=1 };
  
-static const Keyword keywords[] = {{ .name = {.buffer="int", .length=3}, .token=TOK_INT },
-                                                    { .name = {.buffer="float", .length=5}, .token=TOK_FLOAT },
-                                                    {.name =  {.buffer="auto", .length=4}, .token=TOK_AUTO },
-                                                    {.name = {.buffer="break", 5}, .token=TOK_BREAK },
-                                                    {.name = {.buffer="case", 4}, .token=TOK_CASE },
-                                                    {.name = {.buffer="char", 4 }, .token=TOK_CHAR },
-                                                    {.name = {.buffer="const", 5}, .token=TOK_CONST },
-                                                    {.name = {.buffer="continue", 8}, .token=TOK_CONTINUE },
-                                                    {.name = {.buffer="default", 7}, .token=TOK_DEFAULT },
-                                                    {.name = {.buffer="do", 2}, .token=TOK_DO },
-                                                    {.name = {.buffer="double", 6}, .token=TOK_DOUBLE},
-                                                    {.name = {.buffer="else", 4}, .token=TOK_ELSE},
-                                                    {.name = {.buffer="enum", 4}, .token=TOK_ENUM},
-                                                    {.name = {.buffer="extern", 6}, .token=TOK_EXTERN},
-                                                    {.name = {.buffer="for", 3}, .token=TOK_FOR},
-                                                    {.name = {.buffer="goto", 4}, .token=TOK_GOTO},
-                                                    {.name = {.buffer="if", 2}, .token=TOK_IF},
-                                                    {.name = {.buffer="inline", 6}, .token=TOK_INLINE},
-                                                    {.name = {.buffer="long", 4}, .token=TOK_LONG},
-                                                    {.name = {.buffer="register", 8}, .token=TOK_REGISTER},
-                                                    {.name = {.buffer="restrict", 8}, .token=TOK_RESTRICT},
-                                                    {.name = {.buffer="return", 6}, .token=TOK_RETURN},
-                                                    {.name = {.buffer="short", 5}, .token=TOK_SHORT},
-                                                    {.name = {.buffer="signed", 6}, .token=TOK_SIGNED},
-                                                    {.name = {.buffer="sizeof", 6}, .token=TOK_SIZEOF},
-                                                    {.name = {.buffer="static", 3}, .token=TOK_STATIC},
-                                                    {.name = {.buffer="typedef", 7}, .token=TOK_TYPEDEF},
-                                                    {.name = {.buffer="struct", 6}, .token=TOK_STRUCT},
-                                                    {.name = {.buffer="union", 5}, .token=TOK_UNION},
-                                                    {.name = {.buffer="unsigned", 8}, .token=TOK_UNSIGNED},
-                                                    {.name = {.buffer="void", 4}, .token=TOK_VOID },
-                                                    {.name = {.buffer="volatile", 8}, .token=TOK_VOLATILE },
-                                                    {.name = {.buffer="while", 5}, .token=TOK_WHILE }};
+static const Keyword keywords[] = {{ .name = "int", .token=TOK_INT },
+                                   {.name = "float", .token=TOK_FLOAT },
+                                   {.name = "auto", .token=TOK_AUTO },
+                                   {.name = "break", .token=TOK_BREAK },
+                                   {.name = "case", .token=TOK_CASE },
+                                   {.name = "char", .token=TOK_CHAR },
+                                   {.name = "const", .token=TOK_CONST },
+                                   {.name = "continue", .token=TOK_CONTINUE },
+                                   {.name = "default", .token=TOK_DEFAULT },
+                                   {.name = "do", .token=TOK_DO },
+                                   {.name = "double", .token=TOK_DOUBLE},
+                                   {.name = "else", .token=TOK_ELSE},
+                                   {.name = "enum", .token=TOK_ENUM},
+                                   {.name = "extern", .token=TOK_EXTERN},
+                                   {.name = "for", .token=TOK_FOR},
+                                   {.name = "goto", .token=TOK_GOTO},
+                                   {.name = "if", .token=TOK_IF},
+                                   {.name = "inline", .token=TOK_INLINE},
+                                   {.name = "long", .token=TOK_LONG},
+                                   {.name = "register", .token=TOK_REGISTER},
+                                   {.name = "restrict", .token=TOK_RESTRICT},
+                                   {.name = "return", .token=TOK_RETURN},
+                                   {.name = "short", .token=TOK_SHORT},
+                                   {.name = "signed", .token=TOK_SIGNED},
+                                   {.name = "sizeof", .token=TOK_SIZEOF},
+                                   {.name = "static", .token=TOK_STATIC},
+                                   {.name = "typedef", .token=TOK_TYPEDEF},
+                                   {.name = "struct", .token=TOK_STRUCT},
+                                   {.name = "union", .token=TOK_UNION},
+                                   {.name = "unsigned", .token=TOK_UNSIGNED},
+                                   {.name = "void", .token=TOK_VOID },
+                                   {.name = "volatile", .token=TOK_VOLATILE },
+                                   {.name = "while", .token=TOK_WHILE }};
                                                     
 /**************************************************
 @brief StringProcessor_new - TBD
@@ -296,8 +296,8 @@ PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this, unsigned i
 unsigned int  StringProcessor_readDirective(StringProcessor* this)
 {
   unsigned int result = 0;
-  unsigned char c = 0;
   String* includeFileName = NULL;
+  unsigned char c = 0;
   
   // 1. If StringBuffer_compare(current, "#include") then
   if (StringProcessor_match(this, (String*)&includeToken))
@@ -440,7 +440,6 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
 {
   unsigned int result=0;
   String* parameterValue = NULL;
-  String* parameterName = NULL;
   unsigned int paramLength = 0;
   unsigned char c = 0;
   MacroDefinition* macroDefinition = NULL;
@@ -451,6 +450,9 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
   if  (Map_find(this->macros, identifier, (void**)&macroDefinition))
   {
     result = 1;
+    macroExpansion = String_dup(macroDefinition->body);
+    String_print(macroExpansion, "MacroExpansion: Initial value ");
+    
     c = StringBuffer_peekChar(this->currentBuffer);
     if (c=='(')
     {
@@ -466,9 +468,11 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
           c = StringBuffer_peekChar(this->currentBuffer);
         }
         parameterValue = StringBuffer_readback(this->currentBuffer, paramLength);
-        parameterName = (String*)List_getNext(macroDefinition->parameters);
-        macroExpansion = String_searchAndReplace(macroDefinition->body, (String*)p->item, parameterValue);
-        //macroExpansion = String_new("int macro_expansion;");
+        String_print(parameterValue, "MacroExpansion: parameter ");
+        macroExpansion = String_searchAndReplace(macroExpansion, (String*)p->item, parameterValue);
+        String_print(macroExpansion, "MacroExpansion: Result ");
+        String_delete(parameterValue);
+        p = p->next;
         paramLength = 0;
         if (c==',')
         {
@@ -492,9 +496,9 @@ Token* StringProcessor_checkKeyword(StringProcessor* this, String* identifier)
   
   for (i=0; i<sizeof(keywords)/sizeof(Keyword); i++)
   {
-    if (String_match(identifier, 0, &keywords[i].name))
+    if (String_cmp(identifier, keywords[i].name))
     {
-      result = Token_new(keywords[i].token, &keywords[i].name.buffer, 0, NULL, 0, 0);
+      result = Token_new(keywords[i].token, keywords[i].name, 0, NULL, 0, 0);
       if (result)
       {
         i = sizeof(keywords)/sizeof(Keyword);
@@ -596,11 +600,11 @@ void StringProcessor_readDefine(StringProcessor* this)
       paramLength = 0;
       
       List_insert(macroDefinition->parameters, parameter);
-    }
-    if (c==',')
-    {
-      c = StringBuffer_readChar(this->currentBuffer);
-      c = StringBuffer_peekChar(this->currentBuffer);
+      if (c==',')
+      {
+        c = StringBuffer_readChar(this->currentBuffer);
+        c = StringBuffer_peekChar(this->currentBuffer);
+      }
     }
     
     c = StringBuffer_readChar(this->currentBuffer);
