@@ -8,6 +8,7 @@
 
 #include "String2.h"
 #include "Memory.h"
+#include "Debug.h"
 
 #define PRIVATE static
 #define PUBLIC
