@@ -46,6 +46,7 @@ PRIVATE Token* StringProcessor_checkKeyword(StringProcessor* this, String* ident
 PRIVATE String* StringProcessor_readNumber(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_isLetter(StringProcessor* this, unsigned char c);
 PRIVATE void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content, String* bufferName);
+void StringProcessor_deleteMacroDefinition(MacroDefinition* this);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -60,6 +61,7 @@ static const String ifdefToken = { .buffer="#ifdef", .length=6 };
 static const String ifndefToken = { .buffer="#ifndef", .length=7 };
 static const String endifToken = { .buffer="#endif", .length=6 };
 static const String elifToken = { .buffer="#elif", .length=5 };
+static const String elseToken = {.buffer="#else",.length=5};
 static const String quoteToken = { .buffer="\"", .length=1 };
 static const String bracketOpenToken = { .buffer="<", .length=1 };
 static const String bracketCloseToken = { .buffer=">", .length=1 };
@@ -132,7 +134,6 @@ StringProcessor* StringProcessor_new(String* fileContent)
 void StringProcessor_delete(StringProcessor* this)
 {
   int i=0;
-  //FileMgr*  f = CParser_getFileMgr();
   
   //printf("StringProcessor.c: delete\n");
   
@@ -140,12 +141,19 @@ void StringProcessor_delete(StringProcessor* this)
   {
     if (this->buffers[i]!=NULL) StringBuffer_delete(this->buffers[i]);
   }
-  //StringBuffer_delete(this->currentBuffer);
+  
   this->currentBuffer = NULL;
   
-  //Map_delete(this->macros, (void(*)(void*))&String_delete);
+  Map_delete(this->macros, (void(*)(void*))&StringProcessor_deleteMacroDefinition);
   //close all H files f.close
   Memory_free(this, sizeof(StringProcessor));
+}
+
+void StringProcessor_deleteMacroDefinition(MacroDefinition* this)
+{
+  String_delete(this->body);
+  List_delete(this->parameters,String_delete);
+  Memory_free(this, sizeof(MacroDefinition));
 }
 
 /**************************************************
@@ -220,11 +228,16 @@ Token* StringProcessor_getToken(StringProcessor* this)
           nextToken = Token_new(TOK_IDENTIFIER, "IDENTIFIER", identifier, NULL, 0, 0);
         }
       }
+      else
+      {
+        String_delete(identifier);
+      }
     }
     else if ((c>='0') && (c<='9'))
     {
       number = StringProcessor_readNumber(this);
       tmpInt = String_toInt(number);
+      String_delete(number);
       nextToken = Token_new(TOK_CONSTANT, "CONSTANT", (void*)((uintptr_t)tmpInt), NULL, 0, 0);
     }
     else
