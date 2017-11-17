@@ -239,6 +239,9 @@ Grammar* Grammar_new()
 void Grammar_delete(Grammar* this)
 {
   // delete Global var hash
+  //   Declarator localDeclarator;
+  // Declarator declarator;
+  String_delete(this->declarator.name);
   Memory_free(this, sizeof(Grammar));
 
 }
@@ -306,6 +309,10 @@ void Grammar_pushToken(Grammar* this, Token* token)
   {
     Grammar_printDeclarator(this);
     Grammar_reset(this);
+  }
+  else
+  {
+     /* Nothing to do */
   }
   if (this->requestReset)
   {
@@ -562,11 +569,7 @@ void Grammar_matchInitializer(Grammar* this, Token* token)
   switch (rules[E_INITIALIZER].count[0])
   {
     case 0:
-      Grammar_evaluateRule(this, token, E_ASSIGNMENT_EXPRESSION);
-      if (rules[E_ASSIGNMENT_EXPRESSION].isMatched)
-      {
-        rules[E_INITIALIZER].isMatched = 1;
-      }
+      break;
   }
 }
 
