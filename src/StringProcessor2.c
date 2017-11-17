@@ -32,7 +32,7 @@ typedef struct{
 
 /**************************************************
 **************************************************/
-PRIVATE unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName);
+//PRIVATE unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName);
 PRIVATE void StringProcessor_readDefine(StringProcessor* this);
 PRIVATE void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, String* fileName);
@@ -47,6 +47,7 @@ PRIVATE String* StringProcessor_readNumber(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_isLetter(StringProcessor* this, unsigned char c);
 PRIVATE void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content, String* bufferName);
 void StringProcessor_deleteMacroDefinition(MacroDefinition* this);
+void StringProcessor_readInclude(StringProcessor* this);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -62,9 +63,6 @@ static const String ifndefToken = { .buffer="#ifndef", .length=7 };
 static const String endifToken = { .buffer="#endif", .length=6 };
 static const String elifToken = { .buffer="#elif", .length=5 };
 static const String elseToken = {.buffer="#else",.length=5};
-static const String quoteToken = { .buffer="\"", .length=1 };
-static const String bracketOpenToken = { .buffer="<", .length=1 };
-static const String bracketCloseToken = { .buffer=">", .length=1 };
  
 static const Keyword keywords[] = {{ .name = "int", .token=TOK_INT },
                                    {.name = "float", .token=TOK_FLOAT },
@@ -152,7 +150,7 @@ void StringProcessor_delete(StringProcessor* this)
 void StringProcessor_deleteMacroDefinition(MacroDefinition* this)
 {
   String_delete(this->body);
-  List_delete(this->parameters,String_delete);
+  List_delete(this->parameters,(void(*)(void*))String_delete);
   Memory_free(this, sizeof(MacroDefinition));
 }
 
@@ -309,7 +307,6 @@ PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this, unsigned i
 unsigned int  StringProcessor_readDirective(StringProcessor* this)
 {
   unsigned int result = 0;
-  String* includeFileName = NULL;
   unsigned char c = 0;
   
   // 1. If StringBuffer_compare(current, "#include") then
@@ -575,7 +572,7 @@ unsigned int StringProcessor_match(StringProcessor* this, String* pattern)
 
 /**************************************************
 **************************************************/
-unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName)
+/*unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName)
 {
   unsigned int result = 0;
   unsigned char c = 0;
@@ -598,7 +595,7 @@ unsigned int StringProcessor_readFileName(StringProcessor* this, String** includ
   *includeFileName = fileName;
   
   return result;
-}
+}*/
 
 /**************************************************
 **************************************************/
