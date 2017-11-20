@@ -69,7 +69,7 @@ String* String_append(String* this, String* str2)
   
   if (this==NULL)
   {
-    result = str2;
+    result = String_dup(str2);
   }
   else
   {
@@ -108,7 +108,7 @@ int String_cmp(String* this, const char* str2)
 {
   int result = 0;
 
-  if (strncmp(this->buffer, str2, this->length)==0)
+  if ((this->length == strlen(str2)) && (strncmp(this->buffer, str2, this->length)==0))
 	  result=1;
   //printf("String_cmp: %d %s %s\n", this->length, this->buffer, str2);
 	
@@ -257,6 +257,7 @@ String* String_searchAndReplace(String* this, String* search, String* replace)
           tmpStr = String_subString(this, i, j-i);
           tmpStr = String_append(tmpStr, replace);
           result = String_append(result, tmpStr);
+          String_delete(tmpStr);
         } 
 
         j = j + search->length;
@@ -269,6 +270,7 @@ String* String_searchAndReplace(String* this, String* search, String* replace)
     }
     tmpStr = String_subString(this, i, j-i);
     result = String_append(result, tmpStr);
+    String_delete(tmpStr);
   }
 
   return result;
