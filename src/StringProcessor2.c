@@ -48,6 +48,7 @@ PRIVATE unsigned int StringProcessor_isLetter(StringProcessor* this, unsigned ch
 PRIVATE void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content, String* bufferName);
 void StringProcessor_deleteMacroDefinition(MacroDefinition* this);
 void StringProcessor_readInclude(StringProcessor* this);
+Token* StringProcessor_checkOpKeyword(StringProcessor* this);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -95,8 +96,30 @@ static const Keyword keywords[] = {{ .name = "int", .token=TOK_INT },
                                    {.name = "union", .token=TOK_UNION},
                                    {.name = "unsigned", .token=TOK_UNSIGNED},
                                    {.name = "void", .token=TOK_VOID },
-                                   {.name = "volatile", .token=TOK_VOLATILE },
-                                   {.name = "while", .token=TOK_WHILE }};
+                                   {.name = "volatile", .token=TOK_VOLATILE }};
+static const Keyword symbolicKeywords[] =  {{.name = "while", .token=TOK_WHILE },
+                                   {.name = "...", .token=TOK_ELLIPSIS},
+                                   {.name = ">>=", .token=TOK_RASSIGN},
+                                   {.name = "<<=", .token=TOK_LASSIGN},
+                                   {.name = "+=", .token=TOK_ADD_ASSIGN},
+                                   {.name = "-=", .token=TOK_SUB_ASSIGN},
+                                   {.name = "*=", .token=TOK_MUL_ASSIGN},
+                                   {.name = "/=", .token=TOK_DIV_ASSIGN},
+                                   {.name = "%=", .token=TOK_MOD_ASSIGN},
+                                   {.name = "&=", .token=TOK_AND_ASSIGN},
+                                   {.name = "^=", .token=TOK_XOR_ASSIGN},
+                                   {.name = "|=", .token=TOK_OR_ASSIGN},
+                                   {.name = ">>", .token=TOK_RIGHT_OP},
+                                   {.name = "<<", .token=TOK_LEFT_OP},
+                                   {.name = "++", .token=TOK_INC_OP},
+                                   {.name = "--", .token=TOK_DEC_OP},
+                                   {.name = "->", .token=TOK_PTR_OP},
+                                   {.name = "&&", .token=TOK_AND_OP},
+                                   {.name = "||", .token=TOK_OR_OP},
+                                   {.name = "<=", .token=TOK_LE_OP},
+                                   {.name = "=>", .token=TOK_GE_OP},
+                                   {.name = "==", .token=TOK_EQ_OP},
+                                   {.name = "!=", .token=TOK_NE_OP}};
                                                     
 /**************************************************
 @brief StringProcessor_new - TBD
@@ -240,8 +263,12 @@ Token* StringProcessor_getToken(StringProcessor* this)
     }
     else
     {
-      c = StringProcessor_readChar(this,1);
-      nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, 0, 0);
+      nextToken = StringProcessor_checkOpKeyword(this);
+      if (nextToken == NULL)
+      {
+        c = StringProcessor_readChar(this,1);
+        nextToken = Token_new(TOK_UNKNOWN, "UNKOWN", (void*)((intptr_t)c), NULL, 0, 0);
+      }
     }
   }
 
@@ -515,11 +542,26 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
       p = macroDefinition->parameters->head;
       while (c!=')')
       {
-        while ((c!=',') && (c!=')'))
+        if (c=='(')
         {
+          while (c!=')')
+          {
+            paramLength++;
+            c = StringBuffer_readChar(this->currentBuffer);
+            c = StringBuffer_peekChar(this->currentBuffer);
+          }
           paramLength++;
           c = StringBuffer_readChar(this->currentBuffer);
           c = StringBuffer_peekChar(this->currentBuffer);
+        }
+        else
+        {
+          while ((c!=',') && (c!=')'))
+          {
+            paramLength++;
+            c = StringBuffer_readChar(this->currentBuffer);
+            c = StringBuffer_peekChar(this->currentBuffer);
+          }
         }
         parameterValue = StringBuffer_readback(this->currentBuffer, paramLength);
         String_print(parameterValue, "MacroExpansion: parameter ");
@@ -558,6 +600,31 @@ Token* StringProcessor_checkKeyword(StringProcessor* this, String* identifier)
         i = sizeof(keywords)/sizeof(Keyword);
       }
     }
+  }
+  
+  return result;
+}
+
+/**************************************************
+**************************************************/
+Token* StringProcessor_checkOpKeyword(StringProcessor* this)
+{
+  Token* result=NULL;
+  unsigned int i = 0;
+  String* tmpStr=NULL;
+  
+  for (i=0; i<sizeof(symbolicKeywords)/sizeof(Keyword); i++)
+  {
+    tmpStr = String_new(symbolicKeywords[i].name);
+    if (StringProcessor_match(this, tmpStr))
+    {
+      result = Token_new(keywords[i].token, keywords[i].name, 0, NULL, 0, 0);
+      if (result)
+      {
+        i = sizeof(keywords)/sizeof(Keyword);
+      }
+    }
+    String_delete(tmpStr);
   }
   
   return result;
@@ -614,19 +681,19 @@ void StringProcessor_readDefine(StringProcessor* this)
   unsigned char c = 0;
   unsigned int paramLength = 0;
   
-  c = StringBuffer_peekChar(this->currentBuffer);
+    c = StringProcessor_readChar(this,0);
       
   while (c==32)
   {
-    c = StringBuffer_readChar(this->currentBuffer);
-    c = StringBuffer_peekChar(this->currentBuffer);
+    c = StringProcessor_readChar(this,1);
+    c = StringProcessor_readChar(this,0);
   }
     
   while (StringProcessor_isLetter(this, c))
   {
     result++;
-    c = StringBuffer_readChar(this->currentBuffer);
-    c = StringBuffer_peekChar(this->currentBuffer);
+    c = StringProcessor_readChar(this,1);
+    c = StringProcessor_readChar(this,0);
   }
   macroDefinition = Memory_alloc(sizeof(MacroDefinition));
   macroDefinition->name = StringBuffer_readback(this->currentBuffer, result);
@@ -636,15 +703,15 @@ void StringProcessor_readDefine(StringProcessor* this)
 
   if (c=='(')
   {
-    c = StringBuffer_readChar(this->currentBuffer);
-    c = StringBuffer_peekChar(this->currentBuffer);
+    c = StringProcessor_readChar(this,1);
+    c = StringProcessor_readChar(this,0);
     while (c!=')')
     {
       while ((c!=',') && (c!=')'))
       {
         paramLength++;
-        c = StringBuffer_readChar(this->currentBuffer);
-        c = StringBuffer_peekChar(this->currentBuffer);
+        c = StringProcessor_readChar(this,1);
+        c = StringProcessor_readChar(this,0);
       }
       if (macroDefinition->parameters == NULL)
       {
@@ -656,29 +723,29 @@ void StringProcessor_readDefine(StringProcessor* this)
       List_insert(macroDefinition->parameters, parameter);
       if (c==',')
       {
-        c = StringBuffer_readChar(this->currentBuffer);
-        c = StringBuffer_peekChar(this->currentBuffer);
+        c = StringProcessor_readChar(this,1);
+        c = StringProcessor_readChar(this,0);
       }
     }
     
-    c = StringBuffer_readChar(this->currentBuffer);
+        c = StringProcessor_readChar(this,1);
   }
   
   if (c!=10)
   {
-    c = StringBuffer_peekChar(this->currentBuffer);
+        c = StringProcessor_readChar(this,0);
     while (c==32)
     {
-      c = StringBuffer_readChar(this->currentBuffer);
-      c = StringBuffer_peekChar(this->currentBuffer);
+        c = StringProcessor_readChar(this,1);
+        c = StringProcessor_readChar(this,0);
     }
     result =0;
   
     while (c!=10)
     {
       result++;
-      c = StringBuffer_readChar(this->currentBuffer);
-      c = StringBuffer_peekChar(this->currentBuffer);
+      c = StringProcessor_readChar(this,1);
+      c = StringProcessor_readChar(this,0);
     }
     //printf("Read define: result=%d\n", result);
     macroDefinition->body = StringBuffer_readback(this->currentBuffer, result);

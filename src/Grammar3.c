@@ -189,7 +189,7 @@ MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, 
                       { E_ENUM_SPECIFIER , "ENUM_SPECIFIER", 0 , 0, NULL, {0, 0, 0, 0, 0 } },
                       { E_POINTER , "POINTER", 0 , 0, &Grammar_matchPointer, {0, 0, 0, 0, 0 } },
                       { E_CONSTANT_EXPRESSION , "CONSTANT_EXPRESSION", 0 , 0, NULL, {0, 0, 0, 0, 0 } },
-                      { E_INITIALIZER, "INITIALIZER", 0, "INITIALIZER", &Grammar_matchInitializer, {0, 0, 0, 0, 0 } },
+                      { E_INITIALIZER, "INITIALIZER", 0, 0, &Grammar_matchInitializer, {0, 0, 0, 0, 0 } },
                       { E_PARAMETER_TYPE_LIST, "PARAMETER_TYPE_LIST", 0, 0, &Grammar_matchParameterTypeList, {0, 0, 0, 0, 0 } },
                       { E_IDENTIFIER_LIST, "IDENTIFIER_LIST", 0, 0, &Grammar_matchIdentifierList, {0, 0, 0, 0, 0 } },
                       { E_PARAMETER_LIST, "PARAMETER_LIST", 0, 0, &Grammar_matchParameterList, {0, 0, 0, 0, 0 } },
@@ -299,21 +299,25 @@ void Grammar_pushToken(Grammar* this, Token* token)
 
   TRACE(("-- Processing token #%d: %s\n", this->tokenNumber, token->text));
 
-  //Grammar_matchExternalDeclaration(this, token);
-  Grammar_evaluateRule(this, token, this->entryRule[this->context]);
-  
-  this->tokenNumber++;
-  Grammar_printMatchingRules(this, token);
-
-  if (rules[E_EXTERNAL_DECLARATION].isMatched)
+  if (token->id !=TOK_EOF)
   {
-    Grammar_printDeclarator(this);
-    Grammar_reset(this);
+    //Grammar_matchExternalDeclaration(this, token);
+    Grammar_evaluateRule(this, token, this->entryRule[this->context]);
+  
+    this->tokenNumber++;
+    Grammar_printMatchingRules(this, token);
+    
+    if (rules[E_EXTERNAL_DECLARATION].isMatched)
+    {
+      Grammar_printDeclarator(this);
+      Grammar_reset(this);
+    }
   }
   else
   {
-     /* Nothing to do */
+    this->requestReset=1;
   }
+
   if (this->requestReset)
   {
     Grammar_reset(this);
@@ -569,6 +573,10 @@ void Grammar_matchInitializer(Grammar* this, Token* token)
   switch (rules[E_INITIALIZER].count[0])
   {
     case 0:
+      if (token->id == TOK_CONSTANT)
+      {
+        rules[E_INITIALIZER].isMatched = 1;
+      }
       break;
   }
 }
