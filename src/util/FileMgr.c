@@ -184,7 +184,7 @@ PUBLIC List* FileMgr_filterFiles(FileMgr* this, String* filter)
   
   if (this->files != NULL)
   {
-    fd = (FileDesc*)List_getNext(this->files);
+    fd = (FileDesc*)List_getHead(this->files);
     result = List_new();
   
     while(fd!=NULL)
@@ -195,6 +195,7 @@ PUBLIC List* FileMgr_filterFiles(FileMgr* this, String* filter)
       }
       fd = List_getNext(this->files);
     }
+    this->files->current = this->files->head;
   }
   
   return result;
