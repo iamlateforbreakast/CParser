@@ -96,9 +96,9 @@ static const Keyword keywords[] = {{ .name = "int", .token=TOK_INT },
                                    {.name = "union", .token=TOK_UNION},
                                    {.name = "unsigned", .token=TOK_UNSIGNED},
                                    {.name = "void", .token=TOK_VOID },
-                                   {.name = "volatile", .token=TOK_VOLATILE }};
-static const Keyword symbolicKeywords[] =  {{.name = "while", .token=TOK_WHILE },
-                                   {.name = "...", .token=TOK_ELLIPSIS},
+                                   {.name = "volatile", .token=TOK_VOLATILE },
+                                   {.name = "while", .token=TOK_WHILE}};
+static const Keyword symbolicKeywords[] =  {{.name = "...", .token=TOK_ELLIPSIS},
                                    {.name = ">>=", .token=TOK_RASSIGN},
                                    {.name = "<<=", .token=TOK_LASSIGN},
                                    {.name = "+=", .token=TOK_ADD_ASSIGN},
@@ -618,10 +618,10 @@ Token* StringProcessor_checkOpKeyword(StringProcessor* this)
     tmpStr = String_new(symbolicKeywords[i].name);
     if (StringProcessor_match(this, tmpStr))
     {
-      result = Token_new(keywords[i].token, keywords[i].name, 0, NULL, 0, 0);
+      result = Token_new(keywords[i].token, symbolicKeywords[i].name, 0, NULL, 0, 0);
       if (result)
       {
-        i = sizeof(keywords)/sizeof(Keyword);
+        i = sizeof(symbolicKeywords)/sizeof(Keyword);
       }
     }
     String_delete(tmpStr);

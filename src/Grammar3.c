@@ -196,7 +196,7 @@ MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, 
                       { E_ENUMERATOR_LIST , "ENUMERATOR_LIST", 0 , 0, NULL, {0, 0, 0, 0, 0 } },
                       { E_ENUM_SPECIFIER , "ENUM_SPECIFIER", 0 , 0, NULL, {0, 0, 0, 0, 0 } },
                       { E_POINTER , "POINTER", 0 , 0, &Grammar_matchPointer, {0, 0, 0, 0, 0 } },
-                      { E_CONSTANT_EXPRESSION , "CONSTANT_EXPRESSION", 0 , 0, NULL, {0, 0, 0, 0, 0 } },
+                      { E_CONSTANT_EXPRESSION , "CONSTANT_EXPRESSION", 0 , 0, &Grammar_matchConstantExpression, {0, 0, 0, 0, 0 } },
                       { E_INITIALIZER, "INITIALIZER", 0, 0, &Grammar_matchInitializer, {0, 0, 0, 0, 0 } },
                       { E_INITIALIZER_LIST, "INITIALIZER_LIST", 0, 0, &Grammar_matchInitializerList, {0, 0, 0, 0, 0 } },
                       { E_PARAMETER_TYPE_LIST, "PARAMETER_TYPE_LIST", 0, 0, &Grammar_matchParameterTypeList, {0, 0, 0, 0, 0 } },
@@ -1198,13 +1198,29 @@ void Grammar_matchInitializer(Grammar* this, Token* token)
       {
         rules[E_INITIALIZER].isMatched = 1;
         rules[E_INITIALIZER].count[this->context] = 0;
-        Grammar_evaluateRule(this, token, E_EXTERNAL_DECLARATION);
+        
+        if (this->context == 1)
+        {
+          Grammar_restoreContext(this, E_EXTERNAL_DECLARATION);
+          Grammar_evaluateRule(this, token, E_EXTERNAL_DECLARATION);
+        }
+        else
+        {
+          Grammar_restoreContext(this, E_INITIALIZER);
+        }
       }
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value==','))
       {
       }
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value=='{'))
+      {
+        rules[E_INITIALIZER].count[this->context] = 1;
+        Grammar_saveContext(this, E_INITIALIZER);
+        rules[E_INITIALIZER].count[this->context] = 1;
+      }
       else
       {
+        Grammar_saveContext(this, E_INITIALIZER_LIST);
         Grammar_evaluateRule(this, token, E_INITIALIZER_LIST);
       }
   }
@@ -1219,6 +1235,20 @@ initializer_list
 void Grammar_matchInitializerList(Grammar* this, Token* token)
 {
   rules[E_INITIALIZER_LIST].isMatched = 0;
+  switch(rules[E_INITIALIZER_LIST].count[this->context])
+  {
+    case 0:
+      Grammar_evaluateRule(this, token, E_INITIALIZER);
+      if (rules[E_INITIALIZER].isMatched)
+      {
+        rules[E_INITIALIZER_LIST].isMatched = 1;
+        Grammar_restoreContext(this, E_INITIALIZER);
+        Grammar_evaluateRule(this, token, E_INITIALIZER);
+      }
+      break;
+    case 1:
+      break;
+  }
 }
 
 /****************************************************************************
@@ -1267,7 +1297,7 @@ void Grammar_matchPrimaryExpression(Grammar* this, Token* token)
   switch (rules[E_PRIMARY_EXPRESSION].count[this->context])
   {
     case 0:
-      if ((token->id == TOK_UNKNOWN) && (token->value=='('))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value=='('))
       {
         rules[E_PRIMARY_EXPRESSION].count[this->context] = 1;
       }
@@ -1284,7 +1314,7 @@ void Grammar_matchPrimaryExpression(Grammar* this, Token* token)
      // }
       break;
     case 1:
-      if ((token->id == TOK_UNKNOWN) && (token->value==')'))
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value==')'))
       {
         rules[E_PRIMARY_EXPRESSION].isMatched = 1;
         rules[E_PRIMARY_EXPRESSION].count[this->context] = 0;
