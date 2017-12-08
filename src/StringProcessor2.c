@@ -55,7 +55,8 @@ static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
                                            { .buffer="string.h", .length=8 },
                                            { .buffer="stdlib.h", .length=8 },
                                            { .buffer="errno.h", .length=7 },
-                                           { .buffer="unistd.h", .length=8 } };
+                                           { .buffer="unistd.h", .length=8 } ,
+                                           { .buffer="dirent.h", .length=8 }};
 
 static const String includeToken = { .buffer="#include", .length=8 };
 static const String defineToken = { .buffer="#define", .length=7 };
@@ -578,7 +579,10 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
       }
       c = StringBuffer_readChar(this->currentBuffer);
     }
-    StringProcessor_openNewBufferFromString(this, macroExpansion, this->currentBuffer->name);
+    if (macroExpansion!=NULL)
+    {
+      StringProcessor_openNewBufferFromString(this, macroExpansion, this->currentBuffer->name);
+    }
   }
   return result;
 }
