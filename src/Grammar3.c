@@ -170,6 +170,7 @@ void Grammar_matchUnaryExpression(Grammar* this, Token* token);
 void Grammar_matchPostfixExpression(Grammar* this, Token* token);
 void Grammar_matchPrimaryExpression(Grammar* this, Token* token);
 void Grammar_matchInitializerList(Grammar* this, Token* token);
+void Grammar_matchTypeName(Grammar* this, Token* token);
 
 MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, &Grammar_matchExternalDeclaration, {0, 0, 0, 0, 0 } },
                       { E_FUNCTION_DECLARATION , "FUNCTION_DECLARATION", 0 , 0, &Grammar_matchFunctionDeclaration, {0, 0, 0, 0, 0 } },
@@ -220,7 +221,7 @@ MatchRule rules[] = { { E_EXTERNAL_DECLARATION , "EXTERNAL_DECLARATION", 0 , 0, 
                       { E_POSTFIX_EXPRESSION, "POSTFIX_EXPRESSION", 0, 0, &Grammar_matchPostfixExpression, {0, 0, 0, 0, 0 } },
                       { E_UNARY_EXPRESSION, "UNARY_EXPRESSION", 0, 0, &Grammar_matchUnaryExpression, {0, 0, 0, 0, 0 } },
                       { E_CAST_EXPRESSION, "CAST_EXPRESSION", 0, 0, &Grammar_matchCastExpression, {0, 0, 0, 0, 0 } },
-                      { E_TYPE_NAME, "TYPE_NAME", 0, 0, NULL, {0, 0, 0, 0, 0 } }
+                      { E_TYPE_NAME, "TYPE_NAME", 0, 0, &Grammar_matchTypeName, {0, 0, 0, 0, 0 } }
                     };
 
 /****************************************************************************
@@ -592,6 +593,7 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
           rules[E_DECLARATOR].isMatched = 1;
         }
       }
+      break;
     case 1:
       Grammar_evaluateRule(this, token, E_POINTER);
       Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
@@ -599,6 +601,7 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
       {
         rules[E_DECLARATOR].isMatched = 1;
       }
+      break;
   }
 }
 
@@ -664,6 +667,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
         Grammar_saveContext(this, E_PARAMETER_TYPE_LIST);
         Grammar_evaluateRule(this, token, E_PARAMETER_TYPE_LIST);
       }
+      break;
     case 3:
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ']'))
       {
@@ -675,6 +679,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
         Grammar_saveContext(this, E_CONSTANT_EXPRESSION);
         rules[E_CONSTANT_EXPRESSION].count[this->context] = 0;
       }
+      break;
   }
 }
 
@@ -1033,7 +1038,7 @@ void Grammar_matchParameterTypeList(Grammar* this, Token* token)
   if (rules[E_PARAMETER_LIST].isMatched)
   {
     rules[E_PARAMETER_TYPE_LIST].isMatched = 1;
-    Grammar_restoreContext(this,E_FUNCTION_DECLARATION);
+    Grammar_restoreContext(this,E_EXTERNAL_DECLARATION);
   }
 }
 
