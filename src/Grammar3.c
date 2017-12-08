@@ -460,7 +460,10 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
       {
         rules[E_DECLARATION].isMatched = 1;
         rules[E_DECLARATION].count[this->context] = 0;
-        this->declarator.class = E_VARIABLE_DECLARATOR;
+        if (this->declarator.class==0)
+        {
+          this->declarator.class = E_VARIABLE_DECLARATOR;
+        }
       }
       break;
   }
