@@ -49,6 +49,7 @@ PRIVATE void StringProcessor_openNewBufferFromString(StringProcessor* this, Stri
 void StringProcessor_deleteMacroDefinition(MacroDefinition* this);
 void StringProcessor_readInclude(StringProcessor* this);
 Token* StringProcessor_checkOpKeyword(StringProcessor* this);
+PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned char c);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -203,9 +204,9 @@ Token* StringProcessor_getToken(StringProcessor* this)
     {
       nextToken = Token_new(TOK_EOF, "EOF", 0, NULL, 0, 0);
     }
-    else if ((c==10) || (c==13))
+    else if (StringProcessor_isEndOfLine(this,c))
     {
-      c = StringProcessor_readChar(this,1);
+      // Do nothing
     }
     else if (c==32)
     {
@@ -936,5 +937,16 @@ PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned
 {
   unsigned int result = 0;
   
+  if (c==10)
+  {
+    c = StringProcessor_readChar(this,1);
+    c = StringBuffer_peekChar(this->currentBuffer);
+    /* Check for Windows End of line */
+    if (c==13)
+    {
+      c = StringProcessor_readChar(this,1);
+    }
+    result = 1;
+  }
   return result;
 }
