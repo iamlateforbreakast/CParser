@@ -92,13 +92,20 @@ String* String_append(String* this, String* str2)
 **************************************************/
 String* String_dup(String* this)
 {
-  String* duplicatedString;
+  String* duplicatedString = NULL;
    
-  duplicatedString = (String*)Memory_alloc(sizeof(String));
-  duplicatedString->length = this->length;
-  duplicatedString->buffer = (char*)Memory_alloc(sizeof(char)*this->length);
-  memcpy(duplicatedString->buffer, this->buffer, this->length);
-	
+  if (this!=NULL)
+  {
+    duplicatedString = (String*)Memory_alloc(sizeof(String));
+    duplicatedString->length = this->length;
+    duplicatedString->buffer = (char*)Memory_alloc(sizeof(char)*this->length);
+    memcpy(duplicatedString->buffer, this->buffer, this->length);
+	}
+  else
+  {
+    printf("String2.c: String_dup this=NULL\n");
+  }
+  
 	return duplicatedString;
 }
 
