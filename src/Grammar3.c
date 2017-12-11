@@ -753,7 +753,7 @@ void Grammar_matchTypeSpecifier(Grammar* this, Token* token)
   {
     //rules[E_TYPE_SPECIFIER].isMatched = 1;
     //String_print((String*)token->value, "TYPE SPECIFIER =");
-    //rules[E_TYPE_SPECIFIER].isMatched = Grammar_isTypeDefined(this, (String*)token->value);
+    rules[E_TYPE_SPECIFIER].isMatched = Grammar_isTypeDefined(this, (String*)token->value);
   }
   else if (rules[E_ENUM_SPECIFIER].isMatched)
   {
@@ -1673,7 +1673,7 @@ unsigned int Grammar_isTypeDefined(Grammar* this, String* typeName)
   memset(name, 0, 255);
 
   memcpy(name, typeName->buffer, typeName->length);
-  sprintf(cmd,"SELECT * FROM Declarations WHERE name='%s';", name);
+  sprintf(cmd,"SELECT * FROM Type_Declarations WHERE name='%s';", name);
 
   SdbMgr_execute(sdbMgr, cmd);
 
