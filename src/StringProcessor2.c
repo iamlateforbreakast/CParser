@@ -214,7 +214,8 @@ Token* StringProcessor_getToken(StringProcessor* this)
     }
     else if (c=='/')
     {
-        d = StringBuffer_peekChar(this->currentBuffer);
+        c = StringProcessor_readChar(this,1);
+        d = StringProcessor_readChar(this,0);
         if (d=='/')
         {
           StringProcessor_readSingleLineComment(this);
@@ -536,11 +537,11 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
     macroExpansion = String_dup(macroDefinition->body);
     String_print(macroExpansion, "MacroExpansion: Initial value ");
     
-    c = StringBuffer_peekChar(this->currentBuffer);
+    c = StringProcessor_readChar(this,0);
     if (c=='(')
     {
-      c = StringBuffer_readChar(this->currentBuffer);
-      c = StringBuffer_peekChar(this->currentBuffer);
+      c = StringProcessor_readChar(this,1);
+      c = StringProcessor_readChar(this,0);
       p = macroDefinition->parameters->head;
       while (c!=')')
       {
@@ -549,20 +550,20 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
           while (c!=')')
           {
             paramLength++;
-            c = StringBuffer_readChar(this->currentBuffer);
-            c = StringBuffer_peekChar(this->currentBuffer);
+            c = StringProcessor_readChar(this,1);
+            c = StringProcessor_readChar(this,0);
           }
           paramLength++;
-          c = StringBuffer_readChar(this->currentBuffer);
-          c = StringBuffer_peekChar(this->currentBuffer);
+          c = StringProcessor_readChar(this,1);
+          c = StringProcessor_readChar(this,0);
         }
         else
         {
           while ((c!=',') && (c!=')'))
           {
             paramLength++;
-            c = StringBuffer_readChar(this->currentBuffer);
-            c = StringBuffer_peekChar(this->currentBuffer);
+            c = StringProcessor_readChar(this,1);
+            c = StringProcessor_readChar(this,0);
           }
         }
         parameterValue = StringBuffer_readback(this->currentBuffer, paramLength);
@@ -574,11 +575,11 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
         paramLength = 0;
         if (c==',')
         {
-          c = StringBuffer_readChar(this->currentBuffer);
-          c = StringBuffer_peekChar(this->currentBuffer);
+          c = StringProcessor_readChar(this,1);
+          c = StringProcessor_readChar(this,0);
         }
       }
-      c = StringBuffer_readChar(this->currentBuffer);
+      c = StringProcessor_readChar(this,1);
     }
     if (macroExpansion!=NULL)
     {
