@@ -1643,6 +1643,17 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
                         declarator->line,
                         declarator->col);      
     }
+    else if (declarator->class == E_TYPE_DECLARATOR)
+    {
+      sprintf(cmd, "INSERT INTO Type_Declarations ( name, type, scope, fname, line, column ) "
+                        "VALUES ('%s','%s','%s','%s',%d, %d);", 
+                        name, 
+                        classText[declarator->class], 
+                        scopeText[this->scope],
+                        fName,
+                        declarator->line,
+                        declarator->col);  
+    }
   }
   SdbMgr_execute(sdbMgr, cmd);
   SdbMgr_delete(sdbMgr);
