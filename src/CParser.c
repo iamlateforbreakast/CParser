@@ -1,4 +1,11 @@
-/* CParser.c */
+/**********************************************//**
+  @file CParser.c
+  
+  @brief This file contains the implementation of the class CParser.
+  
+  The class CParser parses a directory and generates an SQLite database
+  containing information about the source code contained in this directory.
+**************************************************/
 
 #include "Common.h"
 #include "CParser.h"
@@ -8,8 +15,16 @@
 #include "SdbMgr.h"
 #include "FileMgr.h"
 #include "List.h"
+#include "Grammar.h"
 
-CParser* cparser;
+struct CParser
+{
+  StringProcessor* stringProcessor;  /**< Reference to the associated StringProcessor object */
+	Grammar* grammar;                      /**< Reference to the associated Grammar object */
+	String* initialLocation;                    /**< Reference to the intial location */
+	String* sdbName;                          /**<Reference to the database name */
+	unsigned int isDbReset; 
+};
 
 /**************************************************
 **************************************************/
@@ -19,10 +34,11 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr);
 /**************************************************
  @brief CParser_new
  
- TBD
+ This function allocate a new CParser object
+ and return a pointer to it.
  
- @param: TBD
- @return: TBD.
+ @param: none
+ @return: CParser* - Pointer to new object CParser
 **************************************************/
 PUBLIC CParser* CParser_new()
 {
@@ -40,10 +56,10 @@ PUBLIC CParser* CParser_new()
 /**************************************************
  @brief CParser_delete
  
- TBD
+ This method frees a CParser object.
  
- @param: TBD
- @return: TBD.
+ @param: CParser* - Reference to a CParser object
+ @return: none
 **************************************************/
 PUBLIC void CParser_delete(CParser* this)
 { 
@@ -77,7 +93,6 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   FileMgr_initialise(fileMgr, &stringDirName);
   this->initialLocation = FileMgr_getRootPath(fileMgr);
   FileMgr_printAllFiles(fileMgr);
-
   
   // Open DB
   this->sdbName = &sdbName;
@@ -149,7 +164,7 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
     Grammar_pushToken(this->grammar, newToken);
   }
   /* Flush EOF token and reset grammar */
-  Grammar_pushToken(this->grammar, newToken);
+  //TODO: Not needed ? Grammar_pushToken(this->grammar, newToken);
   
   Token_delete(newToken);
   StringProcessor_delete(this->stringProcessor);
