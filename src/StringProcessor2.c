@@ -1,5 +1,9 @@
-/* StringProcessor.c */
-
+/**********************************************//**
+  @file StringProcessor.c
+  
+  @brief TBD
+  @details TBD
+**************************************************/
 #include "StringProcessor.h"
 #include "FileMgr.h"
 #include "SdbMgr.h"
@@ -11,20 +15,23 @@
 
 /**************************************************
 **************************************************/
-typedef enum{
+/* typedef enum
+{
   E_INCLUDE=0,
   E_DEFINE,
   E_ENDIF,
   E_IF,
   E_ELSE
-} PreprocessorDirective;
+} PreprocessorDirective; */
 
-typedef struct{
+typedef struct
+{
   char* name;
   TokenId token;
 } Keyword;
 
-typedef struct{
+typedef struct
+{
   String* name;
   String* body;
   List* parameters;
@@ -32,7 +39,6 @@ typedef struct{
 
 /**************************************************
 **************************************************/
-//PRIVATE unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName);
 PRIVATE void StringProcessor_readDefine(StringProcessor* this);
 PRIVATE void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName);
 PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, String* fileName);
@@ -46,10 +52,12 @@ PRIVATE Token* StringProcessor_checkKeyword(StringProcessor* this, String* ident
 PRIVATE String* StringProcessor_readNumber(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_isLetter(StringProcessor* this, unsigned char c);
 PRIVATE void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content, String* bufferName);
-void StringProcessor_deleteMacroDefinition(MacroDefinition* this);
-void StringProcessor_readInclude(StringProcessor* this);
-Token* StringProcessor_checkOpKeyword(StringProcessor* this);
+PRIVATE void StringProcessor_deleteMacroDefinition(MacroDefinition* this);
+PRIVATE void StringProcessor_readInclude(StringProcessor* this);
+PRIVATE Token* StringProcessor_checkOpKeyword(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned char c);
+PRIVATE unsigned int StringProcessor_match(StringProcessor* this, String* pattern);
+PRIVATE String* StringProcessor_readIdentifier(StringProcessor* this);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -131,7 +139,7 @@ static const Keyword symbolicKeywords[] =  {{.name = "...", .token=TOK_ELLIPSIS}
  *
  * @return TBD
 **************************************************/
-StringProcessor* StringProcessor_new(String* fileContent)
+PUBLIC StringProcessor* StringProcessor_new(String* fileContent)
 {
   StringProcessor* this = NULL;
   
@@ -154,7 +162,7 @@ StringProcessor* StringProcessor_new(String* fileContent)
  @param: TBD
  @return: TBD.
 **************************************************/
-void StringProcessor_delete(StringProcessor* this)
+PUBLIC void StringProcessor_delete(StringProcessor* this)
 {
   int i=0;
   
@@ -172,7 +180,7 @@ void StringProcessor_delete(StringProcessor* this)
   Memory_free(this, sizeof(StringProcessor));
 }
 
-void StringProcessor_deleteMacroDefinition(MacroDefinition* this)
+PRIVATE void StringProcessor_deleteMacroDefinition(MacroDefinition* this)
 {
   String_delete(this->body);
   List_delete(this->parameters,(void(*)(void*))String_delete);
@@ -187,7 +195,7 @@ void StringProcessor_deleteMacroDefinition(MacroDefinition* this)
  @param: TBD
  @return: TBD.
 **************************************************/
-Token* StringProcessor_getToken(StringProcessor* this)
+PUBLIC Token* StringProcessor_getToken(StringProcessor* this)
 {
   unsigned char c = 0;
   unsigned char d = 0;
@@ -317,6 +325,7 @@ PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this, unsigned i
    {
      current_c = StringBuffer_readChar(this->currentBuffer);
    }
+   
    else
    {
      current_c = StringBuffer_peekChar(this->currentBuffer);
@@ -334,7 +343,7 @@ PRIVATE unsigned char StringProcessor_readChar(StringProcessor* this, unsigned i
  @param: TBD
  @return: TBD.
 **************************************************/
-unsigned int  StringProcessor_readDirective(StringProcessor* this)
+PRIVATE unsigned int  StringProcessor_readDirective(StringProcessor* this)
 {
   unsigned int result = 0;
   unsigned char c = 0;
@@ -385,7 +394,7 @@ unsigned int  StringProcessor_readDirective(StringProcessor* this)
  @param: TBD
  @return: TBD.
 **************************************************/
-void StringProcessor_readInclude(StringProcessor* this)
+PRIVATE void StringProcessor_readInclude(StringProcessor* this)
 {
   unsigned char c = 0;
   unsigned int length = 0;
@@ -427,10 +436,6 @@ void StringProcessor_readInclude(StringProcessor* this)
       String_delete(fileName);
     }
   }
-  
-  
-  
-
 }
 
 /**************************************************
@@ -441,7 +446,7 @@ void StringProcessor_readInclude(StringProcessor* this)
  @param: TBD
  @return: TBD.
 **************************************************/
-String* StringProcessor_readIdentifier(StringProcessor* this)
+PRIVATE String* StringProcessor_readIdentifier(StringProcessor* this)
 {
   String* result = NULL;
   unsigned int length = 1;
@@ -591,7 +596,7 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
 
 /**************************************************
 **************************************************/
-Token* StringProcessor_checkKeyword(StringProcessor* this, String* identifier)
+PRIVATE Token* StringProcessor_checkKeyword(StringProcessor* this, String* identifier)
 {
   Token* result=NULL;
   unsigned int i = 0;
@@ -613,7 +618,7 @@ Token* StringProcessor_checkKeyword(StringProcessor* this, String* identifier)
 
 /**************************************************
 **************************************************/
-Token* StringProcessor_checkOpKeyword(StringProcessor* this)
+PRIVATE Token* StringProcessor_checkOpKeyword(StringProcessor* this)
 {
   Token* result=NULL;
   unsigned int i = 0;
@@ -638,48 +643,14 @@ Token* StringProcessor_checkOpKeyword(StringProcessor* this)
 
 /**************************************************
 **************************************************/
-unsigned int StringProcessor_match(StringProcessor* this, String* pattern)
+PRIVATE unsigned int StringProcessor_match(StringProcessor* this, String* pattern)
 {  
   return (StringBuffer_match(this->currentBuffer, pattern));
 }
 
 /**************************************************
 **************************************************/
-/*unsigned int StringProcessor_readFileName(StringProcessor* this, String** includeFileName)
-{
-  unsigned int result = 0;
-  unsigned char c = 0;
-  String* fileName = NULL;
-  
-  c = StringBuffer_peekChar(this->currentBuffer);
-  
-  while (((c>='a') && (c<='z')) || ((c>='A') && (c<='Z')) ||
-         ((c>='0') && (c<='9')) || (c=='_') || (c=='.') || 
-          (c=='-') || (c=='/'))
-  {
-    result++;
-    c = StringBuffer_readChar(this->currentBuffer);
-    c = StringBuffer_peekChar(this->currentBuffer);
-  }
-  
-  fileName = StringBuffer_readback(this->currentBuffer, result);
-  String_print(fileName, "#include: ");
-  
-  *includeFileName = fileName;
-  
-  return result;
-}*/
-
-/**************************************************
-**************************************************/
-String* StringProcessor_getFileName(StringProcessor* this)
-{
-  return StringBuffer_getName(this->currentBuffer);
-}
-
-/**************************************************
-**************************************************/
-void StringProcessor_readDefine(StringProcessor* this)
+PRIVATE void StringProcessor_readDefine(StringProcessor* this)
 {
   unsigned int result = 0;
   MacroDefinition* macroDefinition = NULL;
@@ -706,7 +677,7 @@ void StringProcessor_readDefine(StringProcessor* this)
   macroDefinition->parameters = NULL;
   macroDefinition->body = NULL;
   String_print(macroDefinition->name, "#define: ");
-
+  
   if (c=='(')
   {
     c = StringProcessor_readChar(this,1);
@@ -737,7 +708,7 @@ void StringProcessor_readDefine(StringProcessor* this)
         c = StringProcessor_readChar(this,1);
   }
   
-  if (c!=10)
+  if ((c!=10) && (c!=13))
   {
         c = StringProcessor_readChar(this,0);
     while (c==32)
@@ -747,7 +718,7 @@ void StringProcessor_readDefine(StringProcessor* this)
     }
     result =0;
   
-    while (c!=10)
+    while ((c!=10) && (c!=13))
     {
       result++;
       c = StringProcessor_readChar(this,1);
@@ -769,7 +740,7 @@ void StringProcessor_readDefine(StringProcessor* this)
 
 /**************************************************
 **************************************************/
-void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName)
+PRIVATE void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileName)
 {
   String* fileContent = NULL;
   FileMgr* fileMgr = FileMgr_getFileMgr();
@@ -792,7 +763,7 @@ void StringProcessor_openNewBufferFromFile(StringProcessor* this, String* fileNa
 
 /**************************************************
 **************************************************/
-void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content, String* bufferName)
+PRIVATE void StringProcessor_openNewBufferFromString(StringProcessor* this, String* content, String* bufferName)
 { 
   if (this->nbOpenBuffers < NB_MAX_BUFFERS)
   {
@@ -858,6 +829,9 @@ PRIVATE void StringProcessor_readSingleLineComment(StringProcessor* this)
 {
   unsigned char c = 0;
   unsigned length = 2;
+  String* comment =NULL;
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+  String* sdbCmd = NULL;
   
   c = StringProcessor_readChar(this,1);
   c = StringProcessor_readChar(this,0);
@@ -868,6 +842,14 @@ PRIVATE void StringProcessor_readSingleLineComment(StringProcessor* this)
     c = StringProcessor_readChar(this,1);
     c = StringProcessor_readChar(this,0);
   }
+  
+  comment = StringBuffer_readback(this->currentBuffer, length);
+  sdbCmd = String_sprint(comment, "INSERT INTO Comments ( content ) VALUES ('%s')");
+  SdbMgr_execute(sdbMgr, sdbCmd->buffer);
+  
+  String_delete(sdbCmd);
+  String_delete(comment);
+  SdbMgr_delete(sdbMgr);
 }
 
 /**************************************************
@@ -877,6 +859,9 @@ PRIVATE void StringProcessor_readMultiLineComment(StringProcessor* this)
   unsigned char c = 0;
   unsigned length = 2;
   unsigned int isFound = 0;
+  String* comment =NULL;
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+  String* sdbCmd = NULL;
   
   c = StringProcessor_readChar(this,1);
   c = StringProcessor_readChar(this,0);
@@ -901,8 +886,14 @@ PRIVATE void StringProcessor_readMultiLineComment(StringProcessor* this)
       c = StringProcessor_readChar(this,1);
       c = StringProcessor_readChar(this,0);
     }
-   
   }
+  comment = StringBuffer_readback(this->currentBuffer, length);
+  sdbCmd = String_sprint(comment, "INSERT INTO Comments ( content ) VALUES ('%s')");
+  SdbMgr_execute(sdbMgr, sdbCmd->buffer);
+  
+  String_delete(sdbCmd);
+  String_delete(comment);
+  SdbMgr_delete(sdbMgr);
 }
 
 /**************************************************
@@ -941,9 +932,13 @@ PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned
   if (c==10)
   {
     c = StringProcessor_readChar(this,1);
-    c = StringBuffer_peekChar(this->currentBuffer);
+  }
+  else if (c==13)
+  {
+    c = StringProcessor_readChar(this,1);
+    c = StringProcessor_readChar(this,0);
     /* Check for Windows End of line */
-    if (c==13)
+    if (c==10)
     {
       c = StringProcessor_readChar(this,1);
     }
