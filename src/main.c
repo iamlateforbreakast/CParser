@@ -6,7 +6,8 @@
 int main(int argc, char** argv)
 {
   int result = 0;
-
+  CParser* cparser = NULL;
+  
   if (argc == 2)
   {
     cparser=CParser_new();
