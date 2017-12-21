@@ -49,6 +49,27 @@ void List_delete(List* this, void (*f_delete)(void*))
 
 /**************************************************
 **************************************************/
+List* List_copy(List* this)
+{
+  List* result = NULL;
+  ListNode* p = NULL;
+  
+  if (this!=NULL)
+  {
+    result = List_new();
+    p = this->head;
+    while (p!=NULL)
+    {
+      List_insert(result, p->item);
+      p = p->next;
+    }
+  }
+  
+  return result;
+}
+
+/**************************************************
+**************************************************/
 void List_insert(List* this, void* item)
 {
   ListNode* newNode = NULL;
