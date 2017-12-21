@@ -1,5 +1,9 @@
-/* Token.h */
-
+/**********************************************//**
+  @file Token.h
+  
+  @brief TBD
+  @details TBD
+**************************************************/
 #ifndef _TOKEN_H_
 #define _TOKEN_H_
 
@@ -68,6 +72,12 @@ typedef enum
   TOK_EOF
 } TokenId;
 
+/**
+  @struct Token
+  @brief TBD
+  
+  Bla bla
+*/
 typedef struct Token
 {
   TokenId id;

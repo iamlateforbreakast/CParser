@@ -1,5 +1,9 @@
-/* Token.c */
-
+/**********************************************//**
+  @file Token.c
+  
+  @brief TBD
+  @details TBD
+**************************************************/
 #include "Token.h"
 
 #include "Common.h"
