@@ -88,11 +88,14 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   String sdbName = { .buffer = "TESTDB", .length = strlen("TESTDB") };
   String filter = { .buffer = "*.c", .length = 3 };
   List* l = NULL;
+  List* filesInDir = NULL;
   
   // Initialise root location
   FileMgr_initialise(fileMgr, &stringDirName);
   this->initialLocation = FileMgr_getRootPath(fileMgr);
+  
   FileMgr_printAllFiles(fileMgr);
+  filesInDir = FileMgr_getFiles(fileMgr);
   
   // Open DB
   this->sdbName = &sdbName;
@@ -118,6 +121,7 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   }
 
   List_delete(l, (void (*)(void*))(NULL));
+  List_delete(filesInDir, (void (*)(void*))(NULL));
   SdbMgr_delete(sdbMgr);
   FileMgr_delete(fileMgr);
 }
@@ -142,7 +146,7 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
   memset(cmd, 0, 255);
   memcpy(&name[0], &fileName->buffer[0], fileName->length);
 
-  sprintf(cmd, "INSERT INTO Files ( id, name ) "
+  sprintf(cmd, "INSERT INTO Translation_Units ( id, name ) "
                "VALUES ('%d','%s');", fileId, name);
 
   fileId++;
@@ -192,6 +196,7 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Nodes;");
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Includes;");
     SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Comments;");
+    SdbMgr_execute(sdbMgr, "DROP TABLE IF EXISTS Defines;");
   }
   SdbMgr_execute(sdbMgr, "CREATE TABLE Root_Location ( "
                          "directory text NOT NULL "
@@ -249,17 +254,25 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
                          ");");
   SdbMgr_execute(sdbMgr, "CREATE TABLE Includes ("
                          "id integer PRIMARY_KEY, "
+                         "type integer,"
                          "file_id integer"
                          ");");
   SdbMgr_execute(sdbMgr, "CREATE TABLE Nodes ("
                          "id integer PRIMARY_KEY, "
                          "type_id integer,"
                          "item_id integer,"
+                         "tu_id integer,"
+                         "file_id,"
                          "next_id integer"
                          ");");
   SdbMgr_execute(sdbMgr, "CREATE TABLE Comments ("
                          "id integer PRIMARY_KEY,"
                          "type_id integer,"
                          "content text NOT NULL"
+                         ");");
+  SdbMgr_execute(sdbMgr, "CREATE TABLE Defines ("
+                         "id integer PRIMARY KEY,"
+                         "name text NOT NULL,"
+                         "body text NOT NULL"
                          ");");
 }
