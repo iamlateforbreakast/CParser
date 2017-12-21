@@ -1,5 +1,9 @@
-/* Grammar.h */
-
+/**********************************************//** 
+  @file Grammar.h
+  
+  @brief TBD
+  @details TBD
+**************************************************/
 #ifndef _GRAMMAR_H_
 #define _GRAMMAR_H_
 
