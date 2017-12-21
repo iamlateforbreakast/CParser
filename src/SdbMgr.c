@@ -1,5 +1,9 @@
-/* SdbMgr.c */
-
+/**********************************************//** 
+  @file SdbMgr.c
+  
+  @brief TBD
+  @details TBD
+**************************************************/
 #include "SdbMgr.h"
 
 #include "Common.h"
