@@ -58,6 +58,7 @@ PRIVATE Token* StringProcessor_checkOpKeyword(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned char c);
 PRIVATE unsigned int StringProcessor_match(StringProcessor* this, String* pattern);
 PRIVATE String* StringProcessor_readIdentifier(StringProcessor* this);
+PRIVATE unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName);
 /**************************************************
 **************************************************/
 static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
@@ -399,6 +400,8 @@ PRIVATE void StringProcessor_readInclude(StringProcessor* this)
   unsigned char c = 0;
   unsigned int length = 0;
   String* fileName = NULL;
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+  String* sdbCmd = NULL;
   
   c = StringProcessor_readChar(this,0);
   
@@ -433,8 +436,17 @@ PRIVATE void StringProcessor_readInclude(StringProcessor* this)
       {
         StringProcessor_openNewBufferFromFile(this, fileName);
       }
-      String_delete(fileName);
     }
+  }
+  if (fileName!=NULL)
+  {
+    StringProcessor_getFileId(this, fileName);
+    sdbCmd = String_sprint(fileName, "INSERT INTO Includes ( content ) VALUES ('%s')");
+    SdbMgr_execute(sdbMgr, sdbCmd->buffer);
+    
+    String_delete(sdbCmd);
+    SdbMgr_delete(sdbMgr);
+    String_delete(fileName);
   }
 }
 
@@ -523,7 +535,13 @@ PRIVATE String* StringProcessor_readNumber(StringProcessor* this)
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief StringProcessor_checkForMacro
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String* identifier)
 {
@@ -594,7 +612,13 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief StringProcessor_checkKeyword
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PRIVATE Token* StringProcessor_checkKeyword(StringProcessor* this, String* identifier)
 {
@@ -616,7 +640,13 @@ PRIVATE Token* StringProcessor_checkKeyword(StringProcessor* this, String* ident
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief StringProcessor_checkOpKeyword
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
 **************************************************/
 PRIVATE Token* StringProcessor_checkOpKeyword(StringProcessor* this)
 {
@@ -932,6 +962,7 @@ PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned
   if (c==10)
   {
     c = StringProcessor_readChar(this,1);
+    result = 1;
   }
   else if (c==13)
   {
@@ -944,5 +975,36 @@ PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned
     }
     result = 1;
   }
+  return result;
+}
+
+/****************************************************************************
+****************************************************************************/
+unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName)
+{
+  unsigned int result = 0;
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+  char cmd[255];
+  char name[255];
+  char **query = NULL;
+
+  memset(cmd, 0, 255);
+  memset(name, 0, 255);
+
+  memcpy(name, fileName->buffer, fileName->length);
+  sprintf(cmd,"SELECT * FROM Files WHERE name='%s';", name);
+
+  SdbMgr_execute(sdbMgr, cmd);
+
+  if (SdbMgr_getQueryCount(sdbMgr))
+  {
+    printf("Found!\n");
+    query = SdbMgr_getQueryResult(sdbMgr);
+    Memory_free(query, sizeof(query));
+    result = 1;
+  }
+
+  SdbMgr_delete(sdbMgr);
+  
   return result;
 }
