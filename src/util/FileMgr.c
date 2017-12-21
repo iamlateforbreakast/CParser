@@ -1,4 +1,6 @@
-/* FileMgr.c **************************************
+/**********************************************//**
+  @file FileMgr.c
+  @brief TBD
 **************************************************/
 
 #include "FileMgr.h"
@@ -8,7 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
-//#include <stat.H>
+//#include <stat.h>
 
 PRIVATE FileMgr* fileMgr = NULL;
 
@@ -164,6 +166,23 @@ PUBLIC String* FileMgr_searchAndLoad(FileMgr* this, String* fileName)
       pNode = pNode->next;
     }
   }
+  
+  return result;
+}
+
+/**************************************************
+ @brief FileMgr_getFiles
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD.
+**************************************************/
+PUBLIC List* FileMgr_getFiles(FileMgr* this)
+{
+  List* result = NULL;
+  
+  result = List_copy(result);
   
   return result;
 }
