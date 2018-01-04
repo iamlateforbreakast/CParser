@@ -179,7 +179,7 @@ String* String_sprint(String* this, const char* displayString)
   
   memcpy(s, this->buffer, this->length);
   snprintf(buffer, 512, displayString, s);
-  result->length = strlen(buffer);
+  result->length = strlen(buffer)+1;
   
   result->buffer = Memory_alloc(result->length);
   memcpy(result->buffer, buffer, result->length);

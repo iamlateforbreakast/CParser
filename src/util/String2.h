@@ -3,10 +3,6 @@
 #ifndef _STRING2_H_
 #define _STRING2_H_
 
-#include "Common.h"
-
-#include <string.h>
-
 typedef struct String
 {
     char* buffer;
@@ -29,4 +25,5 @@ String* String_sprint(String* this, const char* displayString);
 String* String_subString(String* this, unsigned int pos, unsigned int length);
 int String_toInt(String* this);
 String* String_searchAndReplace(String* this, String* search, String* replace);
+char* String_getTerminatedBuffer(String* this);
 #endif
