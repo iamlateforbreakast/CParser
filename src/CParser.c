@@ -80,7 +80,7 @@ PUBLIC void CParser_delete(CParser* this)
 PUBLIC void CParser_parse(CParser* this, char* dirName)
 {
   String* cFileName = NULL;
-
+  String* fileName = NULL;
   SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
   FileMgr* fileMgr = FileMgr_getFileMgr();
   String* sdbCmd = NULL;
@@ -90,27 +90,33 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   List* l = NULL;
   List* filesInDir = NULL;
   
+  
   // Initialise root location
   FileMgr_initialise(fileMgr, &stringDirName);
   this->initialLocation = FileMgr_getRootPath(fileMgr);
   
-  FileMgr_printAllFiles(fileMgr);
-  filesInDir = FileMgr_getFiles(fileMgr);
-  
-  // Open DB
+    // Open DB
   this->sdbName = &sdbName;
   SdbMgr_open(sdbMgr, this->sdbName);
   
   // Create DB tables
   CParser_createTables(this, sdbMgr);
   
-  sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory )"
-                                                "VALUES ('%s')");
+  sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory ) "
+                                                "VALUES ('%s');");
   SdbMgr_execute(sdbMgr, sdbCmd->buffer);
   
+  FileMgr_printAllFiles(fileMgr);
+  filesInDir = FileMgr_getFiles(fileMgr);
   
-  
-  String_delete(sdbCmd);
+  fileName = ((String*)List_getHead(filesInDir));
+  while (fileName!=NULL)
+  {
+    sdbCmd = String_sprint(fileName, "INSERT INTO Files (name) VALUES ('%s');");
+    SdbMgr_execute(sdbMgr, sdbCmd->buffer);
+    String_delete(sdbCmd);
+    fileName = ((String*)List_getNext(l));
+  }
   
   l = FileMgr_filterFiles(fileMgr, &filter);
   cFileName = ((String*)List_getHead(l));
