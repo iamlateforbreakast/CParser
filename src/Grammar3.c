@@ -1,5 +1,10 @@
-/* Grammar.c */
-
+/**********************************************//** 
+  @file Grammar.c
+  
+  @brief This file contains the implementation of the class Grammar.
+  
+  The class Grammar translates a token into one or several SQL statements.
+**************************************************/
 #include "Grammar.h"
 
 #include "Common.h"
@@ -11,7 +16,7 @@
 
 #define DEBUG (1)
 
-#define CONTEXT_DEPTH (5)
+#define CONTEXT_DEPTH (10)
 
 typedef enum
 {
@@ -403,6 +408,7 @@ void Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
     case 2:
       Grammar_evaluateRule(this, token, E_DECLARATOR);
       Grammar_evaluateRule(this, token, E_COMPOUND_STATEMENT);
+      this->declarator.class = E_FUNCTION_DECLARATOR;
       if (rules[E_COMPOUND_STATEMENT].isMatched)
       {
         rules[E_FUNCTION_DECLARATION].isMatched = 1;
@@ -643,11 +649,15 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
         rules[E_DIRECT_DECLARATOR].count[this->context] = 1;
         
-        if (this->context == 0)
+        /*if (this->context == 0)
         {
+          if (this->declarator.name != NULL)
+          {
+            printf("*********************** String not freed ***********************************");
+          }
           this->declarator.name = String_dup((String*)token->value);
           this->declarator.fName = token->fileName;
-        }
+        }*/
       }
       break;
     case 1:
