@@ -441,7 +441,7 @@ PRIVATE void StringProcessor_readInclude(StringProcessor* this)
   if (fileName!=NULL)
   {
     StringProcessor_getFileId(this, fileName);
-    sdbCmd = String_sprint(fileName, "INSERT INTO Includes ( content ) VALUES ('%s')");
+    sdbCmd = String_sprint(fileName, "INSERT INTO Includes ( content ) VALUES ('%s');");
     SdbMgr_execute(sdbMgr, sdbCmd->buffer);
     
     String_delete(sdbCmd);
@@ -850,6 +850,8 @@ PRIVATE unsigned int StringProcessor_evaluateCondition(StringProcessor* this)
   
   result = Map_find(this->macros, macroName, NULL);
 
+  String_delete(macroName);
+  
   return result;
 }
 
@@ -874,7 +876,7 @@ PRIVATE void StringProcessor_readSingleLineComment(StringProcessor* this)
   }
   
   comment = StringBuffer_readback(this->currentBuffer, length);
-  sdbCmd = String_sprint(comment, "INSERT INTO Comments ( content ) VALUES ('%s')");
+  sdbCmd = String_sprint(comment, "INSERT INTO Comments ( content ) VALUES ('%s');");
   SdbMgr_execute(sdbMgr, sdbCmd->buffer);
   
   String_delete(sdbCmd);
@@ -918,7 +920,7 @@ PRIVATE void StringProcessor_readMultiLineComment(StringProcessor* this)
     }
   }
   comment = StringBuffer_readback(this->currentBuffer, length);
-  sdbCmd = String_sprint(comment, "INSERT INTO Comments ( content ) VALUES ('%s')");
+  sdbCmd = String_sprint(comment, "INSERT INTO Comments ( content ) VALUES ('%s');");
   SdbMgr_execute(sdbMgr, sdbCmd->buffer);
   
   String_delete(sdbCmd);
