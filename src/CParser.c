@@ -109,13 +109,13 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   FileMgr_printAllFiles(fileMgr);
   filesInDir = FileMgr_getFiles(fileMgr);
   
-  fileName = ((String*)List_getHead(filesInDir));
+  fileName = ((FileDesc*)List_getHead(filesInDir))->name;
   while (fileName!=NULL)
   {
     sdbCmd = String_sprint(fileName, "INSERT INTO Files (name) VALUES ('%s');");
     SdbMgr_execute(sdbMgr, sdbCmd->buffer);
     String_delete(sdbCmd);
-    fileName = ((String*)List_getNext(l));
+    fileName = ((FileDesc*)List_getNext(l))->name;
   }
   
   l = FileMgr_filterFiles(fileMgr, &filter);
@@ -127,7 +127,7 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   }
 
   List_delete(l, (void (*)(void*))(NULL));
-  List_delete(filesInDir, (void (*)(void*))(NULL));
+  // List_delete(filesInDir, (void (*)(void*))(NULL));
   SdbMgr_delete(sdbMgr);
   FileMgr_delete(fileMgr);
 }
