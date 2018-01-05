@@ -13,5 +13,5 @@ PUBLIC unsigned int SdbMgr_open(SdbMgr* this, String* sdbName);
 PUBLIC unsigned int SdbMgr_execute(SdbMgr* this, const char* statement);
 PUBLIC unsigned int SdbMgr_getQueryCount(SdbMgr* this);
 PUBLIC unsigned int SdbMgr_getQueryReady(SdbMgr* this);
-PUBLIC PUBLIC char** SdbMgr_getQueryResult(SdbMgr* this);
+PUBLIC char* SdbMgr_getQueryResult(SdbMgr* this);
 #endif

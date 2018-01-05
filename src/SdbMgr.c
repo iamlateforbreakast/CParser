@@ -15,7 +15,7 @@ struct SdbMgr
   sqlite3* db;
   unsigned int isQueryReady;
   unsigned int queryCount;
-  char** queryResult;
+  char queryResult[512];
   unsigned int refCount;
 };
 
@@ -33,7 +33,7 @@ PRIVATE SdbMgr* SdbMgr_new()
     this->db = NULL;
     this->queryCount = 0;
     this->isQueryReady = 0;
-    this->queryResult = NULL;
+    memset(this->queryResult, 0, sizeof(this->queryResult));
     
     return this;
 }
@@ -49,7 +49,7 @@ PUBLIC void SdbMgr_delete(SdbMgr* this)
       this->db = NULL;
       this->isQueryReady = 0;
       this->queryCount = 0;
-      this->queryResult = NULL;
+      memset(this->queryResult, 0, sizeof(this->queryResult));
       Memory_free(this, sizeof(SdbMgr));
     }
 }
@@ -99,7 +99,7 @@ unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
 }
 #endif
 
-unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
+PUBLIC unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
 {
   int rc = 0;
   sqlite3_stmt *res = NULL;
@@ -114,8 +114,10 @@ unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
   if (step == SQLITE_ROW)
   {
     //printf("SdbMgr: Query performed\n");
-    text = sqlite3_column_text(res, 1);
-    printf("SdbMgr: %s\n", text);
+    text = sqlite3_column_text(res, 0);
+    
+    memcpy(this->queryResult, text, sizeof(text));
+    printf("SdbMgr: %s\n", this->queryResult);
     sdbMgr->queryCount = 1;
   }
   sqlite3_finalize(res);
@@ -145,13 +147,11 @@ PUBLIC unsigned int SdbMgr_getQueryReady(SdbMgr* this)
   return result;
 }
 
-PUBLIC char** SdbMgr_getQueryResult(SdbMgr* this)
+PUBLIC char* SdbMgr_getQueryResult(SdbMgr* this)
 {
-  char** result = NULL;
+  char* result = NULL;
   
   result = this->queryResult;
-  
-  this->queryResult = NULL;
   
   return result;
 }
