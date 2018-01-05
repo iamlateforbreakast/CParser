@@ -181,8 +181,20 @@ PUBLIC String* FileMgr_searchAndLoad(FileMgr* this, String* fileName)
 PUBLIC List* FileMgr_getFiles(FileMgr* this)
 {
   List* result = NULL;
+  FileDesc* fd = NULL;
   
-  result = List_copy(result);
+  if (this->files != NULL)
+  {
+    fd = (FileDesc*)List_getHead(this->files);
+    result = List_new();
+  
+    while(fd!=NULL)
+    {
+      List_insert(result, fd->fullName);
+      fd = List_getNext(this->files);
+    }
+    this->files->current = this->files->head;
+  }
   
   return result;
 }
