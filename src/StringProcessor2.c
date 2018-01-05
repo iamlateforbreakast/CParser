@@ -1002,7 +1002,7 @@ unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName)
   memset(name, 0, 255);
 
   memcpy(name, fileName->buffer, fileName->length);
-  sprintf(cmd,"SELECT * FROM Files WHERE name='%s';", name);
+  sprintf(cmd,"SELECT * FROM Files WHERE name LIKE '%%%s%%';", name);
 
   SdbMgr_execute(sdbMgr, cmd);
 
@@ -1010,7 +1010,7 @@ unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName)
   {
     printf("Found!\n");
     query = SdbMgr_getQueryResult(sdbMgr);
-    Memory_free(query, sizeof(query));
+    //Memory_free(query, sizeof(query));
     result = atoi(query);
   }
 
