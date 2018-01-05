@@ -30,7 +30,7 @@ struct CParser
 **************************************************/
 PRIVATE void CParser_processFile(CParser* this, String* fileName);
 PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr);
-
+PRIVATE unsigned int CParser_getFileId(CParser* this, String* fileName);
 /**************************************************
  @brief CParser_new
  
@@ -109,13 +109,13 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   FileMgr_printAllFiles(fileMgr);
   filesInDir = FileMgr_getFiles(fileMgr);
   
-  fileName = ((FileDesc*)List_getHead(filesInDir))->name;
+  fileName = ((String*)List_getHead(filesInDir));
   while (fileName!=NULL)
   {
     sdbCmd = String_sprint(fileName, "INSERT INTO Files (name) VALUES ('%s');");
     SdbMgr_execute(sdbMgr, sdbCmd->buffer);
     String_delete(sdbCmd);
-    fileName = ((FileDesc*)List_getNext(l))->name;
+    fileName = ((String*)List_getNext(filesInDir));
   }
   
   l = FileMgr_filterFiles(fileMgr, &filter);
@@ -127,7 +127,7 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   }
 
   List_delete(l, (void (*)(void*))(NULL));
-  // List_delete(filesInDir, (void (*)(void*))(NULL));
+  List_delete(filesInDir, (void (*)(void*))(NULL));
   SdbMgr_delete(sdbMgr);
   FileMgr_delete(fileMgr);
 }
@@ -146,16 +146,18 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
   SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
   char cmd[255];
   char name[255];
-  static unsigned int fileId = 0;
+  unsigned int fileId = 0;
+  static unsigned int id =0;
   
   memset(name, 0, 255);
   memset(cmd, 0, 255);
   memcpy(&name[0], &fileName->buffer[0], fileName->length);
 
-  sprintf(cmd, "INSERT INTO Translation_Units ( id, name ) "
-               "VALUES ('%d','%s');", fileId, name);
+  fileId = CParser_getFileId(this, fileName);
+  sprintf(cmd, "INSERT INTO Translation_Units ( id, file_id ) "
+               "VALUES ('%d','%d');", id, fileId);
 
-  fileId++;
+  id++;
   SdbMgr_execute(sdbMgr, cmd);
   SdbMgr_delete(sdbMgr);
 
@@ -281,4 +283,35 @@ PRIVATE void CParser_createTables(CParser* this, SdbMgr* sdbMgr)
                          "name text NOT NULL,"
                          "body text NOT NULL"
                          ");");
+}
+
+/****************************************************************************
+****************************************************************************/
+PRIVATE unsigned int CParser_getFileId(CParser* this, String* fileName)
+{
+  unsigned int result = 0;
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+  char cmd[255];
+  char name[255];
+  char *query = NULL;
+
+  memset(cmd, 0, 255);
+  memset(name, 0, 255);
+
+  memcpy(name, fileName->buffer, fileName->length);
+  sprintf(cmd,"SELECT id FROM Files WHERE name LIKE '%s';", name);
+
+  SdbMgr_execute(sdbMgr, cmd);
+
+  if (SdbMgr_getQueryCount(sdbMgr))
+  {
+    printf("Found!\n");
+    query = SdbMgr_getQueryResult(sdbMgr);
+    //Memory_free(query, sizeof(query));
+    result = atoi(query);
+  }
+
+  SdbMgr_delete(sdbMgr);
+  
+  return result;
 }
