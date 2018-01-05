@@ -402,7 +402,11 @@ PRIVATE void StringProcessor_readInclude(StringProcessor* this)
   String* fileName = NULL;
   SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
   String* sdbCmd = NULL;
+  static unsigned int id =0;;
+  char cmd[255];
+  unsigned int fileId = 0;
   
+  memset(cmd, 0, 255);  
   c = StringProcessor_readChar(this,0);
   
   while (c==32)
@@ -440,9 +444,13 @@ PRIVATE void StringProcessor_readInclude(StringProcessor* this)
   }
   if (fileName!=NULL)
   {
-    StringProcessor_getFileId(this, fileName);
-    sdbCmd = String_sprint(fileName, "INSERT INTO Includes ( content ) VALUES ('%s');");
-    SdbMgr_execute(sdbMgr, sdbCmd->buffer);
+    fileId = StringProcessor_getFileId(this, fileName);
+    //sdbCmd = String_sprint(fileName, "INSERT INTO Includes ( id, file_id ) VALUES ('%s');");
+      sprintf(cmd, "INSERT INTO Includes ( id, file_id ) "
+               "VALUES ('%d','%d');", id, fileId);
+    SdbMgr_execute(sdbMgr, cmd);
+    
+    id++;
     
     String_delete(sdbCmd);
     SdbMgr_delete(sdbMgr);
@@ -988,7 +996,7 @@ unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName)
   SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
   char cmd[255];
   char name[255];
-  char **query = NULL;
+  char *query = NULL;
 
   memset(cmd, 0, 255);
   memset(name, 0, 255);
@@ -1003,7 +1011,7 @@ unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName)
     printf("Found!\n");
     query = SdbMgr_getQueryResult(sdbMgr);
     Memory_free(query, sizeof(query));
-    result = 1;
+    result = atoi(query);
   }
 
   SdbMgr_delete(sdbMgr);
