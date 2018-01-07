@@ -22,4 +22,5 @@ PUBLIC void FileMgr_printAllFiles(FileMgr* this);
 PUBLIC String* FileMgr_getRootPath(FileMgr* this);
 PUBLIC List* FileMgr_filterFiles(FileMgr* this, String* filter);
 PUBLIC String* FileMgr_searchAndLoad(FileMgr* this, String* fileName);
+PUBLIC List* FileMgr_getFiles(FileMgr* this);
 #endif
