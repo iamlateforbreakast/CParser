@@ -33,10 +33,17 @@ void List_delete(List* this, void (*f_delete)(void*))
     while (p!=NULL)
     {
       this->head = p->next;
-	    if (f_delete!=NULL) 
-      {
-        (*f_delete)(p->item);
-      }
+	    //if (f_delete!=NULL) 
+      //{
+        if (((Object*)p->item)->delete!=NULL)
+        {
+          ((Object*)p->item)->delete((Object*)p->item);
+        }
+        else
+        {
+          (*f_delete)(p->item);
+        }
+      //}
       Memory_free(p, sizeof(ListNode));
       p = this->head;
     }
