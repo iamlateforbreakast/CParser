@@ -1,4 +1,7 @@
-/* String2.c */
+/**********************************************//**
+  @file String2.c
+  @brief TBD
+**************************************************/
 
 #include "Common.h"
 
@@ -15,6 +18,9 @@ String* String_new(const char* string)
     this = (String*)Memory_alloc(sizeof(String));
     this->length = strlen(string);
     this->buffer = (char*)Memory_alloc(sizeof(char)*this->length);
+    this->object.delete = &String_delete;
+    this->object.copy = NULL;
+    this->object.refCount = 1;
     memcpy(this->buffer, string, this->length);
 	  //printf("String: Allocating %s\n", this->buffer);
     return this;
@@ -27,9 +33,21 @@ void String_delete(String* this)
     //printf("Deleting %s\n", this->buffer);
     if (this!=NULL)
     {
-      Memory_free(this->buffer, this->length);
-      this->length=0;
-      Memory_free(this, sizeof(String));
+      if (this->object.refCount == 1)
+      {
+        Memory_free(this->buffer, this->length);
+        this->length=0;
+        Memory_free(this, sizeof(String));
+        this = NULL;
+      }
+      else if (this->object.refCount >1)
+      {
+        this->object.refCount--;
+      }
+      else
+      {
+        printf("Error\n");
+      }
     }
     else
     {
@@ -52,7 +70,8 @@ void String_cat(String* this, const char* str2)
 	Memory_free(this->buffer, this->length);
 	this->length = length;
 	this->buffer = catBuffer;
-	
+	this->object.delete = &String_delete;
+  this->object.copy = NULL;
 	//String_print(this, "Cat string: ");
 	//printf("String: Cat: %d\n", this->length);
 	//printf("String: Cat: %d\n", strlen(this->buffer));
@@ -82,6 +101,8 @@ String* String_append(String* this, String* str2)
   
     this->buffer = buffer;
     this->length = length;
+    this->object.delete = &String_delete;
+    this->object.copy = NULL;
     result = this;
   }
   //String_print(this,"String_append.c: Return = ");
@@ -99,6 +120,9 @@ String* String_dup(String* this)
     duplicatedString = (String*)Memory_alloc(sizeof(String));
     duplicatedString->length = this->length;
     duplicatedString->buffer = (char*)Memory_alloc(sizeof(char)*this->length);
+    duplicatedString->object.delete = &String_delete;
+    duplicatedString->object.copy = NULL;
+    duplicatedString->object.refCount = 1;
     memcpy(duplicatedString->buffer, this->buffer, this->length);
 	}
   else
@@ -181,7 +205,10 @@ String* String_sprint(String* this, const char* displayString)
   snprintf(buffer, 512, displayString, s);
   result->length = strlen(buffer)+1;
   
-  result->buffer = Memory_alloc(result->length);
+  result->buffer = (char*)Memory_alloc(result->length);
+  result->object.delete = &String_delete;
+  result->object.copy = NULL;
+  result->object.refCount = 1;
   memcpy(result->buffer, buffer, result->length);
   
   return result;
@@ -213,9 +240,12 @@ String* String_subString(String* this, unsigned int pos, unsigned int length)
 {
   String* result = NULL;
   
-  result = Memory_alloc(sizeof(String));
+  result = (String*)Memory_alloc(sizeof(String));
   result->length = length;
   result->buffer = (char*)Memory_alloc(sizeof(char)*length);
+  result->object.delete = &String_delete;
+  result->object.copy = NULL;
+  result->object.refCount = 1;
   memcpy(result->buffer, this->buffer+pos, length);
     
   return result;

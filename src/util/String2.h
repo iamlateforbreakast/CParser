@@ -1,29 +1,38 @@
-/* String.h */
+/**********************************************//**
+  @file String2.h
+  @brief TBD
+**************************************************/
 
 #ifndef _STRING2_H_
 #define _STRING2_H_
 
-typedef struct String
-{
-    char* buffer;
-    int length;
-} String;
+#include "Common.h"
 
-String* String_new(const char* string);
-String* String_newFromFile(const char* fileName);
-void String_delete(String* this);
-String* String_createFromFile(const char* fileName);
-char* String_getBuffer(String* this);
-void String_cat(String* this, const char* str2);
-int String_cmp(String* this, const char* str2);
-String* String_dup(String* this);
-int String_match(String* this, unsigned int pos,String* str2);
-String* String_append(String* this, String* str2);
-unsigned int String_filter(String* this, String* filter);
-void String_print(String* this, const char*displayString);
-String* String_sprint(String* this, const char* displayString);
-String* String_subString(String* this, unsigned int pos, unsigned int length);
-int String_toInt(String* this);
-String* String_searchAndReplace(String* this, String* search, String* replace);
-char* String_getTerminatedBuffer(String* this);
+typedef struct String String;
+
+struct String
+{
+  Object object;
+  char* buffer;
+  int length;
+};
+
+PUBLIC String* String_new(const char* string);
+PUBLIC String* String_newFromFile(const char* fileName);
+PUBLIC void String_delete(String* this);
+PUBLIC String* String_createFromFile(const char* fileName);
+PUBLIC char* String_getBuffer(String* this);
+PUBLIC void String_cat(String* this, const char* str2);
+PUBLIC int String_cmp(String* this, const char* str2);
+PUBLIC String* String_dup(String* this);
+PUBLIC int String_match(String* this, unsigned int pos,String* str2);
+PUBLIC String* String_append(String* this, String* str2);
+PUBLIC unsigned int String_filter(String* this, String* filter);
+PUBLIC void String_print(String* this, const char*displayString);
+PUBLIC String* String_sprint(String* this, const char* displayString);
+PUBLIC String* String_subString(String* this, unsigned int pos, unsigned int length);
+PUBLIC int String_toInt(String* this);
+PUBLIC String* String_searchAndReplace(String* this, String* search, String* replace);
+PUBLIC char* String_getTerminatedBuffer(String* this);
+
 #endif
