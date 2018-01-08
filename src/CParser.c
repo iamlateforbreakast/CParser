@@ -84,15 +84,15 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
   FileMgr* fileMgr = FileMgr_getFileMgr();
   String* sdbCmd = NULL;
-  String stringDirName = { .buffer = dirName, .length = strlen(dirName) };
+  String* stringDirName = NULL;
   String sdbName = { .buffer = "TESTDB", .length = strlen("TESTDB") };
   String filter = { .buffer = "*.c", .length = 3 };
   List* l = NULL;
   List* filesInDir = NULL;
   
-  
+  stringDirName = String_new(dirName);
   // Initialise root location
-  FileMgr_initialise(fileMgr, &stringDirName);
+  FileMgr_initialise(fileMgr, stringDirName);
   this->initialLocation = FileMgr_getRootPath(fileMgr);
   
     // Open DB
@@ -105,6 +105,7 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   sdbCmd = String_sprint(this->initialLocation, "INSERT INTO Root_Location ( directory ) "
                                                 "VALUES ('%s');");
   SdbMgr_execute(sdbMgr, sdbCmd->buffer);
+  String_delete(sdbCmd);
   
   FileMgr_printAllFiles(fileMgr);
   filesInDir = FileMgr_getFiles(fileMgr);
@@ -126,8 +127,9 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
     cFileName = ((String*)List_getNext(l));
   }
 
-  List_delete(l, (void (*)(void*))(NULL));
-  List_delete(filesInDir, (void (*)(void*))(NULL));
+  String_delete(stringDirName);
+  List_delete(l);
+  //List_delete(filesInDir);
   SdbMgr_delete(sdbMgr);
   FileMgr_delete(fileMgr);
 }
