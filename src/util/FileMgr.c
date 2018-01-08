@@ -27,6 +27,7 @@ struct FileMgr
 
 typedef struct FileDesc
 {
+  Object object;
   String* name;
   String* fullName;
   // struct stat stat;
@@ -41,6 +42,7 @@ PRIVATE void FileMgr_mergePath(FileMgr* this, String* path1, String* path2);
 PRIVATE void FileMgr_changeDirectory(FileMgr* this, String* newDir);
 PRIVATE String* FileMgr_getCurrentDir(FileMgr* this);
 PRIVATE unsigned int FileMgr_matchWildcard(FileMgr* this, String* fileName, String* filter);
+PRIVATE void FileMgr_deleteFileDescription(FileDesc* this);
 /**************************************************
  @brief FileMgr_new
  
@@ -59,7 +61,7 @@ PUBLIC FileMgr* FileMgr_new()
     this->activePath = NULL;
     this->activeDir = NULL;
     this->rootPath = NULL;
-    this->refCount = 0;
+    this->refCount = 1;
     
     return this;
 }
@@ -75,31 +77,29 @@ PUBLIC void FileMgr_delete(FileMgr* this)
   if (this->refCount==0)
   {
     // Only destroy the file list if not null
-    if (this->files!=NULL)
-    {
-      pNode = this->files->head;
-      while (pNode!=NULL)
-      {
-        this->files->head = pNode->next;
-        String_delete(((FileDesc*)pNode->item)->name);
-        String_delete(((FileDesc*)pNode->item)->fullName);
-        Memory_free(pNode->item, sizeof(FileDesc));
-        Memory_free(pNode, sizeof(ListNode));
-        pNode = this->files->head;
-      }
-    }
+    List_delete(this->files);
+    
     if (this->activeDir!=NULL)
     {
       closedir(this->activeDir);
     }
-    Memory_free(this->files, sizeof(List));
-    this->files = NULL;
+
     //String_delete(this->activePath);
     String_delete(this->rootPath);
     Memory_free(this, sizeof(FileMgr));
     this = NULL;
   }
 
+}
+
+/**************************************************
+**************************************************/
+PRIVATE void FileMgr_deleteFileDescription(FileDesc* this)
+{
+  String_delete(this->name);
+  String_delete(this->fullName);
+  Memory_free(this,sizeof(FileDesc*));
+  this = NULL;
 }
 
 /**************************************************
@@ -118,6 +118,9 @@ PUBLIC String* FileMgr_load(FileMgr* this, String* fileName)
 
   // find filename in list of files
   fileContent = (String*)Memory_alloc(sizeof(String));
+  fileContent->object.delete = &String_delete;
+  fileContent->object.copy = NULL;
+  fileContent->object.refCount = 1;
   memcpy(buffer, fileName->buffer, fileName->length);
   
   FILE* f=fopen(buffer,"rb");
@@ -191,6 +194,7 @@ PUBLIC List* FileMgr_getFiles(FileMgr* this)
     while(fd!=NULL)
     {
       List_insert(result, fd->fullName);
+      //fd->fullName->object.refCount++;
       fd = List_getNext(this->files);
     }
     this->files->current = this->files->head;
@@ -258,9 +262,10 @@ PUBLIC FileMgr* FileMgr_getFileMgr()
   {
     fileMgr = FileMgr_new();
   }
-
-  fileMgr->refCount++;
-  
+  else
+  {
+    fileMgr->refCount++;
+  }
   return fileMgr;
 }
 
@@ -390,7 +395,7 @@ PRIVATE List* FileMgr_listAllFiles(FileMgr* this)
     pNode = pNode->next;
   }
 
-  List_delete(allDirInDir, (void (*)(void *))&String_delete);
+  List_delete(allDirInDir);
   
   closedir(this->activeDir);
   this->activeDir = NULL;
@@ -453,6 +458,9 @@ PRIVATE List* FileMgr_listFilesInDir(FileMgr* this)
       fileDesc = Memory_alloc(sizeof(FileDesc));
       fileDesc->name = String_new(dir->d_name);
       fileDesc->fullName = String_dup(this->activePath);
+      fileDesc->object.delete = &FileMgr_deleteFileDescription;
+      fileDesc->object.copy = NULL;
+      fileDesc->object.refCount = 1;
       FileMgr_mergePath(this, fileDesc->fullName, fileDesc->name);
       List_insert(result, (void*)fileDesc);
     } 
