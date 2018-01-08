@@ -216,6 +216,7 @@ PUBLIC List* FileMgr_filterFiles(FileMgr* this, String* filter)
   List* result = NULL;
   //ListNode* pNode = NULL;
   FileDesc* fd = NULL;
+  String* filteredFileName = NULL;
   
   if (this->files != NULL)
   {
@@ -226,7 +227,8 @@ PUBLIC List* FileMgr_filterFiles(FileMgr* this, String* filter)
     {
       if (FileMgr_matchWildcard(this, fd->name, filter))
       {
-        List_insert(result, fd->fullName);
+        filteredFileName = String_dup(fd->fullName);
+        List_insert(result, filteredFileName);
       }
       fd = List_getNext(this->files);
     }
