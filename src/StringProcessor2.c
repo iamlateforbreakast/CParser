@@ -32,6 +32,7 @@ typedef struct
 
 typedef struct
 {
+  Object object;
   String* name;
   String* body;
   List* parameters;
@@ -176,7 +177,7 @@ PUBLIC void StringProcessor_delete(StringProcessor* this)
   
   this->currentBuffer = NULL;
   
-  Map_delete(this->macros, (void(*)(void*))&StringProcessor_deleteMacroDefinition);
+  Map_delete(this->macros);
   //close all H files f.close
   Memory_free(this, sizeof(StringProcessor));
 }
@@ -184,7 +185,7 @@ PUBLIC void StringProcessor_delete(StringProcessor* this)
 PRIVATE void StringProcessor_deleteMacroDefinition(MacroDefinition* this)
 {
   String_delete(this->body);
-  List_delete(this->parameters,(void(*)(void*))String_delete);
+  List_delete(this->parameters);
   Memory_free(this, sizeof(MacroDefinition));
 }
 
@@ -400,7 +401,7 @@ PRIVATE void StringProcessor_readInclude(StringProcessor* this)
   unsigned char c = 0;
   unsigned int length = 0;
   String* fileName = NULL;
-  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+
   String* sdbCmd = NULL;
   static unsigned int id =0;;
   char cmd[255];
@@ -434,6 +435,9 @@ PRIVATE void StringProcessor_readInclude(StringProcessor* this)
     if ((c=='"') || (c=='>'))
     {
       c = StringProcessor_readChar(this,1);
+      if (c=='"')
+      {
+      }
       c = StringProcessor_readChar(this,0);
       
       if (!StringProcessor_isIncFileIgnored(this, fileName))
@@ -441,20 +445,6 @@ PRIVATE void StringProcessor_readInclude(StringProcessor* this)
         StringProcessor_openNewBufferFromFile(this, fileName);
       }
     }
-  }
-  if (fileName!=NULL)
-  {
-    fileId = StringProcessor_getFileId(this, fileName);
-    //sdbCmd = String_sprint(fileName, "INSERT INTO Includes ( id, file_id ) VALUES ('%s');");
-      sprintf(cmd, "INSERT INTO Includes ( id, file_id ) "
-               "VALUES ('%d','%d');", id, fileId);
-    SdbMgr_execute(sdbMgr, cmd);
-    
-    id++;
-    
-    String_delete(sdbCmd);
-    SdbMgr_delete(sdbMgr);
-    String_delete(fileName);
   }
 }
 
@@ -714,6 +704,9 @@ PRIVATE void StringProcessor_readDefine(StringProcessor* this)
   macroDefinition->name = StringBuffer_readback(this->currentBuffer, result);
   macroDefinition->parameters = NULL;
   macroDefinition->body = NULL;
+  macroDefinition->object.delete = &StringProcessor_deleteMacroDefinition;
+  macroDefinition->object.copy = NULL;
+  macroDefinition->object.refCount = 1;
   String_print(macroDefinition->name, "#define: ");
   
   if (c=='(')
@@ -782,13 +775,26 @@ PRIVATE void StringProcessor_openNewBufferFromFile(StringProcessor* this, String
 {
   String* fileContent = NULL;
   FileMgr* fileMgr = FileMgr_getFileMgr();
+  SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
+  unsigned int fileId = 0;
+  static unsigned int id=0;
+  char cmd[512];
   
+  memset(cmd,0,512);
   fileContent = FileMgr_searchAndLoad(fileMgr, fileName);
   if (fileContent!=NULL)
   {
     StringProcessor_openNewBufferFromString(this, fileContent, fileName);
     String_print(fileName, "Processing file ");
     printf("-----------------------------------------------\n");
+   
+    fileId = StringProcessor_getFileId(this, fileName);
+    sprintf(cmd, "INSERT INTO Includes ( id, file_id ) "
+               "VALUES ('%d','%d');", id, fileId);
+    SdbMgr_execute(sdbMgr, cmd);
+    
+    id++;
+   
   }
   else
   {
@@ -797,6 +803,7 @@ PRIVATE void StringProcessor_openNewBufferFromFile(StringProcessor* this, String
   }      
   
   FileMgr_delete(fileMgr);
+  SdbMgr_delete(sdbMgr);
 }
 
 /**************************************************
