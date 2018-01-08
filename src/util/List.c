@@ -2,6 +2,7 @@
 
 #include "List.h"
 
+#include "Object.h"
 #include "Common.h"
 
 
@@ -22,7 +23,7 @@ List* List_new()
 
 /**************************************************
 **************************************************/
-void List_delete(List* this, void (*f_delete)(void*))
+void List_delete(List* this)
 {
   ListNode* p = NULL;
   
@@ -33,17 +34,11 @@ void List_delete(List* this, void (*f_delete)(void*))
     while (p!=NULL)
     {
       this->head = p->next;
-	    //if (f_delete!=NULL) 
-      //{
-        if (((Object*)p->item)->delete!=NULL)
-        {
-          ((Object*)p->item)->delete((Object*)p->item);
-        }
-        else
-        {
-          (*f_delete)(p->item);
-        }
-      //}
+      
+      if (((Object*)p->item)->delete!=NULL)
+      {
+        ((Object*)p->item)->delete(p->item);
+      }
       Memory_free(p, sizeof(ListNode));
       p = this->head;
     }
