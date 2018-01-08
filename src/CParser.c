@@ -9,7 +9,6 @@
 
 #include "Common.h"
 #include "CParser.h"
-#include "FileList.h"
 #include "StringProcessor.h"
 #include "Token.h"
 #include "SdbMgr.h"
@@ -71,9 +70,9 @@ PUBLIC void CParser_delete(CParser* this)
 
 /**************************************************
  @brief CParser_parse
- 
+
  TBD
- 
+
  @param: TBD
  @return: TBD.
 **************************************************/
@@ -98,7 +97,7 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
     // Open DB
   this->sdbName = &sdbName;
   SdbMgr_open(sdbMgr, this->sdbName);
-  
+
   // Create DB tables
   CParser_createTables(this, sdbMgr);
   
@@ -122,23 +121,23 @@ PUBLIC void CParser_parse(CParser* this, char* dirName)
   l = FileMgr_filterFiles(fileMgr, &filter);
   cFileName = ((String*)List_getHead(l));
   while (cFileName!=NULL)
-  {
+  {    
     CParser_processFile(this, cFileName);
     cFileName = ((String*)List_getNext(l));
   }
 
   String_delete(stringDirName);
   List_delete(l);
-  //List_delete(filesInDir);
+  List_delete(filesInDir);
   SdbMgr_delete(sdbMgr);
   FileMgr_delete(fileMgr);
 }
 
 /**************************************************
  @brief CParser_processFile
- 
+
  TBD
- 
+
  @param: TBD
  @return: TBD.
 **************************************************/
@@ -169,7 +168,7 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
   newToken = StringProcessor_getToken(this->stringProcessor);
   //printf("Token Id: %d\n", newToken->id);
   Grammar_pushToken(this->grammar, newToken);
-    
+
   while (newToken->id!=TOK_EOF)
   {
     Token_delete(newToken);
@@ -186,9 +185,9 @@ PRIVATE void CParser_processFile(CParser* this, String* fileName)
 
 /**************************************************
  @brief CParser_createTables
- 
+
  TBD
- 
+
  @param: TBD
  @return: TBD.
 **************************************************/
