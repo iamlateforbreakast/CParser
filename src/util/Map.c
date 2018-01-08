@@ -15,7 +15,7 @@ Map* Map_new()
   return this;
 }
 
-void Map_delete(Map* this, void (*f_delete)(void*))
+void Map_delete(Map* this)
 {
   unsigned int i = 0;
   for (i=0; i<HTABLE_SIZE; i++)
@@ -23,7 +23,11 @@ void Map_delete(Map* this, void (*f_delete)(void*))
     if (this->htable[i].s!=NULL)
     {
       String_delete(this->htable[i].s);
-      (*f_delete)(this->htable[i].p);
+      if (((Object*)this->htable[i].p)->delete!=NULL)
+      {
+        ((Object*)this->htable[i].p)->delete((Object*)this->htable[i].p);
+      }
+      //(*f_delete)(this->htable[i].p);
     }
   }
   Memory_free(this, sizeof(Map));
