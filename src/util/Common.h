@@ -6,12 +6,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define PRIVATE static
+#define PUBLIC
+
+#include "Object.h"
 #include "String2.h"
 #include "Memory.h"
 #include "Debug.h"
-
-#define PRIVATE static
-#define PUBLIC
 
 #define TRACE(x) do { if (DEBUG) dbg_printf x; } while (0)
 
