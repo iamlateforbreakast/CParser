@@ -6,6 +6,7 @@
 #include "FileMgr.h"
 
 #include "Common.h"
+#include "Object.h"
 #include "List.h"
 #include <unistd.h>
 #include <string.h>
@@ -194,7 +195,7 @@ PUBLIC List* FileMgr_getFiles(FileMgr* this)
     while(fd!=NULL)
     {
       List_insert(result, fd->fullName);
-      //fd->fullName->object.refCount++;
+      fd->fullName->object.refCount++;
       fd = List_getNext(this->files);
     }
     this->files->current = this->files->head;
