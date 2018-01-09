@@ -9,7 +9,13 @@
 
 #include <string.h>
 
-/**************************************************
+/**********************************************//**
+ @brief String_new
+ 
+ This function allocate a String object.
+ 
+ @param: none
+ @return: const char* 
 **************************************************/
 String* String_new(const char* string)
 {
@@ -26,7 +32,13 @@ String* String_new(const char* string)
     return this;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_delete
+ 
+ This function de-allocate a String object.
+ 
+ @param: String* - String to de-allocate
+ @return: none 
 **************************************************/
 void String_delete(String* this)
 {
@@ -56,7 +68,13 @@ void String_delete(String* this)
     this = NULL;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_cat
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
 void String_cat(String* this, const char* str2)
 {
@@ -78,7 +96,13 @@ void String_cat(String* this, const char* str2)
   //ssprintf("String: Cat: %d\n", strlen(str2));
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_append
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
 String* String_append(String* this, String* str2)
 {
@@ -88,7 +112,8 @@ String* String_append(String* this, String* str2)
   
   if (this==NULL)
   {
-    result = String_dup(str2);
+    this = String_dup(str2);
+    result = this;
   }
   else
   {
@@ -109,7 +134,13 @@ String* String_append(String* this, String* str2)
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_dup
+ 
+ This function creates a copy of a given String object.
+ 
+ @param: String* - Reference to a String object.
+ @return: String* - Reference to the created String object.
 **************************************************/
 String* String_dup(String* this)
 {
@@ -133,7 +164,14 @@ String* String_dup(String* this)
 	return duplicatedString;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_cmp
+ 
+ This function compares a String object to a constant string.
+ 
+ @param: String* - String object to compare.
+ @param: const char* - Const string to compare to.
+ @return: int - 0 no match, 1 match
 **************************************************/
 int String_cmp(String* this, const char* str2)
 {
@@ -146,7 +184,13 @@ int String_cmp(String* this, const char* str2)
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_match
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
 int String_match(String* this, unsigned int pos,String* str2)
 {
@@ -159,14 +203,26 @@ int String_match(String* this, unsigned int pos,String* str2)
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_getBuffer
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
-char* String_getBuffer(String* this)
-{
-    return this->buffer;
-}
+//char* String_getBuffer(String* this)
+//{
+//    return this->buffer;
+//}
 
-/**************************************************
+/**********************************************//**
+ @brief String_print
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
 void String_print(String* this, const char*displayString)
 {
@@ -191,7 +247,13 @@ void String_print(String* this, const char*displayString)
   }
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_sprint
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
 String* String_sprint(String* this, const char* displayString)
 {
@@ -214,7 +276,13 @@ String* String_sprint(String* this, const char* displayString)
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_filter
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
 unsigned int String_filter(String* this, String* filter)
 {
@@ -234,7 +302,13 @@ unsigned int String_filter(String* this, String* filter)
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_subString
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
 String* String_subString(String* this, unsigned int pos, unsigned int length)
 {
@@ -251,7 +325,13 @@ String* String_subString(String* this, unsigned int pos, unsigned int length)
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_toInt
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
 int String_toInt(String* this)
 {
@@ -264,7 +344,13 @@ int String_toInt(String* this)
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief String_searchAndReplace
+ 
+ TBD
+ 
+ @param: TBD
+ @return: TBD
 **************************************************/
 String* String_searchAndReplace(String* this, String* search, String* replace)
 {
