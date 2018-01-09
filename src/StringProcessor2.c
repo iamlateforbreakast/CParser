@@ -549,6 +549,7 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
   unsigned char c = 0;
   MacroDefinition* macroDefinition = NULL;
   String* macroExpansion = NULL;
+  String* expandedMacro = NULL;
   ListNode* p = NULL;
   
   // if identifier is a defined macro
@@ -589,8 +590,8 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
         }
         parameterValue = StringBuffer_readback(this->currentBuffer, paramLength);
         String_print(parameterValue, "MacroExpansion: parameter ");
-        macroExpansion = String_searchAndReplace(macroExpansion, (String*)p->item, parameterValue);
-        String_print(macroExpansion, "MacroExpansion: Result ");
+        expandedMacro = String_searchAndReplace(macroExpansion, (String*)p->item, parameterValue);
+        String_print(expandedMacro, "MacroExpansion: Result ");
         String_delete(parameterValue);
         p = p->next;
         paramLength = 0;
@@ -602,10 +603,11 @@ PRIVATE unsigned int StringProcessor_checkForMacro(StringProcessor* this, String
       }
       c = StringProcessor_readChar(this,1);
     }
-    if (macroExpansion!=NULL)
+    if (expandedMacro!=NULL)
     {
-      StringProcessor_openNewBufferFromString(this, macroExpansion, this->currentBuffer->name);
+      StringProcessor_openNewBufferFromString(this, expandedMacro, this->currentBuffer->name);
     }
+    String_delete(macroExpansion);
   }
   return result;
 }
