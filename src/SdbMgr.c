@@ -104,6 +104,7 @@ PUBLIC unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
   int rc = 0;
   sqlite3_stmt *res = NULL;
   const unsigned char *text = NULL;
+  const unsigned char *text1 = NULL;
   int step = 0;
   
   printf("SdbMgr: %s\n", statement);
@@ -115,8 +116,15 @@ PUBLIC unsigned int SdbMgr_execute(SdbMgr* this, const char* statement)
   {
     //printf("SdbMgr: Query performed\n");
     text = sqlite3_column_text(res, 0);
-    
-    memcpy(this->queryResult, text, sizeof(text));
+    text1 = sqlite3_column_text(res, 1);
+    if (text)
+    {
+      memcpy(this->queryResult, text, strlen(text));
+    }
+    else
+    {
+      memcpy(this->queryResult, text1, strlen(text1));
+    }
     printf("SdbMgr: %s\n", this->queryResult);
     sdbMgr->queryCount = 1;
   }
