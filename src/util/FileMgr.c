@@ -99,7 +99,7 @@ PRIVATE void FileMgr_deleteFileDescription(FileDesc* this)
 {
   String_delete(this->name);
   String_delete(this->fullName);
-  Memory_free(this,sizeof(FileDesc*));
+  Memory_free(this,sizeof(FileDesc));
   this = NULL;
 }
 
