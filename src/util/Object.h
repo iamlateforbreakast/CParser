@@ -17,6 +17,6 @@ struct Object
 PUBLIC Object* Object_new();
 PUBLIC void Object_delete(Object* this);
 PUBLIC Object* Object_getRef(Object* this);
-PUBLIC void Object_initialise(Object* this, void (*f_delete)(Object*)), void (*f_copy)(Object*));
+PUBLIC void Object_initialise(Object* this, void (*f_delete)(Object*), void (*f_copy)(Object*));
 
 #endif
