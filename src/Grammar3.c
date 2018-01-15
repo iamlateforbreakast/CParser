@@ -75,6 +75,7 @@ typedef enum
 typedef enum{
   E_UNKNOWN_DECLARATOR = 0,
   E_FUNCTION_DECLARATOR,
+  E_PROTOTYPE_DECLARATOR,
   E_VARIABLE_DECLARATOR,
   E_TYPE_DECLARATOR
 } DeclaratorClass;
@@ -245,7 +246,7 @@ Grammar* Grammar_new()
   this->isInStructDefinition = 0;
   this->context = 0;
   
-  memset(this->entryRule, 0, CONTEXT_DEPTH);
+  Memory_set(this->entryRule, 0, CONTEXT_DEPTH);
   this->entryRule[0] = E_EXTERNAL_DECLARATION;
   
   return this;
@@ -276,7 +277,7 @@ void Grammar_reset(Grammar* this)
     rules[i].isMatched = 0;
     rules[i].isEvaluated = 0;
     if (rules[i].count[0]!=0) TRACE(("-- Set count to zero: %s\n", rules[i].description));
-        memset(rules[i].count, 0, sizeof(rules[i].count));
+        Memory_set(rules[i].count, 0, sizeof(rules[i].count));
   }
   this->declarator.name = NULL;
   this->declarator.class = E_UNKNOWN_DECLARATOR;
@@ -298,7 +299,7 @@ void Grammar_resetContext(Grammar* this)
     rules[i].isMatched = 0;
     rules[i].isEvaluated = 0;
     if (rules[i].count[this->context]!=0) TRACE(("-- Set count to zero: %s\n", rules[i].description));
-    memset(rules[i].count, 0, sizeof(rules[i].count));
+    Memory_set(rules[i].count, 0, sizeof(rules[i].count));
   }
   // this->declarator.name = NULL;
   // this->declarator.class = E_UNKNOWN_DECLARATOR;
@@ -408,7 +409,7 @@ void Grammar_matchFunctionDeclaration(Grammar* this, Token* token)
     case 2:
       Grammar_evaluateRule(this, token, E_DECLARATOR);
       Grammar_evaluateRule(this, token, E_COMPOUND_STATEMENT);
-      this->declarator.class = E_FUNCTION_DECLARATOR;
+      //this->declarator.class = E_FUNCTION_DECLARATOR;
       if (rules[E_COMPOUND_STATEMENT].isMatched)
       {
         rules[E_FUNCTION_DECLARATION].isMatched = 1;
@@ -468,7 +469,7 @@ void Grammar_matchDeclaration(Grammar* this, Token* token)
         rules[E_DECLARATION].count[this->context] = 0;
         if (this->declarator.class==0)
         {
-          this->declarator.class = E_VARIABLE_DECLARATOR;
+          //this->declarator.class = E_VARIABLE_DECLARATOR;
         }
       }
       break;
@@ -649,21 +650,22 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
         rules[E_DIRECT_DECLARATOR].count[this->context] = 1;
         
-        /*if (this->context == 0)
+        if (this->context == 0)
         {
-          if (this->declarator.name != NULL)
+          if (this->declarator.class != E_TYPE_DECLARATOR)
           {
-            printf("*********************** String not freed ***********************************");
+            this->declarator.class = E_VARIABLE_DECLARATOR;
           }
           this->declarator.name = String_dup((String*)token->value);
           this->declarator.fName = token->fileName;
-        }*/
+        }
       }
       break;
     case 1:
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
       {
         rules[E_DIRECT_DECLARATOR].count[this->context] = 2;
+        this->declarator.class = E_PROTOTYPE_DECLARATOR;
       }
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '['))
       {
@@ -718,7 +720,7 @@ void Grammar_matchStorageClass(Grammar* this, Token* token)
   }
   else if (token->id == TOK_TYPEDEF)
   {
-    rules[E_STORAGE_CLASS].isMatched = 1;
+    // rules[E_STORAGE_CLASS].isMatched = 1;Y
     this->declarator.class = E_TYPE_DECLARATOR;
   }
 }
@@ -1582,6 +1584,10 @@ void Grammar_printDeclarator(Grammar* this)
       }
       String_delete(this->declarator.name);
       break;
+    case E_PROTOTYPE_DECLARATOR:
+      String_print(this->declarator.name,"Prototype function found: ");
+      String_delete(this->declarator.name);
+      break;
     case E_UNKNOWN_DECLARATOR:
       String_print(this->declarator.name,"Unkown declaration found: ");
       String_delete(this->declarator.name);
@@ -1614,7 +1620,7 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
   char cmd[255];
   char name[255];
   char fName[255];
-  char *classText[] = {"Unknown","Function","Variable","Type"};
+  char *classText[] = {"Unknown","Function","Proto","Variable","Type"};
   char *scopeText[] = {"Unknown","Local","Global"};
 
   memset(name, 0, 255);
@@ -1656,13 +1662,10 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
     else if (declarator->class == E_TYPE_DECLARATOR)
     {
       sprintf(cmd, "INSERT INTO Type_Declarations ( name, type, scope, fname, line, column ) "
-                        "VALUES ('%s','%s','%s','%s',%d, %d);", 
-                        name, 
-                        classText[declarator->class], 
-                        scopeText[this->scope],
-                        fName,
-                        declarator->line,
-                        declarator->col);  
+                        "VALUES ('%s','Test2','Test3','Test4',%d,%d);",
+                        name,
+                        1,2);
+
     }
   }
   SdbMgr_execute(sdbMgr, cmd);
@@ -1691,7 +1694,7 @@ unsigned int Grammar_isTypeDefined(Grammar* this, String* typeName)
   {
     printf("Found!\n");
     query = SdbMgr_getQueryResult(sdbMgr);
-    Memory_free(query, sizeof(query));
+    //Memory_free(query, sizeof(query));
     result = 1;
   }
 
