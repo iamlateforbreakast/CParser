@@ -596,6 +596,7 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
       Grammar_evaluateRule(this, token, E_POINTER);
       if (rules[E_POINTER].isMatched)
       {
+        rules[E_DECLARATOR].count[this->context] = 1;
       }
       else
       {
@@ -612,6 +613,8 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
       if (rules[E_DIRECT_DECLARATOR].isMatched)
       {
         rules[E_DECLARATOR].isMatched = 1;
+        Grammar_restoreContext(this, E_EXTERNAL_DECLARATION);
+        Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
       }
       break;
   }
@@ -650,22 +653,30 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
         rules[E_DIRECT_DECLARATOR].count[this->context] = 1;
         
-        if (this->context == 0)
+        if (this->declarator.class == E_TYPE_DECLARATOR)
         {
-          if (this->declarator.class != E_TYPE_DECLARATOR)
-          {
-            this->declarator.class = E_VARIABLE_DECLARATOR;
-          }
           this->declarator.name = String_dup((String*)token->value);
           this->declarator.fName = token->fileName;
         }
+        else if (this->context == 0)
+        {
+          this->declarator.class = E_VARIABLE_DECLARATOR;
+          this->declarator.name = String_dup((String*)token->value);
+          this->declarator.fName = token->fileName;
+        }
+      }
+      else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
+      {
+        printf("ooooooooooooooooooooo POinter to function defintion\n");
+        rules[E_DIRECT_DECLARATOR].count[this->context] = 4;
+        Grammar_saveContext(this, E_DECLARATOR);
       }
       break;
     case 1:
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
       {
         rules[E_DIRECT_DECLARATOR].count[this->context] = 2;
-        this->declarator.class = E_PROTOTYPE_DECLARATOR;
+        if (this->declarator.class!=E_TYPE_DECLARATOR) this->declarator.class = E_PROTOTYPE_DECLARATOR;
       }
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '['))
       {
@@ -695,6 +706,14 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       {
         Grammar_saveContext(this, E_CONSTANT_EXPRESSION);
         rules[E_CONSTANT_EXPRESSION].count[this->context] = 0;
+      }
+      break;
+    case 4:
+      printf("oooooooooo Found the ptr function declarator\n");
+      if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ')'))
+      {
+        rules[E_DIRECT_DECLARATOR].isMatched = 1;
+        rules[E_DIRECT_DECLARATOR].count[this->context] = 1;
       }
       break;
   }
@@ -1680,7 +1699,7 @@ unsigned int Grammar_isTypeDefined(Grammar* this, String* typeName)
   SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
   char cmd[255];
   char name[255];
-  char **query = NULL;
+  char *query = NULL;
 
   memset(cmd, 0, 255);
   memset(name, 0, 255);
