@@ -435,16 +435,17 @@ PRIVATE void StringProcessor_readInclude(StringProcessor* this)
     if ((c=='"') || (c=='>'))
     {
       c = StringProcessor_readChar(this,1);
-      if (c=='"')
-      {
-      }
-      c = StringProcessor_readChar(this,0);
+      //c = StringProcessor_readChar(this,0);
       
       if (!StringProcessor_isIncFileIgnored(this, fileName))
       {
         StringProcessor_openNewBufferFromFile(this, fileName);
       }
+      else
+      {
+      }
     }
+    String_delete(fileName);
   }
 }
 
