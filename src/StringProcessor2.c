@@ -38,6 +38,14 @@ typedef struct
   List* parameters;
 } MacroDefinition;
 
+typedef void (*InsertFunction)(StringProcessor* this);
+
+typedef struct
+{
+  String name;
+  InsertFunction insertSymbols;
+} IgnoredIncludeFile;
+
 /**************************************************
 **************************************************/
 PRIVATE void StringProcessor_readDefine(StringProcessor* this);
@@ -60,14 +68,16 @@ PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned
 PRIVATE unsigned int StringProcessor_match(StringProcessor* this, String* pattern);
 PRIVATE String* StringProcessor_readIdentifier(StringProcessor* this);
 PRIVATE unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName);
+PRIVATE void StringProcessor_insertStdio(StringProcessor* this);
 /**************************************************
 **************************************************/
-static const String incFilesToIgnore[] = { { .buffer="stdio.h", .length=7 },
-                                           { .buffer="string.h", .length=8 },
-                                           { .buffer="stdlib.h", .length=8 },
-                                           { .buffer="errno.h", .length=7 },
-                                           { .buffer="unistd.h", .length=8 } ,
-                                           { .buffer="dirent.h", .length=8 }};
+static const IgnoredIncludeFile incFilesToIgnore[] = { 
+                                           {{ .buffer="stdio.h", .length=7 }, &StringProcessor_insertStdio },
+                                           {{ .buffer="string.h", .length=8 }, NULL },
+                                           {{ .buffer="stdlib.h", .length=8 }, NULL},
+                                           {{ .buffer="errno.h", .length=7 }, NULL},
+                                           {{ .buffer="unistd.h", .length=8 }, NULL},
+                                           {{ .buffer="dirent.h", .length=8 }, NULL}};
 
 static const String includeToken = { .buffer="#include", .length=8 };
 static const String defineToken = { .buffer="#define", .length=7 };
@@ -833,9 +843,14 @@ PRIVATE unsigned int StringProcessor_isIncFileIgnored(StringProcessor* this, Str
   unsigned int isFound = 0;
   unsigned int i = 0;
   
-  for (i=0; (i<sizeof(incFilesToIgnore)/sizeof(String) && (!isFound)); i++)
+  for (i=0; (i<sizeof(incFilesToIgnore)/sizeof(IgnoredIncludeFile) && (!isFound)); i++)
   {
-    if (String_match(fileName, 0, (String*)&(incFilesToIgnore[i]))) isFound = 1;
+    if (String_match(fileName, 0, (String*)&(incFilesToIgnore[i].name)))
+    {
+      isFound = 1;
+      if (incFilesToIgnore[i].insertSymbols!=NULL)
+      (*incFilesToIgnore[i].insertSymbols)(this);
+    }
   }
   return isFound;
 }
@@ -1000,7 +1015,7 @@ PRIVATE unsigned int StringProcessor_isEndOfLine(StringProcessor* this, unsigned
 
 /****************************************************************************
 ****************************************************************************/
-unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName)
+PRIVATE unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName)
 {
   unsigned int result = 0;
   SdbMgr* sdbMgr = SdbMgr_getSdbMgr();
@@ -1027,4 +1042,31 @@ unsigned int StringProcessor_getFileId(StringProcessor* this, String* fileName)
   SdbMgr_delete(sdbMgr);
   
   return result;
+}
+
+/****************************************************************************
+****************************************************************************/
+PRIVATE void StringProcessor_insertStdio(StringProcessor* this)
+{
+  MacroDefinition* macroDefinition = NULL;
+  
+  macroDefinition = Memory_alloc(sizeof(MacroDefinition));
+  macroDefinition->name = String_new("NULL");
+  macroDefinition->parameters = NULL;
+  macroDefinition->body = NULL;
+  macroDefinition->object.delete = &StringProcessor_deleteMacroDefinition;
+  macroDefinition->object.copy = NULL;
+  macroDefinition->object.refCount = 1;
+  String_print(macroDefinition->name, "#define: ");
+  macroDefinition->body = String_new("0");
+  String_print(macroDefinition->body, "#define: ");
+
+  if (!Map_insert(this->macros, macroDefinition->name, (void*)macroDefinition))
+  {
+    String_print(macroDefinition->name, "StringProcessor.c: Could not store macro ");
+  }
+  if (Map_find(this->macros, macroDefinition->name, NULL))
+  {
+    String_print(macroDefinition->name, "StringProcessor.c: Found the macro again->");
+  }
 }
