@@ -1,12 +1,16 @@
-/* List.h */
+/**********************************************//**
+  @file List.h
+  
+  @brief TBD
+  @details TBD
+**************************************************/
 #ifndef _LIST_H_
 #define _LIST_H_
 
 #include "Common.h"
 
-typedef struct ListNode ListNode;
-
 typedef struct List List;
+typedef struct ListNode ListNode;
 
 struct ListNode
 {

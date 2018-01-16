@@ -1,13 +1,19 @@
-/* List.c */
-
+/**********************************************//**
+  @file List.c
+  @brief TBD
+**************************************************/
 #include "List.h"
 
 #include "Object.h"
 #include "Common.h"
 
-
-
-/**************************************************
+/**********************************************//**
+ @brief List_new
+ 
+ This function allocate a List object.
+ 
+ @param: none
+ @return: List* 
 **************************************************/ 
 List* List_new()
 {
@@ -21,7 +27,13 @@ List* List_new()
   return this;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief List_delete
+ 
+ This function de-allocate a List object.
+ 
+ @param: List*
+ @return: none
 **************************************************/
 void List_delete(List* this)
 {
@@ -49,7 +61,13 @@ void List_delete(List* this)
   }    
 }
 
-/**************************************************
+/**********************************************//**
+ @brief List_copy
+ 
+ This function create a copy of a List object.
+ 
+ @param: List*
+ @return: List*
 **************************************************/
 List* List_copy(List* this)
 {
@@ -70,7 +88,14 @@ List* List_copy(List* this)
   return result;
 }
 
-/**************************************************
+/**********************************************//**
+ @brief List_insert
+ 
+ This function insert an item in a List object.
+ 
+ @param: List*
+ @param: void*
+ @return: List*
 **************************************************/
 void List_insert(List* this, void* item)
 {
