@@ -5,7 +5,15 @@ int addInt(int n, int m)
 
 typedef int (*myFuncDef)(int, int);
 
-myFuncDef functionFactory(int n) 
+void function1(void* param11, void *(param12)(void* t))
+{
+}
+
+void* function2(int param21, int param22)
+{
+}
+
+myFuncDef function3(int param31) 
 {
   myFuncDef functionPtr = addInt;
   return functionPtr;
