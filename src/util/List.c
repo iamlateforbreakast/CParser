@@ -130,7 +130,7 @@ void List_remove(List* this)
 
 /**************************************************
 **************************************************/
-void List_iterator(List* this, void *(f)(void* t))
+void List_iterator(List* this, void (*f)(void* t))
 {
   ListNode* iterator = this->head;
   
