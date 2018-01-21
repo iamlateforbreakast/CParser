@@ -1,10 +1,24 @@
-/* StringBuffer.c */
+/**********************************************//**
+  @file StringBuffer.c
+  
+  @brief This file contains the implementation of the class StringBuffer.
+  
+  The class StringBuffer stores a String, allow to read sequentially
+  the characters of the String. It is also possible to read back a number of
+  characters from the current reading position.
+**************************************************/
 
 #include "StringBuffer.h"
 
 #include "Common.h"
 
-StringBuffer* StringBuffer_new(String* s, String* name)
+/**********************************************//**
+  @brief Allocate a StringBuffer object.
+  
+  @param String
+  @param String
+**************************************************/
+PUBLIC StringBuffer* StringBuffer_new(String* s, String* name)
 {
   StringBuffer* this;
 
@@ -17,14 +31,24 @@ StringBuffer* StringBuffer_new(String* s, String* name)
   return this;
 }
 
-void StringBuffer_delete(StringBuffer* this)
+/**********************************************//**
+  @brief De-allocate a String object.
+  
+  @param StringBuffer
+**************************************************/
+PUBLIC void StringBuffer_delete(StringBuffer* this)
 {
     String_delete(this->s);
     String_delete(this->name);
     Memory_free(this, sizeof(StringBuffer));
 }
 
-unsigned char StringBuffer_readChar(StringBuffer* this)
+/**********************************************//**
+  @brief Read a character from the buffer.
+  
+  @param StringBuffer
+**************************************************/
+PUBLIC unsigned char StringBuffer_readChar(StringBuffer* this)
 {
   unsigned char result=0;
   
@@ -44,7 +68,12 @@ unsigned char StringBuffer_readChar(StringBuffer* this)
   return result;
 }
 
-unsigned char StringBuffer_peekChar(StringBuffer* this)
+/**********************************************//**
+  @brief Peek the next character to be read.
+  
+  @param  StringBuffer
+**************************************************/
+PUBLIC unsigned char StringBuffer_peekChar(StringBuffer* this)
 {
   unsigned char result = 0;
   
@@ -56,7 +85,13 @@ unsigned char StringBuffer_peekChar(StringBuffer* this)
   return result;
 }
 
-unsigned int StringBuffer_match(StringBuffer* this, String* pattern)
+/**********************************************//**
+  @brief Match a pattern with the next characters a StringBuffer object.
+  
+  @param StringBuffer
+  @param String
+**************************************************/
+PUBLIC unsigned int StringBuffer_match(StringBuffer* this, String* pattern)
 {
   unsigned int result = 0;
   
@@ -73,7 +108,13 @@ unsigned int StringBuffer_match(StringBuffer* this, String* pattern)
   return result;
 }
 
-unsigned int StringBuffer_isEOF(StringBuffer* this)
+/**********************************************//**
+  @brief Check if there are any character left to read
+  in the StringBuffer object.
+  
+  @param StringBuffer
+**************************************************/
+PUBLIC unsigned int StringBuffer_isEOF(StringBuffer* this)
 {
   unsigned int result = 0;
   
@@ -82,7 +123,13 @@ unsigned int StringBuffer_isEOF(StringBuffer* this)
   return result;
 }
 
-String* StringBuffer_readback(StringBuffer* this, unsigned int nbChar)
+/**********************************************//**
+  @brief Read back a number of characters from a StringBuffer object.
+  
+  @param StringBuffer
+  @param unsigned char
+**************************************************/
+PUBLIC String* StringBuffer_readback(StringBuffer* this, unsigned int nbChar)
 {
   String* result = NULL;
   
