@@ -1126,7 +1126,7 @@ void Grammar_matchParameterTypeList(Grammar* this, Token* token)
   if (rules[E_PARAMETER_LIST].isMatched)
   {
     rules[E_PARAMETER_TYPE_LIST].isMatched = 1;
-    Grammar_restoreContext(this,E_EXTERNAL_DECLARATION);
+    Grammar_restoreContext(this,E_DIRECT_DECLARATOR);
   }
 }
 
@@ -1199,6 +1199,7 @@ void Grammar_matchParameterDeclaration(Grammar* this, Token* token)
         if (rules[E_DECLARATOR].isMatched)
         {
           rules[E_PARAMETER_DECLARATION].isMatched = 1;
+	  // Should be rules[E_PARAMETER_DECLARATION] = 2;
           rules[E_DECLARATOR].count[this->context] = 2;
         }
       }
