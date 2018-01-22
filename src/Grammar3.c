@@ -613,8 +613,11 @@ void Grammar_matchDeclarator(Grammar* this, Token* token)
       if (rules[E_DIRECT_DECLARATOR].isMatched)
       {
         rules[E_DECLARATOR].isMatched = 1;
-        Grammar_restoreContext(this, E_EXTERNAL_DECLARATION);
-        Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
+        if (this->entryRule[this->context] == E_DECLARATOR)
+        {
+          Grammar_restoreContext(this, E_EXTERNAL_DECLARATION);
+          Grammar_evaluateRule(this, token, E_DIRECT_DECLARATOR);
+        }
       }
       break;
   }
@@ -645,6 +648,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
 {
   rules[E_DIRECT_DECLARATOR].isMatched = 0;
 
+  printf("ooooooooo Direct Declarator: %d\n", rules[E_DIRECT_DECLARATOR].count[this->context]);
   switch (rules[E_DIRECT_DECLARATOR].count[this->context])
   {
     case 0:
@@ -714,6 +718,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       {
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
         rules[E_DIRECT_DECLARATOR].count[this->context] = 1;
+        Grammar_saveContext(this, E_DIRECT_DECLARATOR);
       }
       break;
   }
@@ -1151,9 +1156,10 @@ void Grammar_matchParameterList(Grammar* this, Token* token)
     case 1:
       if  ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ','))
       {
-        rules[E_DECLARATION_SPECIFIERS].count[this->context] = 0;
-        rules[E_DECLARATOR].count[this->context] = 0;
-        rules[E_DIRECT_DECLARATOR].count[this->context] = 0;
+        //rules[E_DECLARATION_SPECIFIERS].count[this->context] = 0;
+        //rules[E_DECLARATOR].count[this->context] = 0;
+        //rules[E_DIRECT_DECLARATOR].count[this->context] = 0;
+        rules[E_PARAMETER_DECLARATION].count[this->context] = 0;
       }
       else
       {
@@ -1177,6 +1183,7 @@ void Grammar_matchParameterDeclaration(Grammar* this, Token* token)
 {
   rules[E_PARAMETER_DECLARATION].isMatched = 0;
 
+  printf("ooooooooo Parameter Declaration: %d\n", rules[E_PARAMETER_DECLARATION].count[this->context]);
   switch(rules[E_PARAMETER_DECLARATION].count[this->context])
   {
     case 0:
@@ -1199,8 +1206,8 @@ void Grammar_matchParameterDeclaration(Grammar* this, Token* token)
         if (rules[E_DECLARATOR].isMatched)
         {
           rules[E_PARAMETER_DECLARATION].isMatched = 1;
-	  // Should be rules[E_PARAMETER_DECLARATION] = 2;
-          rules[E_DECLARATOR].count[this->context] = 2;
+	        rules[E_PARAMETER_DECLARATION].count[this->context] = 2;
+          //rules[E_DECLARATOR].count[this->context] = 2;
         }
       }
       break;
@@ -1556,6 +1563,7 @@ void Grammar_saveContext(Grammar* this, RuleName entryRule)
   {
     this->context++;
     this->entryRule[this->context] = entryRule;
+    printf("****************** Context Save %d\n",this->context);
   }
 }
 
@@ -1567,6 +1575,7 @@ void Grammar_restoreContext(Grammar* this, RuleName entryRule)
   {
     this->context--;
     this->entryRule[this->context] = entryRule;
+    printf("****************** Restore Context %d\n",this->context);
   }
 }
 
@@ -1682,10 +1691,13 @@ void Grammar_insertDeclaration(Grammar* this, Declarator* declarator)
     else if (declarator->class == E_TYPE_DECLARATOR)
     {
       sprintf(cmd, "INSERT INTO Type_Declarations ( name, type, scope, fname, line, column ) "
-                        "VALUES ('%s','Test2','Test3','Test4',%d,%d);",
-                        name,
-                        1,2);
-
+                        "VALUES ('%s','%s','%s','%s',%d, %d);", 
+                        name, 
+                        classText[declarator->class], 
+                        scopeText[this->scope],
+                        fName,
+                        declarator->line,
+                        declarator->col);  
     }
   }
   SdbMgr_execute(sdbMgr, cmd);
