@@ -568,7 +568,11 @@ void Grammar_matchInitDeclarator(Grammar* this, Token* token)
       }
       else
       {
-        // Error
+        Grammar_evaluateRule(this, token, E_DECLARATOR);
+        if (rules[E_DECLARATOR].isMatched)
+        {
+          rules[E_INIT_DECLARATOR].isMatched = 1;
+        }
       }
       break;
     case 2:
@@ -648,7 +652,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
 {
   rules[E_DIRECT_DECLARATOR].isMatched = 0;
 
-  printf("ooooooooo Direct Declarator: %d\n", rules[E_DIRECT_DECLARATOR].count[this->context]);
+  printf("----- Direct Declarator: %d\n", rules[E_DIRECT_DECLARATOR].count[this->context]);
   switch (rules[E_DIRECT_DECLARATOR].count[this->context])
   {
     case 0:
@@ -671,7 +675,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       }
       else if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == '('))
       {
-        printf("ooooooooooooooooooooo POinter to function defintion\n");
+        //printf("----- POinter to function defintion\n");
         rules[E_DIRECT_DECLARATOR].count[this->context] = 4;
         Grammar_saveContext(this, E_DECLARATOR);
       }
@@ -692,6 +696,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       {
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
         rules[E_DIRECT_DECLARATOR].count[this->context] = 0;
+        rules[E_DIRECT_DECLARATOR].isEvaluated = 1;
         Grammar_evaluateRule(this, token, E_EXTERNAL_DECLARATION);
       }
       else
@@ -713,7 +718,7 @@ void Grammar_matchDirectDeclarator(Grammar* this, Token* token)
       }
       break;
     case 4:
-      printf("oooooooooo Found the ptr function declarator\n");
+      printf("----- Found the ptr function declarator\n");
       if ((token->id == TOK_UNKNOWN) && ((uintptr_t)token->value == ')'))
       {
         rules[E_DIRECT_DECLARATOR].isMatched = 1;
@@ -1131,7 +1136,14 @@ void Grammar_matchParameterTypeList(Grammar* this, Token* token)
   if (rules[E_PARAMETER_LIST].isMatched)
   {
     rules[E_PARAMETER_TYPE_LIST].isMatched = 1;
-    Grammar_restoreContext(this,E_DIRECT_DECLARATOR);
+    if (this->context>1)
+    {
+      Grammar_restoreContext(this,E_DIRECT_DECLARATOR);
+    }
+    else
+    {
+      Grammar_restoreContext(this,E_EXTERNAL_DECLARATION);
+    }
   }
 }
 
